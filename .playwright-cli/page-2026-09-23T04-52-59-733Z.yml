@@ -1,0 +1,176 @@
+- generic [active] [ref=e1]:
+  - link "Saltar al catálogo de ofertas" [ref=e2] [cursor=pointer]:
+    - /url: "#catalogo"
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "Precionauta, ir al inicio" [ref=e5] [cursor=pointer]:
+        - /url: "#inicio"
+        - generic [aria-hidden] [ref=e6]: P
+        - generic [ref=e7]: Precionauta
+      - generic [ref=e10]:
+        - searchbox "Buscar en Precionauta" [ref=e13]
+        - button "Abrir filtros avanzados" [ref=e14] [cursor=pointer]
+      - navigation "Principal" [ref=e17]:
+        - button "Ofertas" [ref=e18] [cursor=pointer]
+        - link "Categorías" [ref=e19] [cursor=pointer]:
+          - /url: "#categorias"
+        - button "Tiendas" [ref=e20] [cursor=pointer]
+        - button "Mis alertas" [disabled] [ref=e21]
+        - button "Entrar" [ref=e23] [cursor=pointer]
+      - button "Cambiar a modo oscuro" [ref=e24] [cursor=pointer]
+      - button "Abrir menú" [ref=e28] [cursor=pointer]
+    - tablist "Categorías de productos" [ref=e34]:
+      - generic [ref=e35]:
+        - button "💻 Tecnología" [ref=e36] [cursor=pointer]:
+          - generic [ref=e38]: "42"
+        - button "🏠 Hogar" [ref=e39] [cursor=pointer]:
+          - generic [ref=e41]: "28"
+        - button "👕 Moda" [ref=e42] [cursor=pointer]:
+          - generic [ref=e44]: "15"
+        - button "⚽ Deporte" [ref=e45] [cursor=pointer]:
+          - generic [ref=e47]: "8"
+        - button "📚 Libros" [ref=e48] [cursor=pointer]:
+          - generic [ref=e50]: "12"
+        - button "🐾 Mascotas" [ref=e51] [cursor=pointer]:
+          - generic [ref=e53]: "5"
+  - generic:
+    - dialog "Menú":
+      - generic:
+        - generic:
+          - generic [aria-hidden]: P
+          - generic: Precionauta
+        - button "Cerrar menú"
+      - search:
+        - searchbox "Buscar ofertas"
+        - button "Buscar"
+      - navigation "Principal móvil":
+        - button "Ofertas"
+        - link "Categorías":
+          - /url: "#categorias"
+        - button "Tiendas"
+        - button "Mis alertas" [disabled]
+      - button "Entrar"
+  - generic [aria-hidden]:
+    - dialog:
+      - button
+      - heading [level=2]: Entrar a Precionauta
+      - tablist:
+        - tab [selected]: Iniciar sesión
+        - tab: Crear cuenta
+      - generic:
+        - generic:
+          - text: Correo electrónico
+          - textbox
+        - generic:
+          - text: Contraseña
+          - textbox
+        - button: Iniciar sesión
+  - main [ref=e55]:
+    - generic [ref=e57]:
+      - generic [ref=e58]:
+        - heading "Encuentra el error de precio primero." [level=1] [ref=e59]
+        - paragraph [ref=e60]: Rastreamos Amazon, Mercado Libre y Liverpool cada 4 horas y comparamos contra el precio histórico real.
+        - button [ref=e61] [cursor=pointer]
+      - article [ref=e67]:
+        - generic [ref=e68]:
+          - link "Ver detalle de Auriculares inalámbricos XR-Pro" [ref=e69] [cursor=pointer]:
+            - /url: producto.html?id=auriculares-xr-pro
+          - generic: AMZ
+          - generic: Oferta más caliente
+          - generic "Descuento del 40 por ciento": "-40%"
+        - generic [ref=e73]:
+          - paragraph [ref=e74]: Tecnología
+          - heading [level=3] [ref=e75]:
+            - link "Auriculares inalámbricos XR-Pro" [ref=e76] [cursor=pointer]:
+              - /url: producto.html?id=auriculares-xr-pro
+          - generic [ref=e77]:
+            - generic [ref=e78]: $2,599
+            - generic [ref=e79]: $1,559
+          - generic [ref=e80]: Ahorras $1,040
+          - paragraph [ref=e81]: 8% por debajo de su precio mínimo histórico
+          - generic [ref=e84]:
+            - generic [ref=e85]: Verificado hace 1 hora
+            - link [ref=e88] [cursor=pointer]:
+              - /url: https://www.amazon.com.mx
+    - region "Cifras de confianza" [ref=e92]:
+      - generic [ref=e93]:
+        - generic [ref=e98]:
+          - generic [ref=e99]: "3"
+          - generic [ref=e100]: tiendas rastreadas
+        - generic [ref=e105]:
+          - generic [ref=e106]: "10"
+          - generic [ref=e107]: ofertas activas ahora
+        - generic [ref=e112]:
+          - generic [ref=e113]: 4 h
+          - generic [ref=e114]: frecuencia de verificación
+        - generic [ref=e115]:
+          - text: Actualizado
+          - generic [ref=e116]: hoy a las 10:52 p.m.
+    - region "Menú de categorías" [ref=e117]:
+      - generic [ref=e118]:
+        - generic [ref=e119]:
+          - heading "Explora por categoría" [level=2] [ref=e120]
+          - paragraph [ref=e121]: Diez ofertas activas repartidas en siete categorías, todas verificadas contra su historial de precio.
+        - generic [ref=e122]:
+          - button "Tecnología 3 ofertas" [ref=e123] [cursor=pointer]:
+            - generic [ref=e127]: Tecnología
+            - generic [ref=e128]: 3 ofertas
+          - button "Hogar 2 ofertas" [ref=e129] [cursor=pointer]:
+            - generic [ref=e133]: Hogar
+            - generic [ref=e134]: 2 ofertas
+          - button "Moda 1 oferta" [ref=e135] [cursor=pointer]:
+            - generic [ref=e139]: Moda
+            - generic [ref=e140]: 1 oferta
+          - button "Deportes 1 oferta" [ref=e141] [cursor=pointer]:
+            - generic [ref=e145]: Deportes
+            - generic [ref=e146]: 1 oferta
+          - button "Juguetes 1 oferta" [ref=e147] [cursor=pointer]:
+            - generic [ref=e151]: Juguetes
+            - generic [ref=e152]: 1 oferta
+          - button "Autos 1 oferta" [ref=e153] [cursor=pointer]:
+            - generic [ref=e157]: Autos
+            - generic [ref=e158]: 1 oferta
+          - button "Supermercado 1 oferta" [ref=e159] [cursor=pointer]:
+            - generic [ref=e163]: Supermercado
+            - generic [ref=e164]: 1 oferta
+    - region "Catálogo de ofertas" [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - heading "Ofertas verificadas hoy" [level=2] [ref=e168]
+          - paragraph [ref=e169]: Cada insignia de descuento se calcula en vivo a partir del precio anterior y el precio actual, nunca a mano.
+        - group "Filtrar por descuento mínimo"
+        - group "Filtrar por tienda"
+        - generic [ref=e170]:
+          - paragraph
+          - generic [ref=e171]:
+            - generic [ref=e172]: Ordenar ofertas
+            - combobox "Ordenar ofertas" [ref=e173]
+    - region [ref=e174]:
+      - generic [ref=e175]:
+        - heading "Mantente conectado" [level=2] [ref=e176]
+        - paragraph [ref=e177]: Sé de los primeros en enterarte cuando aparezca un error de precio o una liquidación extrema.
+        - generic [ref=e178]:
+          - generic [ref=e179]: Correo electrónico
+          - textbox "Correo electrónico" [ref=e180]:
+            - /placeholder: tu@correo.com
+          - button "Suscribirme" [ref=e181] [cursor=pointer]
+        - status
+        - paragraph [ref=e184]:
+          - text: Al suscribirte aceptas nuestro
+          - link "aviso de privacidad" [ref=e185] [cursor=pointer]:
+            - /url: aviso-privacidad.html
+          - text: .
+  - contentinfo [ref=e186]:
+    - generic [ref=e187]:
+      - strong [ref=e188]: Precionauta · Rastreador de descuentos en México · 2026
+      - paragraph [ref=e189]:
+        - link "Cómo funciona" [ref=e190] [cursor=pointer]:
+          - /url: como-funciona.html
+        - link "Aviso de privacidad" [ref=e192] [cursor=pointer]:
+          - /url: aviso-privacidad.html
+        - link "Términos" [ref=e194] [cursor=pointer]:
+          - /url: terminos.html
+        - link "Cookies" [ref=e196] [cursor=pointer]:
+          - /url: politica-cookies.html
+        - link "Reembolsos" [ref=e198] [cursor=pointer]:
+          - /url: politica-reembolsos.html

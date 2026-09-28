@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("precionauta:theme");
+        if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aviso de privacidad - Precionauta</title>
+  <meta name="description" content="Qué datos maneja Precionauta hoy, para qué se usan y cómo puedes borrarlos." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/legal.css" />
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <header id="siteHeader" class="site-header">
+    <div class="container nav-bar">
+      <a href="index.html#inicio" class="brand" aria-label="Precionauta, ir al inicio">
+        <span class="brand__mark" aria-hidden="true">P</span>
+        <span class="brand__name">Precionauta</span>
+      </a>
+
+      <form class="search-field nav-bar__search" role="search" onsubmit="return false;">
+        <span class="search-field__icon">
+          <svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>
+        </span>
+        <input type="search" name="q" placeholder="Buscar productos, tiendas o categorías…" aria-label="Buscar productos, tiendas o categorías" />
+        <button type="submit">Buscar</button>
+      </form>
+
+      <nav class="nav-bar__links" aria-label="Principal">
+        <a href="index.html#catalogo" class="nav-link">Ofertas</a>
+        <button type="button" class="nav-link nav-link--menu" data-category-menu-trigger>
+          Categorías
+          <svg class="icon nav-link__caret" width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </button>
+        <a href="index.html#catalogo" class="nav-link">Tiendas</a>
+        <button type="button" class="nav-link nav-link--alerts" data-alerts-trigger>
+          <svg class="icon" width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-23.19-18h46.38A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></svg>
+          Mis alertas
+          <span class="nav-count tabular-nums" data-alerts-count hidden></span>
+        </button>
+        <span class="savings-pill tabular-nums" data-savings-summary hidden></span>
+        <button type="button" class="btn btn--pill-accent" data-auth-open>Entrar</button>
+      </nav>
+
+      <button
+        type="button"
+        id="themeToggle"
+        class="icon-button theme-toggle"
+        data-theme-toggle
+        aria-label="Cambiar a modo oscuro"
+      >
+        <span class="theme-icon theme-icon--sun"><svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/></svg></span>
+        <span class="theme-icon theme-icon--moon"><svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M240,96a8,8,0,0,1-8,8H216v16a8,8,0,0,1-16,0V104H184a8,8,0,0,1,0-16h16V72a8,8,0,0,1,16,0V88h16A8,8,0,0,1,240,96ZM144,56h8v8a8,8,0,0,0,16,0V56h8a8,8,0,0,0,0-16h-8V32a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16Zm72.77,97a8,8,0,0,1,1.43,8A96,96,0,1,1,95.07,37.8a8,8,0,0,1,10.6,9.06A88.07,88.07,0,0,0,209.14,150.33,8,8,0,0,1,216.77,153Zm-19.39,14.88c-1.79.09-3.59.14-5.38.14A104.11,104.11,0,0,1,88,64c0-1.79,0-3.59.14-5.38A80,80,0,1,0,197.38,167.86Z"/></svg></span>
+      </button>
+
+      <button
+        type="button"
+        id="mobileMenuToggle"
+        class="icon-button nav-bar__mobile-trigger"
+        aria-label="Abrir menú"
+        aria-expanded="false"
+        aria-controls="mobileMenuPanel"
+      >
+        <svg class="icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="scrollSentinel" aria-hidden="true"></div>
+
+  <div id="mobileMenuPanel" class="mobile-menu">
+    <div class="mobile-menu__panel" role="dialog" aria-modal="true" aria-label="Menú">
+      <div class="mobile-menu__head">
+        <span class="brand">
+          <span class="brand__mark" aria-hidden="true">P</span>
+          <span class="brand__name">Precionauta</span>
+        </span>
+        <button type="button" id="mobileMenuClose" class="icon-button" aria-label="Cerrar menú">
+          <svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+        </button>
+      </div>
+
+      <form class="search-field" role="search" onsubmit="return false;">
+        <span class="search-field__icon">
+          <svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>
+        </span>
+        <input type="search" placeholder="Buscar ofertas…" aria-label="Buscar ofertas" />
+        <button type="submit">Buscar</button>
+      </form>
+
+      <nav class="mobile-menu__links" aria-label="Principal móvil">
+        <a href="index.html#catalogo" class="nav-link">Ofertas</a>
+        <button type="button" class="nav-link mobile-menu__disclosure" data-keep-open data-mobile-categories-toggle aria-expanded="false" aria-controls="mobileCategories">
+          Categorías
+          <svg class="icon nav-link__caret" width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </button>
+        <div id="mobileCategories" class="mobile-categories" data-mobile-categories hidden></div>
+        <a href="index.html#catalogo" class="nav-link">Tiendas</a>
+        <button type="button" class="nav-link nav-link--alerts" data-alerts-trigger>
+          <svg class="icon" width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-23.19-18h46.38A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></svg>
+          Mis alertas
+          <span class="nav-count tabular-nums" data-alerts-count hidden></span>
+        </button>
+      </nav>
+
+      <span class="savings-pill tabular-nums" data-savings-summary hidden></span>
+      <button type="button" class="btn btn--pill-accent" data-auth-open>Entrar</button>
+    </div>
+  </div>
+
+
+  <div id="authModal" class="modal" aria-hidden="true">
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+      <button type="button" id="authModalClose" class="icon-button modal__close" aria-label="Cerrar">
+        <svg class="icon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+      </button>
+
+      <h2 id="authModalTitle" class="sr-only">Entrar a Precionauta</h2>
+
+      <div class="modal__tabs" role="tablist" aria-label="Entrar o crear cuenta">
+        <button type="button" class="modal__tab is-active" data-auth-tab="login" role="tab" aria-selected="true">Iniciar sesión</button>
+        <button type="button" class="modal__tab" data-auth-tab="register" role="tab" aria-selected="false">Crear cuenta</button>
+      </div>
+
+      <form class="auth-form" data-auth-panel="login">
+        <label>
+          Correo electrónico
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label>
+          Contraseña
+          <input type="password" name="password" autocomplete="current-password" required minlength="8" />
+        </label>
+        <button type="submit" class="btn btn--primary">Iniciar sesión</button>
+      </form>
+
+      <form class="auth-form" data-auth-panel="register" hidden>
+        <label>
+          Nombre
+          <input type="text" name="name" autocomplete="name" required />
+        </label>
+        <label>
+          Correo electrónico
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label>
+          Contraseña
+          <input type="password" name="password" autocomplete="new-password" required minlength="8" />
+        </label>
+        <label>
+          Confirmar contraseña
+          <input type="password" name="password2" autocomplete="new-password" required minlength="8" />
+        </label>
+        <button type="submit" class="btn btn--primary">Crear cuenta</button>
+      </form>
+
+      <p class="auth-feedback" id="authFeedback" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+  <main>
+    <section id="contenido">
+      <div class="container legal">
+        <p class="legal__updated">Última actualización: 21 de septiembre de 2026</p>
+        <h1>Aviso de privacidad</h1>
+        <p>
+          Precionauta es un proyecto académico (Proyectos V, Universidad Modelo) todavía en
+          desarrollo. Este aviso describe honestamente qué pasa con tus datos <strong>hoy</strong>,
+          no lo que planeamos hacer cuando el sitio esté completo.
+        </p>
+
+        <div class="legal__callout">
+          <p>
+            Ahora mismo, Precionauta no tiene servidor propio ni base de datos. Ningún dato tuyo
+            sale de tu navegador.
+          </p>
+        </div>
+
+        <h2>Qué guardamos y dónde</h2>
+        <ul>
+          <li>
+            <strong>Favoritos y alertas de precio:</strong> se guardan con <code>localStorage</code>,
+            una función del navegador que vive únicamente en tu equipo. Nosotros no tenemos acceso a
+            esa información; nunca viaja a un servidor.
+          </li>
+          <li>
+            <strong>Formulario "Mantente conectado":</strong> en esta versión del sitio, el correo que
+            escribes ahí no se envía ni se almacena en ningún lugar - solo valida el formato y muestra
+            un mensaje de confirmación en pantalla. Cuando conectemos un servicio real de correo,
+            actualizaremos este aviso antes de que eso cambie.
+          </li>
+          <li>
+            <strong>Analítica o rastreo:</strong> no usamos Google Analytics, Meta Pixel ni ninguna
+            herramienta de rastreo todavía.
+          </li>
+        </ul>
+
+        <h2>Enlaces a tiendas externas</h2>
+        <p>
+          Al dar clic en "Ver oferta" te llevamos al sitio de la tienda original (Amazon México,
+          Mercado Libre o Liverpool). Esas tiendas tienen sus propias políticas de privacidad,
+          independientes de esta. Te recomendamos revisarlas antes de comprar.
+        </p>
+
+        <h2>Cuando el proyecto avance</h2>
+        <p>
+          Las siguientes etapas de Precionauta (ver nuestro cronograma) incluyen cuentas de usuario y
+          alertas de precio por correo o Telegram, lo que implicará guardar tu correo electrónico en
+          un servidor. Actualizaremos este aviso, con el detalle exacto de qué se guarda y por cuánto
+          tiempo, antes de activar esas funciones.
+        </p>
+
+        <h2>Cómo borrar lo que ya está guardado</h2>
+        <p>
+          Todo lo que guarda este sitio hoy vive en el almacenamiento local de tu navegador. Puedes
+          borrarlo desde la configuración de tu navegador ("Borrar datos de navegación" /
+          "Configuración del sitio" → Precionauta → Borrar datos), o simplemente usando una ventana
+          de navegación privada.
+        </p>
+
+        <h2>Contacto</h2>
+        <p>
+          Este proyecto todavía no tiene un correo de contacto oficial configurado. Mientras tanto,
+          cualquier duda puede canalizarse a través del equipo del proyecto (Pedro Narváez, Ernesto
+          Hernández, Dylan Mollinedo - Proyectos V).
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__row">
+      <strong>Precionauta · Rastreador de descuentos en México · <span id="footerYear"></span></strong>
+      <p class="footer-links">
+        <a href="como-funciona.html">Cómo funciona</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="aviso-privacidad.html">Aviso de privacidad</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="terminos.html">Términos</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="politica-cookies.html">Cookies</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="politica-reembolsos.html">Reembolsos</a>
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/legal.js"></script>
+</body>
+</html>

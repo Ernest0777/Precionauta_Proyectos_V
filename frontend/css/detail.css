@@ -1,0 +1,382 @@
+/*
+  Detail page (producto.html) - layout specific to this page only.
+  Shares tokens/base/layout/components with Home; nothing here redefines a
+  color or a font, only structure.
+*/
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  margin-bottom: var(--space-6);
+}
+
+.breadcrumb a {
+  color: var(--color-accent-ink);
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb__current {
+  color: var(--color-ink-500);
+}
+
+.breadcrumb__sep {
+  color: var(--color-border);
+}
+
+.product-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-12);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-8);
+  margin-bottom: var(--space-16);
+}
+
+@media (max-width: 900px) {
+  .product-detail {
+    grid-template-columns: 1fr;
+    padding: var(--space-5);
+    gap: var(--space-6);
+  }
+}
+
+/* ---- Gallery ---- */
+
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.gallery__main {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  overflow: hidden;
+}
+
+.gallery__view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(1.03);
+  transition: opacity var(--duration-slow) var(--ease-out-expo),
+    transform var(--duration-slow) var(--ease-out-expo);
+}
+
+.gallery__view.is-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.gallery__glyph {
+  width: 40%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery__glyph .icon {
+  width: 45%;
+  height: 45%;
+}
+
+.gallery__view--solid .gallery__glyph {
+  background: var(--color-accent-600);
+  /* on-accent, not --color-surface: see the same note in components.css. */
+  color: var(--color-on-accent);
+}
+
+.gallery__view--tint .gallery__glyph {
+  background: var(--color-accent-tint);
+  /* accent-ink, not the base accent: same reasoning as .trust-item__icon in components.css. */
+  color: var(--color-accent-ink);
+}
+
+.gallery__view--outline .gallery__glyph {
+  background: transparent;
+  color: var(--color-accent);
+  border: 2px solid var(--color-accent);
+}
+
+.gallery__view--split .gallery__glyph {
+  background: linear-gradient(135deg, var(--color-accent-600) 50%, var(--color-accent-tint) 50%);
+  color: var(--color-on-accent);
+}
+
+.gallery__thumbs {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.gallery__thumb {
+  flex: 1;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  border: 1.5px solid var(--color-border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-400);
+  transition: border-color var(--duration-fast) var(--ease-out-expo),
+    color var(--duration-fast) var(--ease-out-expo);
+}
+
+.gallery__thumb:hover {
+  color: var(--color-accent);
+}
+
+.gallery__thumb.is-active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ---- Info column ---- */
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.product-info__badges {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.badge-pill {
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  padding: 0.28rem 0.7rem;
+  border-radius: var(--radius-pill);
+}
+
+.badge-pill--category {
+  background: var(--color-accent-tint);
+  color: var(--color-accent-ink);
+}
+
+.badge-pill--verified {
+  background: var(--color-success-bg);
+  color: var(--color-success-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.product-info h1 {
+  font-size: var(--fs-h2);
+}
+
+.price-panel {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border-soft);
+}
+
+.price-panel__discount {
+  background: var(--color-accent-600);
+  color: #fff;
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.price-panel__current {
+  font-size: var(--fs-display);
+  font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.25rem);
+  font-weight: 700;
+  color: var(--color-ink-900);
+}
+
+.store-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-bg);
+}
+
+.store-line__mark {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--color-border-soft);
+  color: var(--color-ink-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.product-info__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.product-info__meta {
+  font-size: var(--fs-xs);
+  color: var(--color-ink-500);
+}
+
+/* ---- Two-column panels: specs + price history ---- */
+
+.detail-panels {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-16);
+}
+
+@media (max-width: 900px) {
+  .detail-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-7);
+}
+
+.panel h2 {
+  font-size: var(--fs-h3);
+  margin-bottom: var(--space-4);
+}
+
+.spec-row {
+  display: flex;
+  gap: var(--space-4);
+  padding: 0.65rem 0;
+}
+
+.spec-row + .spec-row {
+  border-top: 1px solid var(--color-border-hairline);
+}
+
+.spec-row__label {
+  min-width: 40%;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-ink-500);
+}
+
+.spec-row__value {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-ink-900);
+}
+
+.price-range {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.price-range__item {
+  flex: 1;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.price-range__item--max {
+  /* Pinned: same reasoning as .legal__callout - this chip's background
+     never themes, so --color-ink-900/--color-ink-500 inside it (the
+     label/value below) can't either. */
+  --color-ink-900: #262220;
+  --color-ink-500: #6b6259;
+  background: var(--color-accent-tint);
+}
+
+.price-range__item--min {
+  --color-ink-900: #262220;
+  --color-ink-500: #6b6259;
+  background: var(--color-success-bg);
+}
+
+.price-range__item--now {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border-soft);
+}
+
+.price-range__label {
+  font-size: var(--fs-2xs);
+  color: var(--color-ink-500);
+  font-weight: 700;
+}
+
+.price-range__value {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--color-ink-900);
+  margin-top: 2px;
+}
+
+.price-chart__axis {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.price-chart__area {
+  fill: var(--color-accent-tint);
+  opacity: 0.6;
+}
+
+.price-chart__line {
+  fill: none;
+  stroke: var(--color-accent-600);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.price-chart__dot--min {
+  fill: var(--color-success-ink);
+}
+
+.price-chart__dot--now {
+  fill: var(--color-accent-600);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.price-chart__label {
+  font-size: 11px;
+  fill: var(--color-ink-400);
+  font-family: var(--font-sans);
+}
+
+/* ---- Related ---- */
+
+.related-heading {
+  margin-bottom: var(--space-6);
+}

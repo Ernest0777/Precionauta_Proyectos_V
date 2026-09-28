@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("precionauta:theme");
+        if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Precionauta - Rastreador de ofertas extremas en México</title>
+  <meta
+    name="description"
+    content="Precionauta rastrea Amazon México, Mercado Libre y Liverpool cada 4 horas y verifica cada descuento contra su historial de precio real."
+  />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <!-- Watermelon UI Components -->
+  <link rel="stylesheet" href="css/components-watermelon.css" />
+</head>
+<body>
+  <a class="skip-link" href="#catalogo">Saltar al catálogo de ofertas</a>
+
+  <header id="siteHeader" class="site-header">
+    <div class="container nav-bar">
+      <a href="#inicio" class="brand" aria-label="Precionauta, ir al inicio">
+        <span class="brand__mark" aria-hidden="true">P</span>
+        <span class="brand__name">Precionauta</span>
+      </a>
+
+      <!-- Watermelon: Morphing Discovery Bar -->
+      <div id="search-container" class="nav-bar__search"></div>
+
+      <nav class="nav-bar__links" aria-label="Principal">
+        <button type="button" class="nav-link" data-scroll-to-catalog>Ofertas</button>
+        <button type="button" class="nav-link nav-link--menu" data-category-menu-trigger>
+          Categorías
+          <svg class="icon nav-link__caret" width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </button>
+        <button type="button" class="nav-link" data-scroll-to-catalog>Tiendas</button>
+        <button type="button" class="nav-link nav-link--alerts" data-alerts-trigger>
+          <svg class="icon" width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-23.19-18h46.38A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></svg>
+          Mis alertas
+          <span class="nav-count tabular-nums" data-alerts-count hidden></span>
+        </button>
+        <span class="savings-pill tabular-nums" data-savings-summary hidden></span>
+        <button type="button" class="btn btn--pill-accent" data-auth-open>Entrar</button>
+      </nav>
+
+      <button
+        type="button"
+        id="themeToggle"
+        class="icon-button theme-toggle"
+        data-theme-toggle
+        aria-label="Cambiar a modo oscuro"
+      >
+        <span class="theme-icon theme-icon--sun"><svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/></svg></span>
+        <span class="theme-icon theme-icon--moon"><svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M240,96a8,8,0,0,1-8,8H216v16a8,8,0,0,1-16,0V104H184a8,8,0,0,1,0-16h16V72a8,8,0,0,1,16,0V88h16A8,8,0,0,1,240,96ZM144,56h8v8a8,8,0,0,0,16,0V56h8a8,8,0,0,0,0-16h-8V32a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16Zm72.77,97a8,8,0,0,1,1.43,8A96,96,0,1,1,95.07,37.8a8,8,0,0,1,10.6,9.06A88.07,88.07,0,0,0,209.14,150.33,8,8,0,0,1,216.77,153Zm-19.39,14.88c-1.79.09-3.59.14-5.38.14A104.11,104.11,0,0,1,88,64c0-1.79,0-3.59.14-5.38A80,80,0,1,0,197.38,167.86Z"/></svg></span>
+      </button>
+
+      <button
+        type="button"
+        id="mobileMenuToggle"
+        class="icon-button nav-bar__mobile-trigger"
+        aria-label="Abrir menú"
+        aria-expanded="false"
+        aria-controls="mobileMenuPanel"
+      >
+        <svg class="icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"/></svg>
+      </button>
+    </div>
+    <!-- El panel de "Categorías" (js/components/headerMenus.js) se monta aquí, debajo de la barra. -->
+  </header>
+
+  <div id="scrollSentinel" aria-hidden="true"></div>
+
+  <div id="mobileMenuPanel" class="mobile-menu">
+    <div class="mobile-menu__panel" role="dialog" aria-modal="true" aria-label="Menú">
+      <div class="mobile-menu__head">
+        <span class="brand">
+          <span class="brand__mark" aria-hidden="true">P</span>
+          <span class="brand__name">Precionauta</span>
+        </span>
+        <button type="button" id="mobileMenuClose" class="icon-button" aria-label="Cerrar menú">
+          <svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+        </button>
+      </div>
+
+      <form class="search-field" role="search" onsubmit="return false;">
+        <span class="search-field__icon">
+          <svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>
+        </span>
+        <input type="search" placeholder="Buscar ofertas…" aria-label="Buscar ofertas" />
+        <button type="submit">Buscar</button>
+      </form>
+
+      <nav class="mobile-menu__links" aria-label="Principal móvil">
+        <button type="button" class="nav-link" data-scroll-to-catalog>Ofertas</button>
+        <button type="button" class="nav-link mobile-menu__disclosure" data-keep-open data-mobile-categories-toggle aria-expanded="false" aria-controls="mobileCategories">
+          Categorías
+          <svg class="icon nav-link__caret" width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </button>
+        <div id="mobileCategories" class="mobile-categories" data-mobile-categories hidden></div>
+        <button type="button" class="nav-link" data-scroll-to-catalog>Tiendas</button>
+        <button type="button" class="nav-link nav-link--alerts" data-alerts-trigger>
+          <svg class="icon" width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-23.19-18h46.38A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></svg>
+          Mis alertas
+          <span class="nav-count tabular-nums" data-alerts-count hidden></span>
+        </button>
+      </nav>
+
+      <span class="savings-pill tabular-nums" data-savings-summary hidden></span>
+      <button type="button" class="btn btn--pill-accent" data-auth-open>Entrar</button>
+    </div>
+  </div>
+
+
+  <div id="authModal" class="modal" aria-hidden="true">
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+      <button type="button" id="authModalClose" class="icon-button modal__close" aria-label="Cerrar">
+        <svg class="icon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+      </button>
+
+      <h2 id="authModalTitle" class="sr-only">Entrar a Precionauta</h2>
+
+      <div class="modal__tabs" role="tablist" aria-label="Entrar o crear cuenta">
+        <button type="button" class="modal__tab is-active" data-auth-tab="login" role="tab" aria-selected="true">Iniciar sesión</button>
+        <button type="button" class="modal__tab" data-auth-tab="register" role="tab" aria-selected="false">Crear cuenta</button>
+      </div>
+
+      <form class="auth-form" data-auth-panel="login">
+        <label>
+          Correo electrónico
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label>
+          Contraseña
+          <input type="password" name="password" autocomplete="current-password" required minlength="8" />
+        </label>
+        <button type="submit" class="btn btn--primary">Iniciar sesión</button>
+      </form>
+
+      <form class="auth-form" data-auth-panel="register" hidden>
+        <label>
+          Nombre
+          <input type="text" name="name" autocomplete="name" required />
+        </label>
+        <label>
+          Correo electrónico
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label>
+          Contraseña
+          <input type="password" name="password" autocomplete="new-password" required minlength="8" />
+        </label>
+        <label>
+          Confirmar contraseña
+          <input type="password" name="password2" autocomplete="new-password" required minlength="8" />
+        </label>
+        <button type="submit" class="btn btn--primary">Crear cuenta</button>
+      </form>
+
+      <p class="auth-feedback" id="authFeedback" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+  <main>
+    <section id="inicio" class="hero">
+      <div class="container hero__grid">
+        <div class="hero__copy">
+          <h1 class="hero__headline">Encuentra el error de precio <em>primero.</em></h1>
+          <p class="hero__subtext">
+            Rastreamos Amazon, Mercado Libre y Liverpool cada 4 horas y comparamos contra el precio histórico real.
+          </p>
+          <div class="hero__actions">
+            <button type="button" class="btn btn--primary" data-scroll-to-catalog>
+              Ver ofertas de hoy
+              <span class="btn__icon-circle">
+                <svg class="icon" width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></svg>
+              </span>
+            </button>
+            <a class="hero__link" href="como-funciona.html">Cómo verificamos cada precio</a>
+          </div>
+          <div class="hero__stores">
+            <p class="hero__stores-label">Ofertas activas en</p>
+            <ul class="hero__stores-list" id="heroStores"></ul>
+          </div>
+        </div>
+
+        <div class="hero__visual">
+          <div class="hero-deck" id="heroDeck"></div>
+          <div id="heroSpotlight" class="hero__spotlight"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="deal-ticker" id="dealTicker" role="region" aria-label="Ofertas con mayor descuento"></div>
+
+    <section class="trust-strip" aria-label="Cifras de confianza">
+      <div class="container trust-strip__row">
+        <div class="trust-item">
+          <span class="trust-item__icon">
+            <svg class="icon" width="19" height="19" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232,96a7.89,7.89,0,0,0-.3-2.2L217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.8A7.89,7.89,0,0,0,24,96h0v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96ZM54,48H202l11.42,40H42.61Zm50,56h48v8a24,24,0,0,1-48,0Zm-16,0v8a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8ZM200,208H56V151.2a40.57,40.57,0,0,0,8,.8,40,40,0,0,0,32-16,40,40,0,0,0,64,0,40,40,0,0,0,32,16,40.57,40.57,0,0,0,8-.8Zm4.93-75.8a8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48v8A24,24,0,0,1,204.93,132.2Z"/></svg>
+          </span>
+          <div>
+            <div class="trust-item__value tabular-nums" id="statStores">3</div>
+            <div class="trust-item__label">tiendas rastreadas</div>
+          </div>
+        </div>
+
+        <div class="trust-item">
+          <span class="trust-item__icon">
+            <svg class="icon" width="19" height="19" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+          </span>
+          <div>
+            <div class="trust-item__value tabular-nums" id="statOffers">10</div>
+            <div class="trust-item__label">ofertas activas ahora</div>
+          </div>
+        </div>
+
+        <div class="trust-item">
+          <span class="trust-item__icon">
+            <svg class="icon" width="19" height="19" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg>
+          </span>
+          <div>
+            <div class="trust-item__value">4 h</div>
+            <div class="trust-item__label">frecuencia de verificación</div>
+          </div>
+        </div>
+
+        <div class="trust-item trust-item--updated">
+          Actualizado <span id="statChecked" class="tabular-nums"></span>
+        </div>
+      </div>
+    </section>
+
+    <section id="catalogo" aria-label="Catálogo de ofertas">
+      <div class="container">
+        <div class="section-head">
+          <h2>Ofertas <em>verificadas</em> hoy</h2>
+          <p>Cada insignia de descuento se calcula en vivo a partir del precio anterior y el precio actual, nunca a mano.</p>
+        </div>
+
+        <!-- Watermelon: Continuous Tabs (filtro de categoría) -->
+        <div id="catalogTabs"></div>
+
+        <div class="catalog-filters">
+          <div class="threshold-filter" id="thresholdFilter" role="group" aria-label="Filtrar por descuento mínimo"></div>
+          <span class="catalog-filters__divider" aria-hidden="true"></span>
+          <div class="threshold-filter" id="storeFilter" role="group" aria-label="Filtrar por tienda"></div>
+        </div>
+
+        <div class="catalog-toolbar">
+          <p class="results-count" id="resultsCount" aria-live="polite"></p>
+
+          <label class="select-wrap">
+            <span class="sr-only">Ordenar ofertas</span>
+            <select id="sortSelect" aria-label="Ordenar ofertas"></select>
+            <svg class="icon" width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+          </label>
+        </div>
+
+        <div id="catalogGrid" class="catalog-grid"></div>
+      </div>
+    </section>
+
+    <section class="stay-connected" aria-labelledby="stayConnectedHeading">
+      <div class="container stay-connected__inner">
+        <h2 id="stayConnectedHeading">Mantente <em>conectado</em></h2>
+        <p>Sé de los primeros en enterarte cuando aparezca un error de precio o una liquidación extrema.</p>
+
+        <form class="subscribe-form" id="subscribeForm" novalidate>
+          <label class="sr-only" for="subscribeEmail">Correo electrónico</label>
+          <input
+            type="email"
+            id="subscribeEmail"
+            name="email"
+            placeholder="tu@correo.com"
+            autocomplete="email"
+            required
+          />
+          <button type="submit" aria-label="Suscribirme">
+            <svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></svg>
+          </button>
+        </form>
+        <p class="subscribe-feedback" id="subscribeFeedback" role="status" aria-live="polite"></p>
+        <p class="subscribe-consent">
+          Al suscribirte aceptas nuestro <a href="aviso-privacidad.html">aviso de privacidad</a>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__row">
+      <strong>Precionauta · Rastreador de descuentos en México · <span id="footerYear"></span></strong>
+      <p class="footer-links">
+        <a href="como-funciona.html">Cómo funciona</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="aviso-privacidad.html">Aviso de privacidad</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="terminos.html">Términos</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="politica-cookies.html">Cookies</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="politica-reembolsos.html">Reembolsos</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- Watermelon UI Components -->
+  <script type="module" src="js/components/watermelonInit.js"></script>
+  <!-- Original App Scripts -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

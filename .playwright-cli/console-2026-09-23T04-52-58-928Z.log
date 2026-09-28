@@ -1,0 +1,6 @@
+[     442ms] [LOG] ✅ Continuous Tabs initialized @ http://localhost:4173/js/components/watermelonInit.js:48
+[     443ms] [LOG] ✅ Morphing Discovery Bar initialized @ http://localhost:4173/js/components/watermelonInit.js:83
+[     511ms] TypeError: Cannot set properties of null (setting 'innerHTML')
+    at renderCategoryTabsUI (http://localhost:4173/js/main.js:126:30)
+    at init (http://localhost:4173/js/main.js:313:3)
+    at http://localhost:4173/js/main.js:333:1
