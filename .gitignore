@@ -1,0 +1,3 @@
+# Local tool/IDE state (per-machine, not shared with the team)
+.serena/
+.claude/settings.local.json

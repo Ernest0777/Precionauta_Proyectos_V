@@ -1,0 +1,30 @@
+[     508ms] [LOG] ✅ Continuous Tabs initialized @ http://localhost:4173/js/components/watermelonInit.js:48
+[     509ms] [LOG] ✅ Morphing Discovery Bar initialized @ http://localhost:4173/js/components/watermelonInit.js:83
+[   21172ms] [LOG] Category changed: Moda @ http://localhost:4173/js/components/watermelonInit.js:41
+[   21172ms] [LOG] Loading deals for Moda @ http://localhost:4173/js/components/watermelonInit.js:91
+[   34130ms] [LOG] Search query: iPhone @ http://localhost:4173/js/components/watermelonInit.js:77
+[   34130ms] [LOG] Searching for: iPhone @ http://localhost:4173/js/components/watermelonInit.js:103
+[   43096ms] [LOG] Category changed: Electrónica @ http://localhost:4173/js/components/watermelonInit.js:41
+[   43097ms] [LOG] Loading deals for Electrónica @ http://localhost:4173/js/components/watermelonInit.js:91
+[  126001ms] [LOG] ✅ Continuous Tabs initialized @ http://localhost:4173/js/components/watermelonInit.js:48
+[  126001ms] [LOG] ✅ Morphing Discovery Bar initialized @ http://localhost:4173/js/components/watermelonInit.js:83
+[  134969ms] [LOG] Category changed: Electrónica @ http://localhost:4173/js/components/watermelonInit.js:41
+[  134969ms] [LOG] Loading deals for Electrónica @ http://localhost:4173/js/components/watermelonInit.js:91
+[  134980ms] TypeError: Cannot set properties of undefined (setting 'innerHTML')
+    at renderCategoryTabsUI (http://localhost:4173/js/main.js:126:30)
+    at setActiveCategory (http://localhost:4173/js/main.js:215:3)
+    at HTMLDocument.<anonymous> (http://localhost:4173/js/main.js:326:7)
+    at PrecionautaWatermelonInit.loadDeals (http://localhost:4173/js/components/watermelonInit.js:100:14)
+    at ContinuousTabs.onTabChange (http://localhost:4173/js/components/watermelonInit.js:44:14)
+    at ContinuousTabs.setActive (http://localhost:4173/js/components/continuousTabs.js:90:12)
+    at HTMLButtonElement.<anonymous> (http://localhost:4173/js/components/continuousTabs.js:57:51)
+[  145856ms] [LOG] ✅ Continuous Tabs initialized @ http://localhost:4173/js/components/watermelonInit.js:48
+[  145857ms] [LOG] ✅ Morphing Discovery Bar initialized @ http://localhost:4173/js/components/watermelonInit.js:83
+[  167018ms] [LOG] Category changed: Electrónica @ http://localhost:4173/js/components/watermelonInit.js:41
+[  167018ms] [LOG] Loading deals for Electrónica @ http://localhost:4173/js/components/watermelonInit.js:91
+[  207405ms] [LOG] ✅ Continuous Tabs initialized @ http://localhost:4173/js/components/watermelonInit.js:48
+[  207405ms] [LOG] ✅ Morphing Discovery Bar initialized @ http://localhost:4173/js/components/watermelonInit.js:83
+[  213717ms] [LOG] Category changed: Moda @ http://localhost:4173/js/components/watermelonInit.js:41
+[  213717ms] [LOG] Loading deals for Moda @ http://localhost:4173/js/components/watermelonInit.js:91
+[  223965ms] [LOG] Category changed: Hogar @ http://localhost:4173/js/components/watermelonInit.js:41
+[  223965ms] [LOG] Loading deals for Hogar @ http://localhost:4173/js/components/watermelonInit.js:91

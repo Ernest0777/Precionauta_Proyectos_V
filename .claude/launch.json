@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "precionauta-frontend",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "C:\\Users\\narva\\OneDrive\\Documentos\\GITHUB\\Precionauta_Proyectos_V\\frontend"],
+      "port": 4173
+    }
+  ]
+}

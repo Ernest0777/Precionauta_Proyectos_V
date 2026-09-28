@@ -1,0 +1,68 @@
+/* Tipografía de las páginas legales (aviso de privacidad, términos, cookies, reembolsos). */
+
+.legal {
+  max-width: 68ch;
+  margin-inline: auto;
+  padding-block: var(--space-16);
+}
+
+.legal__updated {
+  color: var(--color-ink-500);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--space-8);
+}
+
+.legal h1 {
+  font-size: var(--fs-display);
+  margin-bottom: var(--space-3);
+}
+
+.legal h2 {
+  font-size: var(--fs-h3);
+  margin-top: var(--space-10);
+  margin-bottom: var(--space-3);
+}
+
+.legal p {
+  color: var(--color-ink-700);
+  margin-bottom: var(--space-4);
+}
+
+.legal ul {
+  margin: 0 0 var(--space-4);
+  padding-left: 1.25rem;
+  list-style: disc;
+  color: var(--color-ink-700);
+}
+
+.legal li {
+  margin-bottom: var(--space-2);
+}
+
+.legal strong {
+  color: var(--color-ink-900);
+}
+
+.legal a {
+  color: var(--color-accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legal__callout {
+  /* Pinned, not themed: this chip's background never flips (see the note by
+     the same pattern on .stay-connected in layout.css), so its text can't
+     read --color-ink-900 either - that token WOULD flip to a light color in
+     dark mode and go invisible on this permanently-light tint. */
+  --color-ink-900: #262220;
+  background: var(--color-accent-tint);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-block: var(--space-6);
+}
+
+.legal__callout p {
+  margin-bottom: 0;
+  color: var(--color-ink-900);
+  font-weight: 600;
+}

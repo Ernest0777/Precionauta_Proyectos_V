@@ -1,0 +1,321 @@
+/* ============================================================================
+   Watermelon UI components, re-skinned on Precionauta's own tokens.
+
+   Only the components index.html actually mounts live here: Continuous
+   Tabs (catalog category filter) and the Morphing Discovery Bar (header
+   search). The original Watermelon stylesheet declared its own :root
+   palette (--color-accent: orange, --color-bg: grey, its own shadows) and,
+   loaded last, silently overrode the terracotta/cream tokens site-wide. It
+   now lives in watermelon-demo.css, linked only from the demo page.
+   ============================================================================ */
+
+/* ================= 1. CONTINUOUS TABS ================= */
+
+.continuous-tabs-wrapper {
+  position: relative;
+  margin-bottom: var(--space-6);
+}
+
+.continuous-tabs-scroll {
+  position: relative;
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-xs);
+}
+
+.continuous-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* The indicator is a pill that slides behind the active tab and takes on
+   that category's tone, so the colour change itself says "filter moved". */
+.continuous-tabs-indicator {
+  position: absolute;
+  top: var(--space-1);
+  bottom: var(--space-1);
+  left: 0;
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--tone-tint);
+  z-index: 0;
+  transition: transform var(--duration-slow) var(--ease-out-expo),
+    width var(--duration-slow) var(--ease-out-expo), background-color var(--duration-slow) var(--ease-out-expo);
+}
+
+.continuous-tabs-indicator.is-instant {
+  transition: none;
+}
+
+.continuous-tab {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.55rem 0.95rem 0.55rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-ink-500);
+  white-space: nowrap;
+  transition: color var(--duration-base) var(--ease-out-expo);
+}
+
+.continuous-tab:hover {
+  color: var(--color-ink-900);
+}
+
+.continuous-tab.is-active {
+  color: var(--tone-ink);
+}
+
+.tab-icon {
+  display: inline-flex;
+  color: var(--tone-strong);
+  transition: transform var(--duration-base) var(--ease-out-expo);
+}
+
+.continuous-tab.is-active .tab-icon {
+  color: var(--tone-ink);
+  transform: scale(1.08);
+}
+
+.tab-badge {
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding-inline: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+  color: var(--color-ink-700);
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--duration-base) var(--ease-out-expo),
+    color var(--duration-base) var(--ease-out-expo);
+}
+
+.continuous-tab.is-active .tab-badge {
+  background: var(--tone-ink);
+  color: var(--tone-tint);
+}
+
+@media (max-width: 640px) {
+  .continuous-tabs-scroll {
+    width: auto;
+  }
+  .continuous-tab {
+    padding: 0.5rem 0.8rem 0.5rem 0.65rem;
+  }
+}
+
+/* ================= 2. MORPHING DISCOVERY BAR ================= */
+
+.morphing-discovery-bar {
+  position: relative;
+  width: 100%;
+}
+
+.discovery-bar-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 46px;
+  padding: 0 5px 0 var(--space-4);
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border-soft);
+  border-radius: var(--radius-pill);
+  transition: border-color var(--duration-fast) var(--ease-out-expo),
+    background var(--duration-fast) var(--ease-out-expo), box-shadow var(--duration-base) var(--ease-out-expo);
+}
+
+.discovery-bar-container:hover {
+  border-color: var(--color-border);
+}
+
+.discovery-bar-container:focus-within {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  box-shadow: 0 6px 20px rgba(38, 34, 32, 0.08);
+}
+
+.discovery-bar-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--color-ink-500);
+}
+
+.discovery-bar-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--color-ink-900);
+  font-size: var(--fs-sm);
+}
+
+.discovery-bar-input:focus-visible {
+  outline: none;
+}
+
+.discovery-bar-input::placeholder {
+  color: var(--color-ink-500);
+}
+
+.discovery-bar-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.discovery-bar-action {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-600);
+  color: var(--color-on-accent);
+  transition: background var(--duration-fast) var(--ease-out-expo),
+    transform var(--duration-fast) var(--ease-out-expo);
+}
+
+.discovery-bar-action:hover {
+  background: var(--color-accent-700);
+}
+
+.discovery-bar-action:hover svg {
+  transform: translateX(2px);
+}
+
+.discovery-bar-action svg {
+  transition: transform var(--duration-fast) var(--ease-out-expo);
+}
+
+.discovery-bar-action:active {
+  transform: scale(0.94);
+}
+
+.discovery-bar-suggestions {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  right: 0;
+  z-index: var(--z-popover);
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  max-height: min(26rem, 70vh);
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(-6px);
+  visibility: hidden;
+  transition: opacity var(--duration-base) var(--ease-out-expo),
+    transform var(--duration-base) var(--ease-out-expo), visibility 0s linear var(--duration-base);
+}
+
+.discovery-bar-suggestions.is-open {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.discovery-suggestions__head {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  color: var(--color-ink-500);
+}
+
+.discovery-suggestion {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  color: var(--color-ink-900);
+  transition: background var(--duration-fast) var(--ease-out-expo);
+}
+
+.discovery-suggestion:hover,
+.discovery-suggestion.is-highlighted {
+  background: var(--color-surface-soft);
+}
+
+.discovery-suggestion__icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--tone-tint);
+  color: var(--tone-ink);
+}
+
+.discovery-suggestion__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.discovery-suggestion__label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.discovery-suggestion__label mark {
+  background: none;
+  color: var(--color-accent);
+}
+
+.discovery-suggestion__meta {
+  font-size: var(--fs-2xs);
+  color: var(--color-ink-500);
+}
+
+.discovery-suggestion__discount {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.discovery-suggestions__empty {
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--color-ink-500);
+}
+
+.discovery-suggestions__empty strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--color-ink-900);
+}
