@@ -2,118 +2,104 @@
   Design tokens - Precionauta
   Single source of truth for color, type, spacing, radius, shadow and motion.
 
-  Scandinavian palette (terracotta + cream + charcoal), replacing the earlier
-  blue/Nunito baseline per an explicit brief update - see PRODUCT.md > Brand
-  Commitments. Reference direction: the Lovable "Maison Artisan" template.
-  One accent color, one radius scale, one shadow family - locked across every
-  component file. Every text/background pairing below is contrast-checked
-  (WCAG AA, 4.5:1 body / 3:1 large-or-graphic) at the value picked, not at a
-  generic "brand" shade - see the inline notes where a token exists only to
-  clear that bar.
+  Direction (Oct 2026): minimal black & white, structure inspired by large
+  marketplaces (Amazon): prominent search, dense catalog, big prices. Black is
+  the action color; the only hue is --color-deal, reserved for discounts.
+  Every text/background pair is checked at WCAG AA (4.5:1 body, 3:1 large).
 */
 
 :root {
-  /* ---- Color: cream neutrals ---- */
-  --color-bg: #f5f0e7;
-  --color-surface: #fdfaf5;
-  --color-surface-soft: #efe7d8;
-  --color-border: #ddd2be;
-  --color-border-soft: #e8dfce;
-  --color-border-hairline: #eee6d6;
+  /* ---- Color: neutrals (minimal blanco y negro) ---- */
+  --color-bg: #fafafa;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f2f2f2;
+  --color-border: #e0e0e0;
+  --color-border-soft: #eaeaea;
+  --color-border-hairline: #f0f0f0;
 
-  /* ---- Color: charcoal ink scale ---- */
-  --color-ink-900: #262220;
-  --color-ink-700: #4a433d;
-  /* #6b6259: secondary text sits directly on --color-bg with no white card
-     behind it in several places; this clears 4.5:1 there (5.3:1). */
-  --color-ink-500: #6b6259;
-  --color-ink-400: #a69c8d;
+  /* ---- Color: ink scale ---- */
+  --color-ink-900: #0a0a0a;
+  --color-ink-700: #3a3a3a;
+  /* #6b6b6b clears 4.5:1 on --color-bg (5.2:1). */
+  --color-ink-500: #6b6b6b;
+  --color-ink-400: #a3a3a3;
 
-  /* ---- Color: single accent (terracotta) ---- */
-  --color-accent: #c1602e;
-  /* accent-600/700: white text on the base accent only clears ~3.9:1.
-     These darker terracottas clear 4.5:1+ for button fills and for accent
-     text set directly on --color-bg (dual-purpose, both directions checked). */
-  --color-accent-600: #9a3e22;
-  --color-accent-700: #7c321b;
-  --color-accent-tint: #f1e2d3;
-  --color-accent-tint-strong: #e7cbb2;
-  --color-accent-ink: #9a3e22;
-
-  /* ---- Color: savings (semantic exception to the one-accent rule, warm-harmonized) ---- */
-  --color-success-bg: #e3ecdd;
-  --color-success-ink: #3f5c34;
-  /* Savings green set straight on the page (not on the light chip); themed. */
-  --color-success-text: #3f5c34;
-
-  --color-on-accent: #fffdf9;
+  /* ---- Color: action = black (inverts to white in dark mode) ---- */
+  --color-accent: #0a0a0a;
+  --color-accent-600: #0a0a0a;
+  --color-accent-700: #333333;
+  --color-accent-tint: #f0f0f0;
+  --color-accent-tint-strong: #dcdcdc;
+  --color-accent-ink: #0a0a0a;
+  --color-on-accent: #ffffff;
 
   /*
-   * Category tones - warm, desaturated companions to the terracotta accent.
-   * They never carry an action (buttons, discount badges stay accent-600);
-   * they only tell categories apart at a glance: card media, menu icons,
-   * the sliding tab indicator. Each trio: tint (surface), ink (text/icon on
-   * that tint, >= 4.5:1), strong (large graphic, >= 3:1 on the tint).
+   * The one functional color: discounts. Deal sites live on urgency, so the
+   * percentage badge is the only thing on the page that is not black,
+   * white or grey. Set both to neutrals here to go 100% monochrome.
    */
-  --tone-tecnologia-tint: #dfe6ec;
-  --tone-tecnologia-ink: #2f4a5f;
-  --tone-tecnologia-strong: #5b7a92;
-  --tone-hogar-tint: #f1e2d3;
-  --tone-hogar-ink: #9a3e22;
-  --tone-hogar-strong: #c1602e;
-  --tone-moda-tint: #f0dfe2;
-  --tone-moda-ink: #7a3446;
-  --tone-moda-strong: #b0647a;
-  --tone-deportes-tint: #e0e9db;
-  --tone-deportes-ink: #3f5c34;
-  --tone-deportes-strong: #6f8f5f;
-  --tone-juguetes-tint: #f4e7c9;
-  --tone-juguetes-ink: #735410;
-  --tone-juguetes-strong: #c79a3a;
-  --tone-autos-tint: #e4e1dc;
-  --tone-autos-ink: #3d3935;
-  --tone-autos-strong: #7a7168;
-  --tone-supermercado-tint: #e8e9d3;
-  --tone-supermercado-ink: #52571f;
-  --tone-supermercado-strong: #8c9147;
+  --color-deal: #d0021b;
+  --color-deal-text: #c40018;
 
-  /* Saffron ticker band - fixed in both themes, like the inverted band below. */
-  --color-saffron: #e8b54a;
-  --color-saffron-ink: #2b2118;
+  /* Savings / verified: neutral on purpose (no green in this direction). */
+  --color-success-bg: #f0f0f0;
+  --color-success-ink: #0a0a0a;
+  --color-success-text: #3a3a3a;
 
-  /* Hero backdrop wash. Themed separately: the light accent-tint turned into
-     a flat grey fog on the dark page. */
-  --hero-glow-a: var(--color-accent-tint);
-  --hero-glow-b: var(--color-surface-soft);
+  /* Category tones: kept as a hook, set to greys for the monochrome direction. */
+  --tone-tecnologia-tint: #f2f2f2;
+  --tone-tecnologia-ink: #0a0a0a;
+  --tone-tecnologia-strong: #9a9a9a;
+  --tone-hogar-tint: #f2f2f2;
+  --tone-hogar-ink: #0a0a0a;
+  --tone-hogar-strong: #9a9a9a;
+  --tone-moda-tint: #f2f2f2;
+  --tone-moda-ink: #0a0a0a;
+  --tone-moda-strong: #9a9a9a;
+  --tone-deportes-tint: #f2f2f2;
+  --tone-deportes-ink: #0a0a0a;
+  --tone-deportes-strong: #9a9a9a;
+  --tone-juguetes-tint: #f2f2f2;
+  --tone-juguetes-ink: #0a0a0a;
+  --tone-juguetes-strong: #9a9a9a;
+  --tone-autos-tint: #f2f2f2;
+  --tone-autos-ink: #0a0a0a;
+  --tone-autos-strong: #9a9a9a;
+  --tone-supermercado-tint: #f2f2f2;
+  --tone-supermercado-ink: #0a0a0a;
+  --tone-supermercado-strong: #9a9a9a;
 
-  /*
-   * Fixed (never themed) pair for the "Stay Connected" band: that section is
-   * an intentional dark closing moment in LIGHT mode (see layout.css), so it
-   * cannot reuse --color-ink-900/--color-bg for its colors - those flip in
-   * dark mode and would invert the band into a cream-on-cream mess. It stays
-   * the same two colors in both themes on purpose.
-   */
-  --color-inverted-bg: #262220;
-  --color-inverted-text: #f5f0e7;
+  /* Ticker band (inverts with the theme). */
+  --color-saffron: #0a0a0a;
+  --color-saffron-ink: #fafafa;
+
+  --hero-glow-a: #f0f0f0;
+  --hero-glow-b: #f6f6f6;
+
+  /* Closing band: inverted against the page in both themes. */
+  --color-inverted-bg: #0a0a0a;
+  --color-inverted-text: #fafafa;
 
   /* ---- Shadows: soft, offset, tinted to the charcoal/terracotta hue ---- */
-  --shadow-xs: 0 1px 2px rgba(38, 34, 32, 0.06);
-  --shadow-sm: 0 2px 10px rgba(38, 34, 32, 0.07), 0 1px 2px rgba(38, 34, 32, 0.05);
-  --shadow-md: 0 10px 28px rgba(38, 34, 32, 0.1), 0 2px 8px rgba(38, 34, 32, 0.06);
-  --shadow-lg: 0 24px 56px rgba(38, 34, 32, 0.16), 0 8px 20px rgba(38, 34, 32, 0.08);
-  --shadow-accent: 0 14px 30px rgba(154, 62, 34, 0.28);
-  --shadow-accent-strong: 0 20px 40px rgba(124, 50, 27, 0.34);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
+  --shadow-accent: 0 10px 24px rgba(0, 0, 0, 0.18);
+  --shadow-accent-strong: 0 14px 30px rgba(0, 0, 0, 0.24);
 
   /* ---- Radius: one scale, applied consistently ---- */
-  --radius-xs: 8px;
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 28px;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
   --radius-pill: 999px;
 
   /* ---- Type: Cormorant Garamond headings, Inter body (curated pairing) ---- */
   --font-sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
-  --font-serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  /* Minimal direction: one family. The token keeps its old name so every
+     heading rule keeps working; it now points at Inter. */
+  --font-serif: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
 
   --fs-display: clamp(2.5rem, 1.6rem + 3.6vw, 4rem);
   --fs-h2: clamp(1.75rem, 1.45rem + 1.2vw, 2.25rem);
@@ -129,7 +115,7 @@
   --lh-body: 1.6;
 
   --tracking-tight: -0.01em;
-  --tracking-serif: 0em;
+  --tracking-serif: -0.025em;
   --tracking-wide: 0.06em;
 
   /* ---- Spacing scale (4px base) ---- */
@@ -174,122 +160,131 @@
 }
 
 /*
-  Dark mode - same contrast discipline as the light palette above (every
-  pair below is checked at 4.5:1 body / 3:1 large-or-graphic, not eyeballed).
-
-  --color-accent-600/700 are NOT overridden: those are button fills read
-  against their OWN white text, independent of the page background, so the
-  light-mode values already work here unchanged. --color-accent-tint and
-  --color-success-bg are also left alone on purpose - they are small,
-  self-contained light chips (already paired with a dark-enough ink color)
-  that read fine floating on a dark page, the same way a bright accent chip
-  reads on any dark UI; inverting them would be extra work for no gain.
-
-  Two triggers: the OS preference (when the user has not chosen explicitly,
-  guarded by :not([data-theme="light"])) and the explicit toggle
-  ([data-theme="dark"], set by js/theme.js and persisted in localStorage).
+  Dark mode - the monochrome scale inverted: action color flips from black
+  to near-white (and --color-on-accent flips with it), so every button,
+  chip and badge keeps its contrast without per-component overrides.
+  Two triggers: the OS preference (guarded by :not([data-theme="light"]))
+  and the explicit toggle ([data-theme="dark"], persisted in localStorage).
 */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-bg: #1c1917;
-    --color-surface: #24211e;
-    --color-surface-soft: #2c2822;
-    --color-border: #423c34;
-    --color-border-soft: #363029;
-    --color-border-hairline: #2f2a24;
-
-    --color-ink-900: #f2ece0;
-    --color-ink-700: #cfc6b4;
-    --color-ink-500: #a89b86;
-    --color-ink-400: #7d7160;
-
-    /* Brighter than the light-mode #c1602e: text/icons/borders set directly
-       in the accent color need more lift to clear 4.5:1 on a dark surface. */
-    --color-accent: #d97a44;
-
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
-    --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.5), 0 8px 20px rgba(0, 0, 0, 0.35);
-    /* neutral, not tinted: a colored glow on a dark background reads as the
-       generic AI-UI "neon" tell - a plain deep shadow still reads as lift. */
-    --shadow-accent: 0 14px 30px rgba(0, 0, 0, 0.45);
-    --shadow-accent-strong: 0 20px 40px rgba(0, 0, 0, 0.55);
-
-    --tone-tecnologia-tint: #243039;
-    --tone-tecnologia-ink: #b7cde0;
-    --tone-tecnologia-strong: #7f9fb8;
-    --tone-hogar-tint: #3a2519;
-    --tone-hogar-ink: #f0b38e;
-    --tone-hogar-strong: #d97a44;
-    --tone-moda-tint: #3a2329;
-    --tone-moda-ink: #e9b3c1;
-    --tone-moda-strong: #c07a8e;
-    --tone-deportes-tint: #243021;
-    --tone-deportes-ink: #b9d3aa;
-    --tone-deportes-strong: #85a574;
-    --tone-juguetes-tint: #372c14;
-    --tone-juguetes-ink: #ecd08e;
-    --tone-juguetes-strong: #d4a94a;
-    --tone-autos-tint: #2e2b28;
-    --tone-autos-ink: #d6cfc5;
-    --tone-autos-strong: #968c80;
-    --tone-supermercado-tint: #2f311b;
-    --tone-supermercado-ink: #d3d69c;
-    --tone-supermercado-strong: #a3a85a;
-
-    --color-success-text: #a9c99a;
-    --hero-glow-a: rgba(217, 122, 68, 0.16);
-    --hero-glow-b: rgba(232, 181, 74, 0.07);
+    --color-bg: #0a0a0a;
+    --color-surface: #141414;
+    --color-surface-soft: #1c1c1c;
+    --color-border: #2e2e2e;
+    --color-border-soft: #242424;
+    --color-border-hairline: #1c1c1c;
+    --color-ink-900: #f5f5f5;
+    --color-ink-700: #d4d4d4;
+    --color-ink-500: #a3a3a3;
+    --color-ink-400: #6b6b6b;
+    --color-accent: #f5f5f5;
+    --color-accent-600: #f5f5f5;
+    --color-accent-700: #d4d4d4;
+    --color-accent-tint: #222222;
+    --color-accent-tint-strong: #333333;
+    --color-accent-ink: #f5f5f5;
+    --color-on-accent: #0a0a0a;
+    --color-deal-text: #ff5c6c;
+    --color-success-bg: #1f1f1f;
+    --color-success-ink: #f5f5f5;
+    --color-success-text: #d4d4d4;
+    --tone-tecnologia-tint: #1c1c1c;
+    --tone-tecnologia-ink: #f5f5f5;
+    --tone-tecnologia-strong: #6b6b6b;
+    --tone-hogar-tint: #1c1c1c;
+    --tone-hogar-ink: #f5f5f5;
+    --tone-hogar-strong: #6b6b6b;
+    --tone-moda-tint: #1c1c1c;
+    --tone-moda-ink: #f5f5f5;
+    --tone-moda-strong: #6b6b6b;
+    --tone-deportes-tint: #1c1c1c;
+    --tone-deportes-ink: #f5f5f5;
+    --tone-deportes-strong: #6b6b6b;
+    --tone-juguetes-tint: #1c1c1c;
+    --tone-juguetes-ink: #f5f5f5;
+    --tone-juguetes-strong: #6b6b6b;
+    --tone-autos-tint: #1c1c1c;
+    --tone-autos-ink: #f5f5f5;
+    --tone-autos-strong: #6b6b6b;
+    --tone-supermercado-tint: #1c1c1c;
+    --tone-supermercado-ink: #f5f5f5;
+    --tone-supermercado-strong: #6b6b6b;
+    --color-saffron: #f5f5f5;
+    --color-saffron-ink: #0a0a0a;
+    --hero-glow-a: rgba(255, 255, 255, 0.05);
+    --hero-glow-b: rgba(255, 255, 255, 0.025);
+    --color-inverted-bg: #f5f5f5;
+    --color-inverted-text: #0a0a0a;
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.6);
+    --shadow-accent: 0 10px 24px rgba(0, 0, 0, 0.5);
+    --shadow-accent-strong: 0 14px 30px rgba(0, 0, 0, 0.6);
   }
 }
 
 :root[data-theme="dark"] {
-  --color-bg: #1c1917;
-  --color-surface: #24211e;
-  --color-surface-soft: #2c2822;
-  --color-border: #423c34;
-  --color-border-soft: #363029;
-  --color-border-hairline: #2f2a24;
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-soft: #1c1c1c;
+  --color-border: #2e2e2e;
+  --color-border-soft: #242424;
+  --color-border-hairline: #1c1c1c;
 
-  --color-ink-900: #f2ece0;
-  --color-ink-700: #cfc6b4;
-  --color-ink-500: #a89b86;
-  --color-ink-400: #7d7160;
+  --color-ink-900: #f5f5f5;
+  --color-ink-700: #d4d4d4;
+  --color-ink-500: #a3a3a3;
+  --color-ink-400: #6b6b6b;
 
-  --color-accent: #d97a44;
+  --color-accent: #f5f5f5;
+  --color-accent-600: #f5f5f5;
+  --color-accent-700: #d4d4d4;
+  --color-accent-tint: #222222;
+  --color-accent-tint-strong: #333333;
+  --color-accent-ink: #f5f5f5;
+  --color-on-accent: #0a0a0a;
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.5), 0 8px 20px rgba(0, 0, 0, 0.35);
-  /* neutral, not tinted: see the @media block above for why. */
-  --shadow-accent: 0 14px 30px rgba(0, 0, 0, 0.45);
-  --shadow-accent-strong: 0 20px 40px rgba(0, 0, 0, 0.55);
+  --color-deal-text: #ff5c6c;
 
-  --tone-tecnologia-tint: #243039;
-  --tone-tecnologia-ink: #b7cde0;
-  --tone-tecnologia-strong: #7f9fb8;
-  --tone-hogar-tint: #3a2519;
-  --tone-hogar-ink: #f0b38e;
-  --tone-hogar-strong: #d97a44;
-  --tone-moda-tint: #3a2329;
-  --tone-moda-ink: #e9b3c1;
-  --tone-moda-strong: #c07a8e;
-  --tone-deportes-tint: #243021;
-  --tone-deportes-ink: #b9d3aa;
-  --tone-deportes-strong: #85a574;
-  --tone-juguetes-tint: #372c14;
-  --tone-juguetes-ink: #ecd08e;
-  --tone-juguetes-strong: #d4a94a;
-  --tone-autos-tint: #2e2b28;
-  --tone-autos-ink: #d6cfc5;
-  --tone-autos-strong: #968c80;
-  --tone-supermercado-tint: #2f311b;
-  --tone-supermercado-ink: #d3d69c;
-  --tone-supermercado-strong: #a3a85a;
+  --color-success-bg: #1f1f1f;
+  --color-success-ink: #f5f5f5;
+  --color-success-text: #d4d4d4;
 
-  --color-success-text: #a9c99a;
-  --hero-glow-a: rgba(217, 122, 68, 0.16);
-  --hero-glow-b: rgba(232, 181, 74, 0.07);
+  --tone-tecnologia-tint: #1c1c1c;
+  --tone-tecnologia-ink: #f5f5f5;
+  --tone-tecnologia-strong: #6b6b6b;
+  --tone-hogar-tint: #1c1c1c;
+  --tone-hogar-ink: #f5f5f5;
+  --tone-hogar-strong: #6b6b6b;
+  --tone-moda-tint: #1c1c1c;
+  --tone-moda-ink: #f5f5f5;
+  --tone-moda-strong: #6b6b6b;
+  --tone-deportes-tint: #1c1c1c;
+  --tone-deportes-ink: #f5f5f5;
+  --tone-deportes-strong: #6b6b6b;
+  --tone-juguetes-tint: #1c1c1c;
+  --tone-juguetes-ink: #f5f5f5;
+  --tone-juguetes-strong: #6b6b6b;
+  --tone-autos-tint: #1c1c1c;
+  --tone-autos-ink: #f5f5f5;
+  --tone-autos-strong: #6b6b6b;
+  --tone-supermercado-tint: #1c1c1c;
+  --tone-supermercado-ink: #f5f5f5;
+  --tone-supermercado-strong: #6b6b6b;
+
+  --color-saffron: #f5f5f5;
+  --color-saffron-ink: #0a0a0a;
+  --hero-glow-a: rgba(255, 255, 255, 0.05);
+  --hero-glow-b: rgba(255, 255, 255, 0.025);
+  --color-inverted-bg: #f5f5f5;
+  --color-inverted-text: #0a0a0a;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.6);
+  --shadow-accent: 0 10px 24px rgba(0, 0, 0, 0.5);
+  --shadow-accent-strong: 0 14px 30px rgba(0, 0, 0, 0.6);
 }

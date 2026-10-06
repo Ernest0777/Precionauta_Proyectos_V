@@ -194,7 +194,7 @@
 }
 
 .price-panel__discount {
-  background: var(--color-accent-600);
+  background: var(--color-deal);
   color: #fff;
   font-size: var(--fs-h3);
   font-weight: 700;
@@ -379,4 +379,112 @@
 
 .related-heading {
   margin-bottom: var(--space-6);
+}
+
+/* ---- Meses sin intereses ---- */
+.msi {
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-surface);
+}
+
+.msi__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.msi__title {
+  font-size: var(--fs-base);
+  font-weight: 700;
+}
+
+.msi__terms {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+}
+
+.msi__term {
+  min-width: 2.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  color: var(--color-ink-500);
+  transition: background var(--duration-fast) var(--ease-out-expo), color var(--duration-fast) var(--ease-out-expo);
+}
+
+.msi__term.is-active {
+  background: var(--color-accent-600);
+  color: var(--color-on-accent);
+}
+
+.msi__result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.msi__monthly {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.msi__detail {
+  font-size: var(--fs-xs);
+  color: var(--color-ink-500);
+}
+
+.msi__note {
+  margin-top: var(--space-2);
+  font-size: var(--fs-2xs);
+  color: var(--color-ink-500);
+}
+
+/* ---- Compartir ---- */
+.share-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.share-row__label {
+  margin-right: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--color-ink-500);
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--color-ink-900);
+  transition: border-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.share-btn:hover {
+  border-color: var(--color-ink-900);
+}
+
+/* El verde de WhatsApp solo en el icono: la marca se reconoce sin teñir la página. */
+.share-btn--whatsapp .icon {
+  color: #1faa53;
 }

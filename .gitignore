@@ -1,3 +1,6 @@
 # Local tool/IDE state (per-machine, not shared with the team)
 .serena/
 .claude/settings.local.json
+
+# Logs y capturas de playwright-cli (se regeneran en cada prueba)
+.playwright-cli/

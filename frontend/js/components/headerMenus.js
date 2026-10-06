@@ -16,13 +16,24 @@ import { ALL_CATEGORIES_SLUG } from "../data/categories.js";
 import { icon, CATEGORY_ICON_BY_SLUG } from "../utils/icons.js";
 import { formatPriceMXN } from "../utils/format.js";
 import { getAllStats, getCategoryStats, discountOf } from "../utils/catalogStats.js";
-import { loadAlertIds, persistAlertIds } from "../shared.js";
+import { SEASON, getSeasonStatus, splitDuration } from "../data/season.js";
+import {
+  loadAlertIds,
+  persistAlertIds,
+  loadSavedIds,
+  toggleSaved,
+  SAVED_CHANGED_EVENT,
+  isPlus,
+  FREE_ALERT_LIMIT,
+  ALERTS_CHANGED_EVENT,
+  PLAN_CHANGED_EVENT,
+} from "../shared.js";
 
 const HOVER_OPEN_DELAY = 80;
 const HOVER_CLOSE_DELAY = 240;
 const canHover = window.matchMedia("(hover: hover) and (pointer: fine)");
 
-export const ALERTS_CHANGED_EVENT = "alerts-changed";
+export { ALERTS_CHANGED_EVENT };
 
 /**
  * Solo cambios de ANCHO: en móvil, ocultar la barra de direcciones al hacer
@@ -53,6 +64,107 @@ function offersLabel(count) {
 
 function escapeHtml(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+}
+
+/**
+ * Comportamiento común de los desplegables del header (Categorías, Tiendas):
+ * hover con intención (solo puntero fino), clic, flechas, Esc, cierre al
+ * perder el foco o al tocar fuera.
+ */
+function createDropdownMenu({ trigger, panel, header, itemSelector, columns = 1, onOpen }) {
+  let openTimer = null;
+  let closeTimer = null;
+  let openedByHoverAt = 0;
+
+  trigger.setAttribute("aria-controls", panel.id);
+  trigger.setAttribute("aria-expanded", "false");
+
+  const isOpen = () => panel.classList.contains("is-open");
+
+  const open = () => {
+    clearTimeout(closeTimer);
+    if (isOpen()) return;
+    onOpen?.();
+    panel.classList.add("is-open");
+    trigger.setAttribute("aria-expanded", "true");
+    header.classList.add("has-open-menu");
+  };
+
+  const close = ({ restoreFocus = false } = {}) => {
+    clearTimeout(openTimer);
+    if (!isOpen()) return;
+    panel.classList.remove("is-open");
+    trigger.setAttribute("aria-expanded", "false");
+    header.classList.remove("has-open-menu");
+    if (restoreFocus) trigger.focus();
+  };
+
+  const scheduleOpen = () => {
+    clearTimeout(closeTimer);
+    clearTimeout(openTimer);
+    openTimer = setTimeout(() => {
+      if (!isOpen()) openedByHoverAt = performance.now();
+      open();
+    }, HOVER_OPEN_DELAY);
+  };
+
+  const scheduleClose = () => {
+    clearTimeout(openTimer);
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(() => close(), HOVER_CLOSE_DELAY);
+  };
+
+  // Hover (solo con puntero fino: en táctil el primer toque es el clic).
+  [trigger, panel].forEach((el) => {
+    el.addEventListener("pointerenter", (event) => {
+      if (event.pointerType === "mouse" && canHover.matches) scheduleOpen();
+    });
+    el.addEventListener("pointerleave", (event) => {
+      if (event.pointerType === "mouse" && canHover.matches) scheduleClose();
+    });
+  });
+
+  trigger.addEventListener("click", () => {
+    // Si el hover acaba de abrirlo, el clic que sigue no debe cerrarlo.
+    if (isOpen() && performance.now() - openedByHoverAt < 450) return;
+    isOpen() ? close() : open();
+  });
+
+  trigger.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      open();
+      panel.querySelector(itemSelector)?.focus();
+    } else if (event.key === "Escape") {
+      close();
+    }
+  });
+
+  panel.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      close({ restoreFocus: true });
+      return;
+    }
+    const items = [...panel.querySelectorAll(itemSelector)];
+    const index = items.indexOf(document.activeElement);
+    if (index === -1) return;
+    const moves = { ArrowDown: columns, ArrowUp: -columns, ArrowRight: 1, ArrowLeft: -1 };
+    if (moves[event.key] === undefined) return;
+    event.preventDefault();
+    items[Math.min(Math.max(index + moves[event.key], 0), items.length - 1)].focus();
+  });
+
+  const leftMenu = (target) => !target || (!panel.contains(target) && !trigger.contains(target));
+  panel.addEventListener("focusout", (event) => {
+    if (leftMenu(event.relatedTarget)) close();
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (isOpen() && leftMenu(event.target)) close();
+  });
+
+  onWidthChange(() => close());
+
+  return { open, close, isOpen };
 }
 
 /* ============================ CATEGORÍAS ============================ */
@@ -140,107 +252,15 @@ function bindCategoryMenu({ onCategory } = {}) {
   panel.innerHTML = renderMegaMenu(allStat, stats);
   header.appendChild(panel);
 
-  trigger.setAttribute("aria-controls", panel.id);
-  trigger.setAttribute("aria-expanded", "false");
-
   const preview = panel.querySelector("[data-mega-preview]");
   let currentPreview = ALL_CATEGORIES_SLUG;
-  let openTimer = null;
-  let closeTimer = null;
-  let openedByHoverAt = 0;
-
-  const isOpen = () => panel.classList.contains("is-open");
-
-  const open = () => {
-    clearTimeout(closeTimer);
-    if (isOpen()) return;
-    panel.classList.add("is-open");
-    trigger.setAttribute("aria-expanded", "true");
-    header.classList.add("has-open-menu");
-  };
-
-  const close = ({ restoreFocus = false } = {}) => {
-    clearTimeout(openTimer);
-    if (!isOpen()) return;
-    panel.classList.remove("is-open");
-    trigger.setAttribute("aria-expanded", "false");
-    header.classList.remove("has-open-menu");
-    if (restoreFocus) trigger.focus();
-  };
-
-  const scheduleOpen = () => {
-    clearTimeout(closeTimer);
-    clearTimeout(openTimer);
-    openTimer = setTimeout(() => {
-      if (!isOpen()) openedByHoverAt = performance.now();
-      open();
-    }, HOVER_OPEN_DELAY);
-  };
-
-  const scheduleClose = () => {
-    clearTimeout(openTimer);
-    clearTimeout(closeTimer);
-    closeTimer = setTimeout(() => close(), HOVER_CLOSE_DELAY);
-  };
+  const menu = createDropdownMenu({ trigger, panel, header, itemSelector: ".mega-item", columns: 2 });
 
   const showPreview = (slug) => {
     if (!slug || slug === currentPreview || !statBySlug[slug]?.bestProduct) return;
     currentPreview = slug;
     preview.innerHTML = renderMegaPreview(statBySlug[slug]);
   };
-
-  // Hover (solo con puntero fino: en táctil el primer toque es el clic).
-  [trigger, panel].forEach((el) => {
-    el.addEventListener("pointerenter", (event) => {
-      if (event.pointerType === "mouse" && canHover.matches) scheduleOpen();
-    });
-    el.addEventListener("pointerleave", (event) => {
-      if (event.pointerType === "mouse" && canHover.matches) scheduleClose();
-    });
-  });
-
-  trigger.addEventListener("click", () => {
-    // Si el hover acaba de abrirlo, el clic que sigue no debe cerrarlo.
-    if (isOpen() && performance.now() - openedByHoverAt < 450) return;
-    isOpen() ? close() : open();
-  });
-
-  trigger.addEventListener("keydown", (event) => {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      open();
-      panel.querySelector(".mega-item")?.focus();
-    }
-  });
-
-  panel.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      close({ restoreFocus: true });
-      return;
-    }
-    const items = [...panel.querySelectorAll(".mega-item")];
-    const index = items.indexOf(document.activeElement);
-    if (index === -1) return;
-    // La rejilla siempre tiene 2 columnas (el panel solo existe en escritorio).
-    const moves = { ArrowDown: 2, ArrowUp: -2, ArrowRight: 1, ArrowLeft: -1 };
-    if (moves[event.key] === undefined) return;
-    event.preventDefault();
-    const next = items[Math.min(Math.max(index + moves[event.key], 0), items.length - 1)];
-    next.focus();
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && isOpen() && trigger === document.activeElement) close();
-  });
-
-  // Cerrar cuando el foco sale de trigger+panel, o con un clic fuera.
-  const leftMenu = (target) => !target || (!panel.contains(target) && !trigger.contains(target));
-  panel.addEventListener("focusout", (event) => {
-    if (leftMenu(event.relatedTarget)) close();
-  });
-  document.addEventListener("pointerdown", (event) => {
-    if (isOpen() && leftMenu(event.target)) close();
-  });
 
   panel.addEventListener("pointerover", (event) => {
     showPreview(event.target.closest("[data-category-slug]")?.dataset.categorySlug);
@@ -255,10 +275,8 @@ function bindCategoryMenu({ onCategory } = {}) {
       event.preventDefault();
       onCategory(item.dataset.categorySlug);
     }
-    if (event.target.closest("a")) close();
+    if (event.target.closest("a")) menu.close();
   });
-
-  onWidthChange(() => close());
 
   bindMobileCategories({ stats, allStat, onCategory });
 }
@@ -292,6 +310,104 @@ function bindMobileCategories({ stats, allStat, onCategory }) {
     if (item && onCategory) {
       event.preventDefault();
       onCategory(item.dataset.categorySlug);
+    }
+  });
+}
+
+/* ============================ TIENDAS ============================ */
+
+function storeHref(store) {
+  return `index.html?tienda=${encodeURIComponent(store)}#catalogo`;
+}
+
+function getStoreMenuStats() {
+  const byStore = new Map();
+  PRODUCTS.forEach((p) => {
+    const entry = byStore.get(p.store) ?? { store: p.store, code: p.storeCode, count: 0, best: 0, savings: 0 };
+    entry.count += 1;
+    entry.best = Math.max(entry.best, discountOf(p));
+    entry.savings += p.previousPrice - p.currentPrice;
+    byStore.set(p.store, entry);
+  });
+  return [...byStore.values()].sort((a, b) => b.count - a.count);
+}
+
+function bindStoreMenu({ onStore } = {}) {
+  const trigger = document.querySelector("[data-store-menu-trigger]");
+  const header = document.getElementById("siteHeader");
+  if (!trigger || !header) return;
+
+  const stats = getStoreMenuStats();
+  const panel = document.createElement("div");
+  panel.id = "storeMenu";
+  panel.className = "store-menu";
+  panel.setAttribute("role", "region");
+  panel.setAttribute("aria-label", "Tiendas rastreadas");
+  panel.innerHTML = `
+    <ul class="store-menu__list">
+      ${stats
+        .map(
+          (s) => `
+        <li>
+          <a class="store-item" href="${storeHref(s.store)}" data-store-target="${escapeHtml(s.store)}">
+            <span class="store-item__code" aria-hidden="true">${escapeHtml(s.code ?? "")}</span>
+            <span class="store-item__text">
+              <span class="store-item__name">${escapeHtml(s.store)}</span>
+              <span class="store-item__meta tabular-nums">${offersLabel(s.count)} · hasta −${s.best}%</span>
+            </span>
+            <span class="store-item__savings tabular-nums">Ahorras ${formatPriceMXN(s.savings)}</span>
+          </a>
+        </li>`
+        )
+        .join("")}
+    </ul>
+    <p class="store-menu__note">${icon("clock", { size: 14 })} Verificamos cada tienda cada 4 horas.</p>
+  `;
+  header.appendChild(panel);
+
+  // Centrado bajo el botón "Tiendas" (el header es de ancho completo).
+  const place = () => {
+    const rect = trigger.getBoundingClientRect();
+    const width = panel.offsetWidth || 380;
+    const left = rect.left + rect.width / 2 - width / 2;
+    panel.style.left = `${Math.max(16, Math.min(left, window.innerWidth - width - 16))}px`;
+  };
+
+  const menu = createDropdownMenu({ trigger, panel, header, itemSelector: ".store-item", onOpen: place });
+
+  panel.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-store-target]");
+    if (item && onStore) {
+      event.preventDefault();
+      onStore(item.dataset.storeTarget);
+    }
+    if (event.target.closest("a")) menu.close();
+  });
+
+  // Menú móvil: acordeón igual que Categorías.
+  const toggle = document.querySelector("[data-mobile-stores-toggle]");
+  const list = document.querySelector("[data-mobile-stores]");
+  if (!toggle || !list) return;
+  list.innerHTML = stats
+    .map(
+      (s) => `
+        <a class="mobile-category" href="${storeHref(s.store)}" data-store-target="${escapeHtml(s.store)}">
+          <span class="mobile-category__icon mobile-category__icon--code" aria-hidden="true">${escapeHtml(s.code ?? "")}</span>
+          <span class="mobile-category__label">${escapeHtml(s.store)}</span>
+          <span class="mobile-category__count tabular-nums">${s.count}</span>
+        </a>`
+    )
+    .join("");
+  toggle.addEventListener("click", () => {
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!expanded));
+    list.hidden = expanded;
+  });
+  list.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-store-target]");
+    if (item && onStore) {
+      event.preventDefault();
+      onStore(item.dataset.storeTarget);
     }
   });
 }
@@ -361,7 +477,10 @@ function bindAlertsMenu() {
 
   const render = () => {
     const products = getAlertProducts();
-    const countLabel = products.length === 1 ? "1 activa" : `${products.length} activas`;
+    const plus = isPlus();
+    const countLabel = plus
+      ? `${products.length} ${products.length === 1 ? "activa" : "activas"}`
+      : `${products.length} de ${FREE_ALERT_LIMIT}`;
     panel.innerHTML = `
       <div class="alerts-panel__head">
         <h2 class="alerts-panel__title" id="alertsPanelTitle">Mis alertas</h2>
@@ -373,7 +492,11 @@ function bindAlertsMenu() {
       <div class="alerts-panel__body">${renderAlertsBody(products)}</div>
       <p class="alerts-panel__foot">
         ${icon("shieldCheck", { size: 14 })}
-        Se guardan solo en este navegador, sin cuenta.
+        ${
+          plus
+            ? "Plus (demo): alertas ilimitadas en este navegador."
+            : `Plan gratis: hasta ${FREE_ALERT_LIMIT} alertas. <a href="planes.html">Ilimitadas con Plus</a>`
+        }
       </p>
     `;
     updateCounts(products.length);
@@ -456,8 +579,203 @@ function bindAlertsMenu() {
     if (event.detail?.source !== "panel") refresh();
   });
   window.addEventListener("storage", refresh);
+  document.addEventListener(PLAN_CHANGED_EVENT, refresh);
 
   updateCounts(getAlertProducts().length);
+}
+
+/* ============================ MIS GUARDADOS ============================ */
+
+function renderSavedBody(products) {
+  if (products.length === 0) {
+    return `
+      <div class="alerts-empty">
+        <span class="alerts-empty__icon" aria-hidden="true">${icon("heart", { size: 28 })}</span>
+        <p class="alerts-empty__title">Aún no guardas ofertas</p>
+        <p class="alerts-empty__body">Toca el <strong>corazón</strong> de cualquier oferta para tenerla a la mano y sumar tu ahorro.</p>
+        <a class="btn btn--cta" href="index.html#catalogo">
+          Explorar ofertas
+          <span class="btn__icon-circle">${icon("arrowRight", { size: 14 })}</span>
+        </a>
+      </div>
+    `;
+  }
+  return `<ul class="alerts-list">${products
+    .map((product) => {
+      const name = escapeHtml(product.name);
+      return `
+        <li class="alert-item" data-tone="${product.categorySlug}">
+          <a class="alert-item__link" href="${productHref(product)}">
+            <span class="alert-item__icon" aria-hidden="true">${icon(CATEGORY_ICON_BY_SLUG[product.categorySlug] ?? "tag", { size: 20 })}</span>
+            <span class="alert-item__text">
+              <span class="alert-item__name">${name}</span>
+              <span class="alert-item__meta tabular-nums">
+                <strong>${formatPriceMXN(product.currentPrice)}</strong> · ahorras ${formatPriceMXN(product.previousPrice - product.currentPrice)}
+              </span>
+            </span>
+          </a>
+          <button type="button" class="alert-item__remove" data-remove-saved="${product.id}" aria-label="Quitar ${name} de guardados">
+            ${icon("close", { size: 14 })}
+          </button>
+        </li>
+      `;
+    })
+    .join("")}</ul>`;
+}
+
+/** Panel "Mis guardados" (corazón del header): misma mecánica que "Mis alertas". */
+function bindSavedMenu() {
+  const triggers = [...document.querySelectorAll("[data-saved-trigger]")];
+  if (triggers.length === 0) return;
+
+  const panel = document.createElement("div");
+  panel.id = "savedPanel";
+  panel.className = "alerts-panel";
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-labelledby", "savedPanelTitle");
+  panel.tabIndex = -1;
+  document.body.appendChild(panel);
+
+  let activeTrigger = null;
+  const isOpen = () => panel.classList.contains("is-open");
+  const getProducts = () => {
+    const ids = loadSavedIds();
+    return PRODUCTS.filter((p) => ids.has(p.id));
+  };
+
+  const updateCounts = (count) => {
+    document.querySelectorAll("[data-saved-count]").forEach((el) => {
+      el.hidden = count === 0;
+      el.textContent = String(count);
+    });
+    triggers.forEach((t) =>
+      t.setAttribute("aria-label", count ? `Mis guardados, ${count}` : "Mis guardados, ninguno")
+    );
+  };
+
+  const render = () => {
+    const products = getProducts();
+    const total = products.reduce((sum, p) => sum + (p.previousPrice - p.currentPrice), 0);
+    panel.innerHTML = `
+      <div class="alerts-panel__head">
+        <h2 class="alerts-panel__title" id="savedPanelTitle">Mis guardados</h2>
+        ${products.length ? `<span class="alerts-panel__count tabular-nums">${products.length}</span>` : ""}
+        <button type="button" class="icon-button alerts-panel__close" data-saved-close aria-label="Cerrar mis guardados">
+          ${icon("close", { size: 14 })}
+        </button>
+      </div>
+      <div class="alerts-panel__body">${renderSavedBody(products)}</div>
+      ${
+        products.length
+          ? `<p class="alerts-panel__foot alerts-panel__foot--total"><span>Ahorro si compras todo</span><strong class="tabular-nums">${formatPriceMXN(total)}</strong></p>`
+          : ""
+      }
+    `;
+    updateCounts(products.length);
+  };
+
+  const position = (trigger) => {
+    const anchor = trigger.closest("#mobileMenuPanel") || trigger.offsetParent === null
+      ? document.getElementById("mobileMenuToggle") ?? trigger
+      : trigger;
+    const rect = anchor.getBoundingClientRect();
+    panel.style.top = `${Math.round(rect.bottom + 12)}px`;
+    panel.style.right = `${Math.max(16, Math.round(window.innerWidth - rect.right - 8))}px`;
+  };
+
+  const open = (trigger) => {
+    activeTrigger = trigger;
+    render();
+    position(trigger);
+    panel.classList.add("is-open");
+    triggers.forEach((t) => t.setAttribute("aria-expanded", String(t === trigger)));
+    setTimeout(() => panel.focus({ preventScroll: true }), 0);
+  };
+
+  const close = ({ restoreFocus = false } = {}) => {
+    if (!isOpen()) return;
+    panel.classList.remove("is-open");
+    triggers.forEach((t) => t.setAttribute("aria-expanded", "false"));
+    if (restoreFocus && activeTrigger?.offsetParent) activeTrigger.focus();
+  };
+
+  triggers.forEach((trigger) => {
+    trigger.setAttribute("aria-controls", panel.id);
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.addEventListener("click", () => (isOpen() && activeTrigger === trigger ? close() : open(trigger)));
+  });
+
+  panel.addEventListener("click", (event) => {
+    const remove = event.target.closest("[data-remove-saved]");
+    if (remove) {
+      toggleSaved(remove.dataset.removeSaved, { source: "panel" });
+      panel.focus();
+      return;
+    }
+    if (event.target.closest("[data-saved-close]")) close({ restoreFocus: true });
+    if (event.target.closest("a")) close();
+  });
+  panel.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") close({ restoreFocus: true });
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (!isOpen() || panel.contains(event.target) || triggers.some((t) => t.contains(event.target))) return;
+    close();
+  });
+  onWidthChange(() => close());
+
+  const refresh = () => (isOpen() ? render() : updateCounts(getProducts().length));
+  document.addEventListener(SAVED_CHANGED_EVENT, refresh);
+  window.addEventListener("storage", refresh);
+  updateCounts(getProducts().length);
+}
+
+/* ============================ BARRA DE TEMPORADA ============================ */
+
+const SEASON_DISMISS_KEY = `precionauta:season-bar:${SEASON.slug}`;
+
+/** Franja superior tipo marketplace: "Buen Fin 2026 · faltan 38 días". Se puede cerrar. */
+function bindSeasonBar() {
+  const header = document.getElementById("siteHeader");
+  if (!header || document.body.dataset.page === "temporada") return;
+  try {
+    if (localStorage.getItem(SEASON_DISMISS_KEY) === "1") return;
+  } catch {
+    /* sin localStorage: se muestra siempre */
+  }
+  const status = getSeasonStatus();
+  if (status.phase === "after") return;
+
+  const { days, hours } = splitDuration(status.ms);
+  const when =
+    status.phase === "live"
+      ? "¡ya empezó! Termina en " + (days ? `${days} d ${hours} h` : `${hours} h`)
+      : days > 0
+      ? `faltan ${days} ${days === 1 ? "día" : "días"}`
+      : `faltan ${hours} h`;
+
+  const bar = document.createElement("div");
+  bar.className = "season-bar";
+  bar.innerHTML = `
+    <div class="container season-bar__inner">
+      <a class="season-bar__link" href="temporada.html">
+        ${icon("sparkle", { size: 15 })}
+        <strong>${SEASON.name}</strong>
+        <span class="season-bar__muted">· ${when}${SEASON.estimated && status.phase === "before" ? " (fecha estimada)" : ""}</span>
+        <span class="season-bar__cta">Prepárate ${icon("arrowRight", { size: 13 })}</span>
+      </a>
+      <button type="button" class="season-bar__close" aria-label="Ocultar aviso del ${SEASON.name}">${icon("close", { size: 12 })}</button>
+    </div>
+  `;
+  header.before(bar);
+  bar.querySelector(".season-bar__close").addEventListener("click", () => {
+    bar.remove();
+    try {
+      localStorage.setItem(SEASON_DISMISS_KEY, "1");
+    } catch {
+      /* se vuelve a mostrar en la próxima visita */
+    }
+  });
 }
 
 /* ============================ BUSCADORES SIMPLES ============================ */
@@ -480,10 +798,27 @@ function bindSearchForms({ onSearch } = {}) {
 }
 
 /**
- * @param {{ onCategory?: (slug: string) => void, onSearch?: (query: string) => void }} [opts]
+ * @param {{ onCategory?: (slug: string) => void, onStore?: (store: string) => void, onSearch?: (query: string) => void }} [opts]
  */
+/** El enlace "Plus" del header cambia de texto si el plan de demostración está activo. */
+function bindPlanLinks() {
+  const paint = () => {
+    const plus = isPlus();
+    document.querySelectorAll("[data-plan-link]").forEach((link) => {
+      link.classList.toggle("is-active", plus);
+      if (plus) link.textContent = "Plus activo";
+    });
+  };
+  paint();
+  document.addEventListener(PLAN_CHANGED_EVENT, paint);
+}
+
 export function bindHeaderMenus(opts = {}) {
+  bindSeasonBar();
   bindCategoryMenu(opts);
+  bindStoreMenu(opts);
+  bindSavedMenu();
+  bindPlanLinks();
   bindAlertsMenu();
   bindSearchForms(opts);
 }

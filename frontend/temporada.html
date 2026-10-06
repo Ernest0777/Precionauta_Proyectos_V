@@ -11,17 +11,17 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Política de reembolsos - Precionauta</title>
-  <meta name="description" content="Precionauta no vende ni procesa pagos: cómo pedir un reembolso en la tienda de origen." />
+  <title>Buen Fin 2026 - Precionauta</title>
+  <meta name="description" content="Prepárate para el Buen Fin 2026: cuenta regresiva, ofertas en mínimo histórico y cómo detectar descuentos falsos." />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/legal.css" />
+  <link rel="stylesheet" href="css/season.css" />
 </head>
-<body>
+<body data-page="temporada">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
   <header id="siteHeader" class="site-header">
@@ -191,43 +191,66 @@
       <p class="auth-feedback" id="authFeedback" role="status" aria-live="polite"></p>
     </div>
   </div>
-  <main>
-    <section id="contenido">
-      <div class="container legal">
-        <p class="legal__updated">Última actualización: 21 de septiembre de 2026</p>
-        <h1>Política de reembolsos</h1>
-
-        <div class="legal__callout">
-          <p>Precionauta no vende productos ni procesa pagos. No podemos emitir reembolsos porque nunca recibimos tu dinero.</p>
+  <main id="contenido">
+    <section class="season-hero">
+      <div class="container season-hero__inner">
+        <div class="season-hero__copy">
+          <h1 class="season-hero__title">Buen Fin <em>2026</em></h1>
+          <p class="season-hero__lead" id="seasonLead">El fin de semana de descuentos más grande de México. Llega con tus alertas listas y sabiendo qué precio sí es una ganga.</p>
+          <div class="season-hero__actions">
+            <a class="btn btn--primary" href="#minimos">Ver ofertas en mínimo histórico</a>
+            <a class="hero__link" href="#guia">Cómo detectar descuentos falsos</a>
+          </div>
         </div>
+        <div class="countdown" id="countdown" aria-live="polite">
+          <p class="countdown__label" id="countdownLabel">Faltan</p>
+          <div class="countdown__grid">
+            <div class="countdown__cell"><span class="countdown__num tabular-nums" data-unit="days">--</span><span class="countdown__unit">días</span></div>
+            <div class="countdown__cell"><span class="countdown__num tabular-nums" data-unit="hours">--</span><span class="countdown__unit">horas</span></div>
+            <div class="countdown__cell"><span class="countdown__num tabular-nums" data-unit="minutes">--</span><span class="countdown__unit">min</span></div>
+          </div>
+          <p class="countdown__note" id="countdownNote"></p>
+        </div>
+      </div>
+    </section>
 
-        <h2>Dónde compraste, ahí se resuelve</h2>
-        <p>
-          Cuando das clic en "Ver oferta", la compra se realiza completamente en el sitio de la
-          tienda de origen (Amazon México, Mercado Libre, Liverpool, u otra que agreguemos más
-          adelante). Esa tienda procesa el pago, el envío y es la única que puede:
-        </p>
-        <ul>
-          <li>Cancelar o modificar tu pedido.</li>
-          <li>Procesar una devolución o reembolso.</li>
-          <li>Resolver una garantía del producto.</li>
-          <li>Atender un problema con el envío.</li>
-        </ul>
+    <section id="minimos" class="season-section" aria-labelledby="minimosTitle">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="minimosTitle">Ya están en su <em>mínimo histórico</em></h2>
+          <p>Precio actual igual o por debajo del más bajo que hemos registrado. No hace falta esperar al Buen Fin para estas.</p>
+        </div>
+        <div class="catalog-grid" id="minGrid"></div>
+      </div>
+    </section>
 
-        <h2>Qué hacer si tienes un problema con una compra</h2>
-        <p>
-          Contacta directamente al servicio al cliente de la tienda donde compraste, usando el número
-          de pedido que ellos te dieron. Precionauta no tiene acceso a esa información ni puede
-          intervenir en la transacción.
-        </p>
+    <section class="season-section season-section--alt" aria-labelledby="fuertesTitle">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="fuertesTitle">Calentamiento: <em>más de 50%</em> hoy</h2>
+          <p>Las caídas más fuertes de la semana, verificadas contra su historial.</p>
+        </div>
+        <div class="catalog-grid" id="strongGrid"></div>
+      </div>
+    </section>
 
-        <h2>Precios y disponibilidad</h2>
-        <p>
-          Verificamos los precios que mostramos con la frecuencia indicada en cada oferta, pero el
-          precio final, el stock y las condiciones de venta son siempre los que la tienda muestra en
-          el momento de tu compra. Si el precio cambió entre que lo detectamos y que llegaste a la
-          tienda, la tienda es quien decide cómo proceder.
-        </p>
+    <section id="guia" class="season-section" aria-labelledby="guiaTitle">
+      <div class="container season-guide">
+        <div>
+          <h2 id="guiaTitle">Cómo no caer en <em>descuentos falsos</em></h2>
+          <p class="season-guide__lead">Marca cada paso mientras te preparas. Se guarda en este navegador.</p>
+        </div>
+        <ul class="checklist" id="checklist"></ul>
+      </div>
+    </section>
+
+    <section class="season-section season-section--alt" aria-labelledby="calTitle">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="calTitle">Calendario de <em>temporadas</em></h2>
+          <p>Las fechas exactas cambian cada año; estos son los meses en que suelen ocurrir.</p>
+        </div>
+        <ol class="season-calendar" id="seasonCalendar"></ol>
       </div>
     </section>
   </main>
@@ -253,6 +276,6 @@
     </div>
   </footer>
 
-  <script type="module" src="js/legal.js"></script>
+  <script type="module" src="js/season.js"></script>
 </body>
 </html>

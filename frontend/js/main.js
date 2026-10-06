@@ -3,9 +3,17 @@ import { CATEGORIES, ALL_CATEGORIES_SLUG } from "./data/categories.js";
 import { renderProductCard } from "./components/productCard.js";
 import { ContinuousTabs } from "./components/continuousTabs.js";
 import { bindHeaderMenus } from "./components/headerMenus.js";
+import { maybeShowOnboarding, openOnboarding } from "./components/onboarding.js";
+import {
+  track,
+  recommend,
+  getInterests,
+  clearActivity,
+  ACTIVITY_CHANGED_EVENT,
+} from "./utils/recommender.js";
 import { normalize } from "./components/morphingDiscoveryBar.js";
 import { icon, CATEGORY_ICON_BY_SLUG } from "./utils/icons.js";
-import { formatCheckedAtLabel, formatPriceMXN } from "./utils/format.js";
+import { formatCheckedAtLabel, formatPriceMXN, formatPriceHTML } from "./utils/format.js";
 import {
   discountOf,
   getAllStats,
@@ -15,7 +23,8 @@ import {
 } from "./utils/catalogStats.js";
 import {
   loadSavedIds,
-  persistSavedIds,
+  loadAlertIds,
+  bindCardActions,
   renderSavingsSummary,
   bindHeaderScrollShadow,
   bindMobileMenu,
@@ -23,7 +32,12 @@ import {
   bindThemeToggle,
   bindAuthModal,
   observeReveal,
+  SAVED_CHANGED_EVENT,
 } from "./shared.js";
+
+/** Tarjetas por "página" del catálogo (110 productos no caben de golpe). */
+const PAGE_SIZE = 12;
+const TICKER_SIZE = 14;
 
 const CATEGORY_LABEL_BY_SLUG = Object.fromEntries(
   CATEGORIES.map((category) => [category.slug, category.label])
@@ -70,6 +84,7 @@ const state = {
   query: "",
   sortBy: "discount-desc",
   saved: loadSavedIds(),
+  visibleCount: PAGE_SIZE,
 };
 
 const els = {
@@ -86,6 +101,10 @@ const els = {
   thresholdFilter: document.getElementById("thresholdFilter"),
   storeFilter: document.getElementById("storeFilter"),
   year: document.getElementById("footerYear"),
+  catalogMore: document.getElementById("catalogMore"),
+  recoRail: document.getElementById("recoRail"),
+  recoInterests: document.getElementById("recoInterests"),
+  recoTitle: document.getElementById("recoTitle"),
 };
 
 let categoryTabs = null;
@@ -178,13 +197,13 @@ function animatePriceDrop(card, product) {
   const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
   card.classList.add("is-dropping");
-  priceEl.textContent = formatPriceMXN(from);
+  priceEl.innerHTML = formatPriceHTML(from);
 
   setTimeout(() => {
     const start = performance.now();
     const tick = (now) => {
       const t = Math.min((now - start) / duration, 1);
-      priceEl.textContent = formatPriceMXN(Math.round(from - (from - to) * easeOutExpo(t)));
+      priceEl.innerHTML = formatPriceHTML(Math.round(from - (from - to) * easeOutExpo(t)));
       if (t < 1) requestAnimationFrame(tick);
       else card.classList.replace("is-dropping", "has-dropped");
     };
@@ -220,6 +239,7 @@ function renderHeroStores() {
 function renderDealTicker() {
   if (!els.dealTicker) return;
   const items = getProductsByDiscount()
+    .slice(0, TICKER_SIZE)
     .map(
       (p) => `
         <a class="ticker__item" href="producto.html?id=${encodeURIComponent(p.id)}">
@@ -240,6 +260,87 @@ function renderDealTicker() {
       <div class="ticker__group" aria-hidden="true">${items.replaceAll("<a ", '<a tabindex="-1" ')}</div>
     </div>
   `;
+}
+
+/* ================= RECOMENDADO PARA TI ================= */
+
+/**
+ * Riel horizontal con lo que el recomendador (utils/recommender.js) cree que
+ * más le interesa a esta persona, cada tarjeta con su "porqué". Se vuelve a
+ * calcular cuando cambia la actividad (búsquedas, filtros, guardados...).
+ */
+function renderRecommendations() {
+  if (!els.recoRail) return;
+  const picks = recommend(PRODUCTS, { limit: 10 });
+  const interests = getInterests();
+  const alertIds = loadAlertIds();
+
+  if (els.recoTitle) {
+    els.recoTitle.innerHTML = interests.length ? "Recomendado <em>para ti</em>" : "Para <em>empezar</em>";
+  }
+
+  els.recoInterests.innerHTML = interests.length
+    ? `<span class="reco__label">Basado en</span>
+       ${interests
+         .map((it) =>
+           it.kind === "category"
+             ? `<button type="button" class="interest-chip" data-tone="${it.slug}" data-interest-category="${it.slug}">${icon(CATEGORY_ICON_BY_SLUG[it.slug] ?? "tag", { size: 14 })} ${escapeHtml(it.label)}</button>`
+             : `<button type="button" class="interest-chip" data-interest-search="${escapeHtml(it.query)}">${icon("search", { size: 13 })} ${escapeHtml(it.label)}</button>`
+         )
+         .join("")}
+       <button type="button" class="reco__action" data-edit-interests>Editar intereses</button>
+       <button type="button" class="reco__action" data-clear-activity>Borrar historial</button>`
+    : `<span class="reco__label">Aún no sabemos qué te gusta.</span>
+       <button type="button" class="reco__action reco__action--strong" data-edit-interests>Elegir mis intereses</button>`;
+
+  els.recoRail.innerHTML = picks
+    .map(({ product, reason }) =>
+      renderProductCard(product, CATEGORY_LABEL_BY_SLUG[product.categorySlug], {
+        saved: state.saved.has(product.id),
+        alerted: alertIds.has(product.id),
+        reason,
+      })
+    )
+    .join("");
+  els.recoRail.querySelectorAll(".product-card").forEach((card) => card.classList.add("is-visible"));
+}
+
+let recoTimer = null;
+function scheduleRecommendations() {
+  clearTimeout(recoTimer);
+  recoTimer = setTimeout(renderRecommendations, 350);
+}
+
+function bindRecommendations() {
+  const section = document.getElementById("recomendados");
+  if (!section) return;
+  bindCardActions(els.recoRail);
+
+  section.addEventListener("click", (event) => {
+    if (event.target.closest("[data-edit-interests]")) openOnboarding();
+    if (event.target.closest("[data-clear-activity]")) clearActivity();
+    const cat = event.target.closest("[data-interest-category]");
+    if (cat) {
+      setActiveCategory(cat.dataset.interestCategory);
+      scrollToCatalog();
+    }
+    const search = event.target.closest("[data-interest-search]");
+    if (search) {
+      window.searchBar?.setValue(search.dataset.interestSearch);
+      setQuery(search.dataset.interestSearch);
+      scrollToCatalog();
+    }
+  });
+
+  // Flechas del riel (en táctil basta con deslizar).
+  section.querySelectorAll("[data-rail-scroll]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const dir = btn.dataset.railScroll === "next" ? 1 : -1;
+      els.recoRail.scrollBy({ left: dir * els.recoRail.clientWidth * 0.85, behavior: "smooth" });
+    });
+  });
+
+  document.addEventListener(ACTIVITY_CHANGED_EVENT, scheduleRecommendations);
 }
 
 /* ================= CATALOG FILTERS ================= */
@@ -317,10 +418,13 @@ function renderCatalog({ animate = false } = {}) {
 
   if (visible.length === 0) {
     els.catalogGrid.innerHTML = renderEmptyState();
+    renderLoadMore(0, 0);
     return;
   }
 
-  els.catalogGrid.innerHTML = visible
+  const alertIds = loadAlertIds();
+  const page = visible.slice(0, state.visibleCount);
+  els.catalogGrid.innerHTML = page
     .map((product) => {
       // La loseta grande solo tiene sentido en la vista completa; filtrada
       // a 1-2 resultados, una tarjeta de 2x2 deja huecos raros.
@@ -328,6 +432,7 @@ function renderCatalog({ animate = false } = {}) {
       return renderProductCard(product, CATEGORY_LABEL_BY_SLUG[product.categorySlug], {
         variant,
         saved: state.saved.has(product.id),
+        alerted: alertIds.has(product.id),
       });
     })
     .join("");
@@ -339,6 +444,32 @@ function renderCatalog({ animate = false } = {}) {
       card.classList.add("is-visible");
     });
   }
+  renderLoadMore(page.length, visible.length);
+}
+
+function renderLoadMore(shown, total) {
+  if (!els.catalogMore) return;
+  const remaining = total - shown;
+  els.catalogMore.innerHTML =
+    total === 0
+      ? ""
+      : `
+    <p class="catalog-more__progress tabular-nums">Viendo ${shown} de ${total} ofertas</p>
+    <div class="catalog-more__bar" aria-hidden="true"><span style="width:${Math.round((shown / total) * 100)}%"></span></div>
+    ${
+      remaining > 0
+        ? `<button type="button" class="btn btn--outline" data-load-more>Mostrar ${Math.min(remaining, PAGE_SIZE)} más</button>`
+        : ""
+    }
+  `;
+}
+
+function loadMore() {
+  const before = state.visibleCount;
+  state.visibleCount += PAGE_SIZE;
+  renderCatalog({ animate: true });
+  // Lleva el foco a la primera tarjeta nueva (quien navega con teclado no se pierde).
+  els.catalogGrid.querySelectorAll(".product-card")[before]?.querySelector("a")?.focus({ preventScroll: true });
 }
 
 function hasActiveFilters() {
@@ -370,6 +501,8 @@ function renderEmptyState() {
 function setActiveCategory(slug, { syncTabs = true } = {}) {
   if (slug === state.activeCategory) return;
   state.activeCategory = slug;
+  state.visibleCount = PAGE_SIZE;
+  track("category", { slug });
   if (syncTabs) categoryTabs?.setActiveBy((t) => t.slug === slug, { silent: true });
   renderCatalog({ animate: true });
 }
@@ -377,6 +510,7 @@ function setActiveCategory(slug, { syncTabs = true } = {}) {
 function setMinDiscount(value) {
   if (value === state.minDiscount) return;
   state.minDiscount = value;
+  state.visibleCount = PAGE_SIZE;
   renderThresholdFilter();
   renderCatalog({ animate: true });
 }
@@ -384,6 +518,8 @@ function setMinDiscount(value) {
 function setStore(value) {
   if (value === state.store) return;
   state.store = value;
+  state.visibleCount = PAGE_SIZE;
+  track("store", { store: value });
   renderStoreFilter();
   renderCatalog({ animate: true });
 }
@@ -392,6 +528,7 @@ function setQuery(value) {
   const query = value.trim();
   if (query === state.query) return;
   state.query = query;
+  state.visibleCount = PAGE_SIZE;
   renderCatalog({ animate: false });
 }
 
@@ -400,6 +537,7 @@ function resetFilters() {
   state.minDiscount = ALL_THRESHOLD;
   state.store = ALL_STORES;
   state.activeCategory = ALL_CATEGORIES_SLUG;
+  state.visibleCount = PAGE_SIZE;
   window.searchBar?.clear();
   categoryTabs?.setActiveBy((t) => t.slug === ALL_CATEGORIES_SLUG, { silent: true });
   renderThresholdFilter();
@@ -444,23 +582,15 @@ function bindSortControl() {
  */
 function bindCatalogDelegation() {
   els.catalogGrid.addEventListener("click", (event) => {
-    if (event.target.closest("[data-reset-filters]")) {
-      resetFilters();
-      return;
-    }
-
-    const saveButton = event.target.closest("[data-save-toggle]");
-    if (!saveButton) return;
-    const card = saveButton.closest(".product-card");
-    const id = card?.dataset.productId;
-    if (!id) return;
-
-    const isSaved = state.saved.has(id);
-    isSaved ? state.saved.delete(id) : state.saved.add(id);
-    saveButton.setAttribute("aria-pressed", String(!isSaved));
-    saveButton.classList.toggle("is-saved", !isSaved);
-    persistSavedIds(state.saved);
-    renderSavingsSummary(state.saved);
+    if (event.target.closest("[data-reset-filters]")) resetFilters();
+  });
+  els.catalogMore?.addEventListener("click", (event) => {
+    if (event.target.closest("[data-load-more]")) loadMore();
+  });
+  // Corazón (guardar) y campana (alerta, con el límite del plan gratis).
+  bindCardActions(els.catalogGrid);
+  document.addEventListener(SAVED_CHANGED_EVENT, () => {
+    state.saved = loadSavedIds();
   });
 }
 
@@ -481,11 +611,17 @@ function bindScrollToCatalogLinks() {
 function readUrlFilters() {
   const params = new URLSearchParams(window.location.search);
   const category = params.get("categoria");
-  if (category && CATEGORY_LABEL_BY_SLUG[category]) state.activeCategory = category;
+  if (category && CATEGORY_LABEL_BY_SLUG[category]) {
+    state.activeCategory = category;
+    track("category", { slug: category });
+  }
+  const store = params.get("tienda");
+  if (store && STORE_OPTIONS.includes(store)) state.store = store;
   const query = params.get("q");
   if (query) {
     state.query = query.trim();
     window.searchBar?.setValue(state.query);
+    track("search", { query: state.query });
   }
 }
 
@@ -501,12 +637,21 @@ function init() {
   renderThresholdFilter();
   renderStoreFilter();
   renderCatalog({ animate: true });
+  renderRecommendations();
   renderSavingsSummary(state.saved);
 
+  let searchTrackTimer = null;
   document.addEventListener("search-query", (event) => {
     const { query = "", submit = false } = event.detail ?? {};
     setQuery(query);
-    if (submit) scrollToCatalog();
+    clearTimeout(searchTrackTimer);
+    if (submit) {
+      track("search", { query });
+      scrollToCatalog();
+    } else {
+      // Teclear y quedarse leyendo resultados 2 s también cuenta como búsqueda.
+      searchTrackTimer = setTimeout(() => track("search", { query }), 2000);
+    }
   });
 
   bindHeaderMenus({
@@ -514,9 +659,14 @@ function init() {
       setActiveCategory(slug);
       scrollToCatalog();
     },
+    onStore: (store) => {
+      setStore(store);
+      scrollToCatalog();
+    },
     onSearch: (query) => {
       window.searchBar?.setValue(query);
       setQuery(query);
+      track("search", { query });
       scrollToCatalog();
     },
   });
@@ -531,6 +681,8 @@ function init() {
   bindAuthModal();
   bindScrollToCatalogLinks();
   bindSubscribeForm();
+  bindRecommendations();
+  maybeShowOnboarding();
 }
 
 init();

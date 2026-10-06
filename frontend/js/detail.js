@@ -12,9 +12,11 @@ import {
 } from "./utils/format.js";
 import {
   loadSavedIds,
-  persistSavedIds,
   loadAlertIds,
-  persistAlertIds,
+  toggleAlert,
+  toggleSaved,
+  showToast,
+  bindCardActions,
   renderSavingsSummary,
   bindHeaderScrollShadow,
   bindMobileMenu,
@@ -23,7 +25,12 @@ import {
   bindAuthModal,
   observeReveal,
 } from "./shared.js";
-import { bindHeaderMenus, ALERTS_CHANGED_EVENT } from "./components/headerMenus.js";
+import { bindHeaderMenus } from "./components/headerMenus.js";
+import { ALERTS_CHANGED_EVENT, SAVED_CHANGED_EVENT } from "./shared.js";
+import { track } from "./utils/recommender.js";
+
+/** Plazos típicos de meses sin intereses en tiendas mexicanas. */
+const MSI_TERMS = [3, 6, 9, 12, 18];
 
 const CATEGORY_LABEL_BY_SLUG = Object.fromEntries(
   CATEGORIES.map((category) => [category.slug, category.label])
@@ -133,11 +140,92 @@ function renderInfoColumn() {
         </button>
       </div>
 
+      ${renderMsiCalculator()}
+
+      <div class="share-row">
+        <span class="share-row__label">Compartir</span>
+        <a class="share-btn share-btn--whatsapp" id="shareWhatsapp" href="#" target="_blank" rel="noopener">
+          ${icon("whatsapp", { size: 18 })} WhatsApp
+        </a>
+        <button type="button" class="share-btn" id="copyLink">${icon("copy", { size: 16 })} Copiar enlace</button>
+      </div>
+
       <span class="product-info__meta">Precionauta verifica cada 4 horas · Última revisión ${formatHoursAgoLabel(
         product.checkedHoursAgo
       )}</span>
     </div>
   `;
+}
+
+/**
+ * Calculadora de meses sin intereses: precio ÷ plazo. Es una estimación;
+ * cada tienda y banco define plazos y montos mínimos.
+ */
+function renderMsiCalculator() {
+  const terms = MSI_TERMS.map(
+    (m, i) => `
+      <button type="button" class="msi__term ${i === 1 ? "is-active" : ""}" data-msi="${m}" role="radio" aria-checked="${i === 1}">
+        ${m}
+      </button>`
+  ).join("");
+  return `
+    <section class="msi" aria-labelledby="msiTitle">
+      <div class="msi__head">
+        <h2 class="msi__title" id="msiTitle">Meses sin intereses</h2>
+        <div class="msi__terms" role="radiogroup" aria-label="Plazo en meses">${terms}</div>
+      </div>
+      <p class="msi__result" aria-live="polite">
+        <span class="msi__monthly tabular-nums" id="msiMonthly"></span>
+        <span class="msi__detail" id="msiDetail"></span>
+      </p>
+      <p class="msi__note">Estimación: depende de la tienda y de tu banco. Algunos plazos piden un monto mínimo de compra.</p>
+    </section>
+  `;
+}
+
+function bindMsiCalculator() {
+  const root = document.querySelector(".msi");
+  if (!root) return;
+  const monthlyEl = document.getElementById("msiMonthly");
+  const detailEl = document.getElementById("msiDetail");
+
+  const paint = (months) => {
+    const monthly = Math.ceil(product.currentPrice / months);
+    monthlyEl.textContent = `${formatPriceMXN(monthly)} al mes`;
+    detailEl.textContent = `durante ${months} meses · total ${formatPriceMXN(product.currentPrice)}, sin intereses`;
+  };
+
+  root.addEventListener("click", (event) => {
+    const term = event.target.closest("[data-msi]");
+    if (!term) return;
+    root.querySelectorAll("[data-msi]").forEach((t) => {
+      const on = t === term;
+      t.classList.toggle("is-active", on);
+      t.setAttribute("aria-checked", String(on));
+    });
+    paint(Number(term.dataset.msi));
+  });
+
+  paint(MSI_TERMS[1]);
+}
+
+/** WhatsApp (wa.me abre la app o WhatsApp Web) y copiar enlace al portapapeles. */
+function bindShare() {
+  const discount = calculateDiscountPercent(product.previousPrice, product.currentPrice);
+  const url = window.location.href;
+  const text = `Mira esta oferta en Precionauta: ${product.name} a ${formatPriceMXN(product.currentPrice)} (−${discount}%) en ${product.store}. ${url}`;
+
+  const whatsapp = document.getElementById("shareWhatsapp");
+  if (whatsapp) whatsapp.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+  document.getElementById("copyLink")?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast("Enlace copiado. Pégalo donde quieras.");
+    } catch {
+      showToast("No pudimos copiar el enlace; cópialo desde la barra de direcciones.");
+    }
+  });
 }
 
 function renderProductDetail() {
@@ -191,7 +279,9 @@ function renderRelated() {
   const grid = document.getElementById("relatedGrid");
   if (!grid) return;
 
-  const sameCategory = PRODUCTS.filter((p) => p.id !== product.id && p.categorySlug === product.categorySlug);
+  const sameCategory = PRODUCTS.filter((p) => p.id !== product.id && p.categorySlug === product.categorySlug).sort(
+    (a, b) => calculateDiscountPercent(b.previousPrice, b.currentPrice) - calculateDiscountPercent(a.previousPrice, a.currentPrice)
+  );
   const others = shuffleDeterministic(
     PRODUCTS.filter((p) => p.id !== product.id && p.categorySlug !== product.categorySlug),
     product.id
@@ -203,11 +293,17 @@ function renderRelated() {
       renderProductCard(p, CATEGORY_LABEL_BY_SLUG[p.categorySlug], {
         variant: "standard",
         saved: state.saved.has(p.id),
+        alerted: state.alerts.has(p.id),
       })
     )
     .join("");
 
   observeReveal(grid, ".product-card");
+}
+
+/* Antes el corazón de las tarjetas relacionadas no hacía nada (sin delegación). */
+function bindRelatedActions() {
+  bindCardActions(document.getElementById("relatedGrid"));
 }
 
 function bindGallery() {
@@ -234,13 +330,15 @@ function bindGallery() {
 function bindSaveToggle() {
   const button = document.getElementById("saveToggle");
   if (!button) return;
-  button.addEventListener("click", () => {
+  const paint = () => {
     const isSaved = state.saved.has(product.id);
-    isSaved ? state.saved.delete(product.id) : state.saved.add(product.id);
-    persistSavedIds(state.saved);
-    button.setAttribute("aria-pressed", String(!isSaved));
-    button.innerHTML = `${icon("heart", { size: 16 })} ${!isSaved ? "Guardado" : "Guardar oferta"}`;
-    renderSavingsSummary(state.saved);
+    button.setAttribute("aria-pressed", String(isSaved));
+    button.innerHTML = `${icon("heart", { size: 16 })} ${isSaved ? "Guardado" : "Guardar oferta"}`;
+  };
+  button.addEventListener("click", () => toggleSaved(product.id, { source: "detail" }));
+  document.addEventListener(SAVED_CHANGED_EVENT, () => {
+    state.saved = loadSavedIds();
+    paint();
   });
 }
 
@@ -254,18 +352,11 @@ function bindAlertToggle() {
     button.innerHTML = `${icon("lightning", { size: 16 })} ${hasAlert ? "Alerta activada" : "Avisarme si baja más"}`;
   };
 
-  button.addEventListener("click", () => {
-    const hasAlert = state.alerts.has(product.id);
-    hasAlert ? state.alerts.delete(product.id) : state.alerts.add(product.id);
-    persistAlertIds(state.alerts);
-    paint();
-    // El panel "Mis alertas" del header escucha esto para actualizar su contador.
-    document.dispatchEvent(new CustomEvent(ALERTS_CHANGED_EVENT, { detail: { source: "detail" } }));
-  });
+  // toggleAlert aplica el límite del plan gratis y avisa al panel del header.
+  button.addEventListener("click", () => toggleAlert(product.id, { source: "detail" }));
 
-  // Y al revés: quitar la alerta desde el panel debe reflejarse en este botón.
-  document.addEventListener(ALERTS_CHANGED_EVENT, (event) => {
-    if (event.detail?.source !== "panel") return;
+  // Cualquier cambio (este botón, el panel o una campana de "relacionados").
+  document.addEventListener(ALERTS_CHANGED_EVENT, () => {
     state.alerts = loadAlertIds();
     paint();
   });
@@ -302,9 +393,14 @@ function init() {
   renderRelated();
   renderSavingsSummary(state.saved);
 
+  track("view", { product });
+
   bindGallery();
+  bindMsiCalculator();
+  bindShare();
   bindSaveToggle();
   bindAlertToggle();
+  bindRelatedActions();
   bindHeaderMenus();
   bindHeaderScrollShadow();
   bindMobileMenu();

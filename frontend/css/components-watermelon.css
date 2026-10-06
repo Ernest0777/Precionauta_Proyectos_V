@@ -148,7 +148,7 @@
 .discovery-bar-container:focus-within {
   border-color: var(--color-accent);
   background: var(--color-surface);
-  box-shadow: 0 6px 20px rgba(38, 34, 32, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 .discovery-bar-icon {
@@ -303,7 +303,7 @@
   flex-shrink: 0;
   font-size: var(--fs-xs);
   font-weight: 800;
-  color: var(--color-accent);
+  color: var(--color-deal-text);
   font-variant-numeric: tabular-nums;
 }
 

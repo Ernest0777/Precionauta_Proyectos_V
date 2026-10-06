@@ -8,6 +8,7 @@
 
 import { PRODUCTS } from "./data/products.js";
 import { calculateSavings, formatPriceMXN } from "./utils/format.js";
+import { track } from "./utils/recommender.js";
 
 export const SAVED_STORAGE_KEY = "precionauta:saved-offers";
 export const ALERTS_STORAGE_KEY = "precionauta:price-alerts";
@@ -44,6 +45,169 @@ export function loadAlertIds() {
 
 export function persistAlertIds(set) {
   persistIdSet(ALERTS_STORAGE_KEY, set);
+}
+
+/* ================= PLAN (Gratis / Plus de demostración) ================= */
+
+export const PLAN_STORAGE_KEY = "precionauta:plan";
+export const ALERTS_CHANGED_EVENT = "alerts-changed";
+export const SAVED_CHANGED_EVENT = "saved-changed";
+export const PLAN_CHANGED_EVENT = "plan-changed";
+/** El plan gratis guarda hasta 3 alertas; Plus las vuelve ilimitadas (ver planes.html). */
+export const FREE_ALERT_LIMIT = 3;
+
+/**
+ * Plan actual. No hay backend ni cobro real: "plus" solo se activa desde el
+ * checkout de demostración de planes.html y vive en este navegador.
+ * @returns {{ id: "free" | "plus", period?: "mensual" | "anual", since?: string }}
+ */
+export function loadPlan() {
+  try {
+    const raw = localStorage.getItem(PLAN_STORAGE_KEY);
+    const plan = raw ? JSON.parse(raw) : null;
+    return plan?.id === "plus" ? plan : { id: "free" };
+  } catch {
+    return { id: "free" };
+  }
+}
+
+export function persistPlan(plan) {
+  try {
+    if (plan.id === "free") localStorage.removeItem(PLAN_STORAGE_KEY);
+    else localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plan));
+  } catch {
+    /* sin localStorage el plan dura solo esta visita */
+  }
+  document.dispatchEvent(new CustomEvent(PLAN_CHANGED_EVENT, { detail: plan }));
+}
+
+export function isPlus() {
+  return loadPlan().id === "plus";
+}
+
+/**
+ * Agrega o quita una alerta respetando el límite del plan gratis.
+ * @returns {"added" | "removed" | "limit"}
+ */
+export function toggleAlert(id, { source = "page" } = {}) {
+  const ids = loadAlertIds();
+  let result;
+  if (ids.has(id)) {
+    ids.delete(id);
+    result = "removed";
+  } else if (!isPlus() && ids.size >= FREE_ALERT_LIMIT) {
+    showToast(`Llegaste a ${FREE_ALERT_LIMIT} alertas del plan gratis. Con Plus son ilimitadas.`, {
+      actionLabel: "Ver Plus",
+      actionHref: "planes.html",
+    });
+    return "limit";
+  } else {
+    ids.add(id);
+    result = "added";
+    track("alert", { product: PRODUCTS.find((p) => p.id === id) });
+  }
+  persistAlertIds(ids);
+  document.dispatchEvent(new CustomEvent(ALERTS_CHANGED_EVENT, { detail: { source, id, result } }));
+  return result;
+}
+
+/**
+ * Guarda o quita una oferta. Única vía para cambiar los guardados: así el
+ * panel "Mis guardados", los corazones y el resumen de ahorro se enteran por
+ * el mismo evento, en cualquier página.
+ * @returns {"added" | "removed"}
+ */
+export function toggleSaved(id, { source = "page" } = {}) {
+  const ids = loadSavedIds();
+  const result = ids.has(id) ? "removed" : "added";
+  result === "added" ? ids.add(id) : ids.delete(id);
+  persistSavedIds(ids);
+  if (result === "added") track("save", { product: PRODUCTS.find((p) => p.id === id) });
+  renderSavingsSummary(ids);
+  document.dispatchEvent(new CustomEvent(SAVED_CHANGED_EVENT, { detail: { source, id, result } }));
+  return result;
+}
+
+/* ================= TOAST ================= */
+
+let toastTimer = null;
+
+/**
+ * Aviso breve abajo de la pantalla (role=status, no roba el foco).
+ * @param {string} message
+ * @param {{ actionLabel?: string, actionHref?: string, duration?: number }} [opts]
+ */
+export function showToast(message, { actionLabel, actionHref, duration = 4200 } = {}) {
+  let toast = document.getElementById("appToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "appToast";
+    toast.className = "toast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `
+    <span class="toast__message"></span>
+    ${actionLabel && actionHref ? `<a class="toast__action" href="${actionHref}"></a>` : ""}
+  `;
+  toast.querySelector(".toast__message").textContent = message;
+  const action = toast.querySelector(".toast__action");
+  if (action) action.textContent = actionLabel;
+
+  toast.classList.remove("is-visible");
+  void toast.offsetWidth; // reinicia la transición si ya estaba visible
+  toast.classList.add("is-visible");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("is-visible"), duration);
+}
+
+/* ================= ACCIONES DE TARJETA (guardar / alerta) ================= */
+
+/**
+ * Delegación para los botones de corazón y campana de cualquier grid de
+ * tarjetas (catálogo, recomendados, temporada, relacionados en Detalle).
+ * Lee y escribe siempre en localStorage (toggleSaved / toggleAlert) y
+ * repinta los botones cuando el cambio viene de otro lado (paneles).
+ */
+export function bindCardActions(container) {
+  if (!container) return;
+
+  container.addEventListener("click", (event) => {
+    const saveButton = event.target.closest("[data-save-toggle]");
+    const alertButton = event.target.closest("[data-alert-toggle]");
+    const id = (saveButton || alertButton)?.closest(".product-card")?.dataset.productId;
+    if (!id) return;
+
+    if (saveButton) {
+      const result = toggleSaved(id, { source: "card" });
+      if (result === "added") showToast("Guardada. Está en «Mis guardados».");
+    }
+    if (alertButton) {
+      const result = toggleAlert(id, { source: "card" });
+      if (result === "added") showToast("Alerta activada. Está en «Mis alertas».");
+    }
+  });
+
+  const sync = () => {
+    const alerts = loadAlertIds();
+    const saved = loadSavedIds();
+    container.querySelectorAll(".product-card").forEach((card) => {
+      const id = card.dataset.productId;
+      const bell = card.querySelector("[data-alert-toggle]");
+      const heart = card.querySelector("[data-save-toggle]");
+      if (bell) {
+        bell.setAttribute("aria-pressed", String(alerts.has(id)));
+        bell.classList.toggle("is-on", alerts.has(id));
+      }
+      if (heart) {
+        heart.setAttribute("aria-pressed", String(saved.has(id)));
+        heart.classList.toggle("is-saved", saved.has(id));
+      }
+    });
+  };
+  document.addEventListener(ALERTS_CHANGED_EVENT, sync);
+  document.addEventListener(SAVED_CHANGED_EVENT, sync);
 }
 
 /**
@@ -270,6 +434,15 @@ export function bindAuthModal() {
 
   modal.querySelectorAll(".auth-form").forEach((form) => {
     form.addEventListener("submit", showPreviewNotice);
+  });
+
+  // Google / Facebook: el flujo real necesita OAuth del lado del servidor
+  // (o Firebase Auth / Supabase). Hasta entonces, mensaje honesto, sin popup.
+  modal.querySelectorAll("[data-social-login]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!feedback) return;
+      feedback.textContent = `Entrar con ${button.dataset.socialLogin} estará disponible cuando conectemos el backend (OAuth). Por ahora es una vista previa: no se abre ninguna ventana ni se comparte ningún dato.`;
+    });
   });
 }
 

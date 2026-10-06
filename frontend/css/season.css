@@ -1,0 +1,244 @@
+/* temporada.html - Buen Fin. Mismo sistema monocromo; el rojo solo en descuentos. */
+
+.season-hero {
+  padding-block: var(--space-16) var(--space-12);
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.season-hero__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-12);
+  align-items: center;
+}
+
+.season-hero__title {
+  font-size: clamp(3rem, 1.6rem + 6vw, 6rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+}
+
+.season-hero__title em {
+  font-style: normal;
+  color: color-mix(in srgb, currentColor 42%, transparent);
+}
+
+.season-hero__lead {
+  margin-top: var(--space-5);
+  max-width: 44ch;
+  font-size: var(--fs-lg);
+  color: var(--color-ink-700);
+}
+
+.season-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-6);
+  margin-top: var(--space-6);
+}
+
+/* ---- Cuenta regresiva ---- */
+.countdown {
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  background: var(--color-inverted-bg);
+  color: var(--color-inverted-text);
+}
+
+.countdown__label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.countdown__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.countdown__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-4) var(--space-2);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-inverted-text) 9%, transparent);
+}
+
+.countdown__num {
+  font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.countdown__unit {
+  margin-top: var(--space-1);
+  font-size: var(--fs-xs);
+  opacity: 0.75;
+}
+
+.countdown__note {
+  margin-top: var(--space-4);
+  font-size: var(--fs-xs);
+  opacity: 0.75;
+}
+
+@media (max-width: 900px) {
+  .season-hero__inner {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+}
+
+/* ---- Secciones ---- */
+.season-section--alt {
+  background: var(--color-surface);
+  border-block: 1px solid var(--color-border-soft);
+}
+
+/* ---- Guía / checklist ---- */
+.season-guide {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: var(--space-10);
+}
+
+.season-guide h2 {
+  font-size: var(--fs-h2);
+}
+
+.season-guide h2 em {
+  font-style: normal;
+  color: color-mix(in srgb, currentColor 42%, transparent);
+}
+
+.season-guide__lead {
+  margin-top: var(--space-3);
+  color: var(--color-ink-500);
+  font-size: var(--fs-sm);
+}
+
+.checklist {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.check-item {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.check-item:hover {
+  border-color: var(--color-border);
+}
+
+.check-item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.check-item__box {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border);
+  color: transparent;
+  transition: background var(--duration-fast) var(--ease-out-expo), color var(--duration-fast) var(--ease-out-expo);
+}
+
+.check-item input:checked + .check-item__box {
+  background: var(--color-accent-600);
+  border-color: var(--color-accent-600);
+  color: var(--color-on-accent);
+}
+
+.check-item input:focus-visible + .check-item__box {
+  outline: 2.5px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.check-item__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--fs-sm);
+}
+
+.check-item__text span {
+  color: var(--color-ink-500);
+}
+
+.check-item input:checked ~ .check-item__text strong {
+  text-decoration: line-through;
+  color: var(--color-ink-500);
+}
+
+@media (max-width: 900px) {
+  .season-guide {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+}
+
+/* ---- Calendario ---- */
+.season-calendar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.season-calendar__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-bg);
+  font-size: var(--fs-sm);
+}
+
+.season-calendar__item span:last-child {
+  color: var(--color-ink-500);
+}
+
+.season-calendar__month {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--color-ink-500);
+}
+
+.season-calendar__item.is-current {
+  background: var(--color-inverted-bg);
+  color: var(--color-inverted-text);
+  border-color: var(--color-inverted-bg);
+}
+
+.season-calendar__item.is-current span:last-child,
+.season-calendar__item.is-current .season-calendar__month {
+  color: color-mix(in srgb, var(--color-inverted-text) 72%, transparent);
+}
+
+@media (max-width: 900px) {
+  .season-calendar {
+    grid-template-columns: 1fr;
+  }
+}

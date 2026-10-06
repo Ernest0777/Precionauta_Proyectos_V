@@ -14,6 +14,11 @@ export function formatPriceMXN(amount) {
   return mxn.format(amount);
 }
 
+/** Precio grande estilo marketplace: "$" pequeño y alzado (ver .price-cur). */
+export function formatPriceHTML(amount) {
+  return formatPriceMXN(amount).replace("$", '<span class="price-cur" aria-hidden="true">$</span>');
+}
+
 /**
  * Calcula el porcentaje de descuento entre el precio anterior y el actual.
  * Redondeado al entero mas cercano, como se muestra en la insignia de la tarjeta.

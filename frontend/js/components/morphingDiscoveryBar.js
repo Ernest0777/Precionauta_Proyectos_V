@@ -16,6 +16,8 @@ class MorphingDiscoveryBar {
     this.searchMinLength = options.searchMinLength ?? 2;
     this.debounceTime = options.debounceTime ?? 180;
     this.maxResults = options.maxResults ?? 6;
+    /** () => { head, items }[] : qué mostrar al enfocar el buscador vacío (recientes, recomendados). */
+    this.emptyProvider = options.emptyProvider || null;
 
     if (!this.container) {
       console.error(`Container with id "${containerId}" not found`);
@@ -65,6 +67,7 @@ class MorphingDiscoveryBar {
     this.input.addEventListener("input", () => this.handleInput());
     this.input.addEventListener("focus", () => {
       if (this.getValue().length >= this.searchMinLength) this.showSuggestions();
+      else this.showEmptyState();
     });
     this.input.addEventListener("keydown", (e) => this.handleKeydown(e));
     this.form.addEventListener("submit", (e) => {
@@ -90,6 +93,8 @@ class MorphingDiscoveryBar {
       if (query.length >= this.searchMinLength) {
         this.updateSuggestions(query);
         this.showSuggestions();
+      } else if (query.length === 0) {
+        this.showEmptyState();
       } else {
         this.hideSuggestions();
       }
@@ -143,11 +148,23 @@ class MorphingDiscoveryBar {
       return;
     }
 
-    this.suggestionsContainer.innerHTML = `
-      <p class="discovery-suggestions__head">Ofertas que coinciden</p>
-      ${this.results
-        .map(
-          (s, i) => `
+    this.renderGroups([{ head: "Ofertas que coinciden", items: this.results }], query);
+  }
+
+  /** Pinta uno o más grupos ({ head, items }) como opciones navegables con flechas. */
+  renderGroups(groups, query = "") {
+    this.results = groups.flatMap((g) => g.items);
+    this.highlighted = -1;
+    let index = 0;
+    this.suggestionsContainer.innerHTML = groups
+      .filter((g) => g.items.length)
+      .map(
+        (g) => `
+      <p class="discovery-suggestions__head">${escapeHtml(g.head)}</p>
+      ${g.items
+        .map((s) => {
+          const i = index++;
+          return `
         <a
           class="discovery-suggestion"
           id="discovery-option-${i}"
@@ -163,11 +180,11 @@ class MorphingDiscoveryBar {
             ${s.meta ? `<span class="discovery-suggestion__meta">${escapeHtml(s.meta)}</span>` : ""}
           </span>
           ${s.badge ? `<span class="discovery-suggestion__discount">${escapeHtml(s.badge)}</span>` : ""}
-        </a>
-      `
-        )
-        .join("")}
-    `;
+        </a>`;
+        })
+        .join("")}`
+      )
+      .join("");
 
     this.suggestionsContainer.querySelectorAll(".discovery-suggestion").forEach((el) => {
       el.addEventListener("click", (e) => {
@@ -178,6 +195,13 @@ class MorphingDiscoveryBar {
         }
       });
     });
+  }
+
+  showEmptyState() {
+    const groups = this.emptyProvider?.() ?? [];
+    if (!groups.some((g) => g.items.length)) return;
+    this.renderGroups(groups);
+    this.showSuggestions();
   }
 
   selectSuggestion(text) {

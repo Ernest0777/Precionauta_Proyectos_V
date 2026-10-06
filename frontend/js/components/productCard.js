@@ -1,6 +1,7 @@
 import { icon, CATEGORY_ICON_BY_SLUG } from "../utils/icons.js";
 import {
   formatPriceMXN,
+  formatPriceHTML,
   calculateDiscountPercent,
   calculateSavings,
   formatHoursAgoLabel,
@@ -13,10 +14,10 @@ import {
  *
  * @param {object} product - un item de data/products.js
  * @param {string} categoryLabel - etiqueta legible de la categoría
- * @param {{ variant?: "standard" | "featured", saved?: boolean }} [opts]
+ * @param {{ variant?: "standard" | "featured", saved?: boolean, alerted?: boolean, showSaveButton?: boolean, reason?: string }} [opts]
  */
 export function renderProductCard(product, categoryLabel, opts = {}) {
-  const { variant = "standard", saved = false, showSaveButton = true } = opts;
+  const { variant = "standard", saved = false, alerted = false, showSaveButton = true, reason = "" } = opts;
   const isFeatured = variant === "featured";
 
   const discountPercent = calculateDiscountPercent(
@@ -54,15 +55,26 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
 
         ${
           showSaveButton
-            ? `<button
-                 type="button"
-                 class="icon-button product-card__save ${saved ? "is-saved" : ""}"
-                 data-save-toggle
-                 aria-pressed="${saved}"
-                 aria-label="Guardar ${escapeAttr(product.name)}"
-               >
-                 ${icon("heart", { size: 18 })}
-               </button>`
+            ? `<div class="product-card__actions">
+                 <button
+                   type="button"
+                   class="icon-button product-card__action product-card__bell ${alerted ? "is-on" : ""}"
+                   data-alert-toggle
+                   aria-pressed="${alerted}"
+                   aria-label="Avisarme si baja ${escapeAttr(product.name)}"
+                 >
+                   ${icon("bell", { size: 17 })}
+                 </button>
+                 <button
+                   type="button"
+                   class="icon-button product-card__action product-card__save ${saved ? "is-saved" : ""}"
+                   data-save-toggle
+                   aria-pressed="${saved}"
+                   aria-label="Guardar ${escapeAttr(product.name)}"
+                 >
+                   ${icon("heart", { size: 18 })}
+                 </button>
+               </div>`
             : ""
         }
 
@@ -83,6 +95,7 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
       </div>
 
       <div class="product-card__body">
+        ${reason ? `<p class="product-card__reason">${icon("sparkle", { size: 13 })} ${escapeHtml(reason)}</p>` : ""}
         <p class="product-card__category">${categoryLabel}</p>
         <h3 class="product-card__name">
           <a href="producto.html?id=${encodeURIComponent(product.id)}">${escapeHtml(product.name)}</a>
@@ -90,7 +103,7 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
 
         <div class="product-card__prices">
           <span class="price-old tabular-nums">${formatPriceMXN(product.previousPrice)}</span>
-          <span class="price-new tabular-nums">${formatPriceMXN(product.currentPrice)}</span>
+          <span class="price-new tabular-nums" aria-label="Precio actual ${formatPriceMXN(product.currentPrice)}">${formatPriceHTML(product.currentPrice)}</span>
         </div>
 
         <span class="chip chip--savings">Ahorras ${formatPriceMXN(savings)}</span>

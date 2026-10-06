@@ -67,8 +67,14 @@ section {
 
 .nav-bar__search {
   flex: 1;
-  min-width: 0;
-  max-width: 30rem;
+  min-width: 11rem;
+  max-width: 34rem;
+}
+
+/* El total ya vive en el panel "Mis guardados" (corazón); en la barra de
+   escritorio solo le quitaba espacio al buscador. Sigue en el menú móvil. */
+.nav-bar__links .savings-pill {
+  display: none;
 }
 
 .nav-bar__links {
@@ -122,6 +128,18 @@ section {
   }
   .nav-bar__links {
     gap: var(--space-5);
+  }
+}
+
+/* Entre tablet y escritorio pequeño no cabe todo: menos aire y fuera
+   "Ofertas" (el logo y el hero ya llevan al catálogo). */
+@media (max-width: 1180px) {
+  .nav-bar,
+  .nav-bar__links {
+    gap: var(--space-4);
+  }
+  .nav-bar__links > .nav-link:first-child {
+    display: none;
   }
 }
 
@@ -372,19 +390,19 @@ section {
 
 .hero__headline {
   font-size: clamp(2.75rem, 1.6rem + 4.4vw, 5.25rem);
-  line-height: 1.02;
-  letter-spacing: -0.015em;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-weight: 700;
   text-wrap: balance;
 }
 
-/* La cursiva de Cormorant, en terracota: la única palabra que el ojo debe
-   atrapar primero. Mismo recurso en los h2 de sección (con mesura). */
+/* Titular a dos tintas: la palabra clave en el mismo color al 45%. Sin
+   cursivas ni color nuevo; funciona igual sobre fondo claro u oscuro. */
 .hero__headline em,
 .section-head h2 em,
 .stay-connected h2 em {
-  font-style: italic;
-  font-weight: 500;
-  color: var(--color-accent);
+  font-style: normal;
+  color: color-mix(in srgb, currentColor 42%, transparent);
 }
 
 .hero__subtext {
@@ -524,8 +542,8 @@ section {
   right: var(--space-5);
   padding: 0.25rem 0.6rem;
   border-radius: var(--radius-pill);
-  background: var(--color-accent-600);
-  color: var(--color-on-accent);
+  background: var(--color-deal);
+  color: #fff;
   font-size: var(--fs-xs);
   font-weight: 800;
 }
@@ -585,7 +603,7 @@ section {
   overflow: hidden;
   background: var(--color-saffron);
   color: var(--color-saffron-ink);
-  border-block: 1px solid rgba(43, 33, 24, 0.12);
+  border-block: 1px solid var(--color-saffron);
   --ticker-duration: 55s;
 }
 
@@ -617,13 +635,10 @@ section {
 
 .ticker__pct {
   font-weight: 800;
-  color: #7c321b;
 }
 
 .ticker__name {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 1.1875rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
 }
 
@@ -641,7 +656,7 @@ section {
 
 .ticker__spark {
   display: inline-flex;
-  color: #9a3e22;
+  opacity: 0.45;
 }
 
 .ticker__item:focus-visible {
@@ -712,52 +727,6 @@ section {
     border-right: none;
     padding-inline-end: 0;
     width: 100%;
-  }
-}
-
-/* ================= CATEGORY BENTO ================= */
-
-.category-bento {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-auto-rows: 96px;
-  gap: var(--space-4);
-}
-
-.category-tile--lg {
-  grid-column: span 3;
-  grid-row: span 2;
-}
-
-.category-tile--sm {
-  grid-column: span 2;
-  grid-row: span 1;
-}
-
-@media (max-width: 1024px) {
-  .category-bento {
-    grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: 92px;
-  }
-  /* span 2 (half row), not span 4: at full width the two lg tiles stacked
-     instead of sitting side by side, and row-span:1 left only 92px for a
-     56px icon + padding + label + count, which clipped/overlapped. */
-  .category-tile--lg {
-    grid-column: span 2;
-    grid-row: span 2;
-  }
-  .category-tile--sm {
-    grid-column: span 2;
-  }
-}
-
-@media (max-width: 640px) {
-  .category-bento {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .category-tile--lg,
-  .category-tile--sm {
-    grid-column: span 1;
   }
 }
 
@@ -837,18 +806,18 @@ section {
 /* ================= STAY CONNECTED ================= */
 
 /*
- * Closing band in full terracotta (reference: the brick-red "Everyone's
- * welcome at our table" band on The Mainstays). Used once, right before the
- * footer. Colors are pinned locally so the band is identical in both themes.
+ * Closing band, inverted against the page (black on the light theme, white
+ * on the dark one). Descendant rules read accent/ink/surface, so they are
+ * re-pointed here at the inverted pair.
  */
 .stay-connected {
-  --color-accent: #fbe3d2;
-  --color-ink-900: #7c321b;
-  --color-surface: #fdfaf5;
+  --color-accent: var(--color-inverted-text);
+  --color-ink-900: var(--color-inverted-bg);
+  --color-surface: var(--color-inverted-text);
   position: relative;
   overflow: clip;
-  background: #9a3e22;
-  color: #fdfaf5;
+  background: var(--color-inverted-bg);
+  color: var(--color-inverted-text);
   text-align: center;
   padding-block: var(--space-24);
   padding-inline: var(--container-pad);
@@ -862,9 +831,11 @@ section {
   aspect-ratio: 1;
   right: -9rem;
   top: -10rem;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%23b24a28' d='M128,0C136.5,102.4,153.6,119.5,256,128C153.6,136.5,136.5,153.6,128,256C119.5,153.6,102.4,136.5,0,128C102.4,119.5,119.5,102.4,128,0Z'/%3E%3C/svg%3E")
+  background: color-mix(in srgb, var(--color-inverted-text) 7%, transparent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,0C136.5,102.4,153.6,119.5,256,128C153.6,136.5,136.5,153.6,128,256C119.5,153.6,102.4,136.5,0,128C102.4,119.5,119.5,102.4,128,0Z'/%3E%3C/svg%3E")
     center / contain no-repeat;
-  opacity: 0.8;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,0C136.5,102.4,153.6,119.5,256,128C153.6,136.5,136.5,153.6,128,256C119.5,153.6,102.4,136.5,0,128C102.4,119.5,119.5,102.4,128,0Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 
 .stay-connected__inner {
@@ -889,7 +860,7 @@ section {
 }
 
 .stay-connected p {
-  color: rgba(253, 250, 245, 0.86);
+  color: color-mix(in srgb, var(--color-inverted-text) 80%, transparent);
   max-width: 38ch;
 }
 

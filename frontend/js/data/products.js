@@ -1,5 +1,5 @@
 /**
- * Datos de prueba - 10 productos.
+ * Datos de prueba - 10 productos base (más 100 generados en generatedProducts.js).
  *
  * Contenido ilustrativo para maquetar el catálogo y la página de Detalle
  * (ver PRODUCT.md > Capabilities and Constraints): precios, tiendas,
@@ -13,7 +13,9 @@
  * aparece destacado en el catálogo, para que Home y Detalle compartan datos.
  */
 
-export const PRODUCTS = [
+import { GENERATED_PRODUCTS } from "./generatedProducts.js";
+
+const BASE_PRODUCTS = [
   {
     id: "auriculares-xr-pro",
     name: "Auriculares inalámbricos XR-Pro",
@@ -240,3 +242,6 @@ export const PRODUCTS = [
     ],
   },
 ];
+
+/** Los 10 productos base (los que usan Detalle y los textos) + 100 generados. */
+export const PRODUCTS = [...BASE_PRODUCTS, ...GENERATED_PRODUCTS];
