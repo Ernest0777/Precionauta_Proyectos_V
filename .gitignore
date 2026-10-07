@@ -4,3 +4,27 @@
 
 # Logs y capturas de playwright-cli (se regeneran en cada prueba)
 .playwright-cli/
+
+# Environment variables (secrets - NEVER commit)
+.env
+.env.local
+.env.*.local
+
+# Node modules (auto-generated)
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

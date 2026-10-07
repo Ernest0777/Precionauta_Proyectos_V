@@ -2,12 +2,15 @@
   "name": "precionauta",
   "version": "1.0.0",
   "description": "Rastreador de ofertas extremas en México - Real-time deal aggregator",
-  "main": "frontend/index.html",
+  "main": "backend/server.js",
   "scripts": {
-    "dev": "concurrently \"http-server frontend -p 4173 -c-1\" \"sleep 2 && start http://localhost:4173\" || concurrently \"http-server frontend -p 4173 -c-1\" \"sleep 2 && open http://localhost:4173\"",
+    "dev": "concurrently \"npm run server:dev\" \"npm run frontend:dev\"",
+    "frontend:dev": "http-server frontend -p 4173 -c-1 && start http://localhost:4173 || http-server frontend -p 4173 -c-1 && open http://localhost:4173",
+    "server:dev": "nodemon backend/server.js",
+    "server": "node backend/server.js",
     "start": "npm run dev",
     "serve": "http-server frontend -p 4173",
-    "build": "echo Production ready - deploy frontend/ folder"
+    "build": "echo Production ready - deploy backend/ and frontend/ folders"
   },
   "keywords": [
     "deals",
@@ -19,8 +22,16 @@
   ],
   "author": "Precionauta Team",
   "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2"
+  },
   "devDependencies": {
     "concurrently": "^8.2.0",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "nodemon": "^3.0.2"
   }
 }
