@@ -53,10 +53,29 @@
 - [x] `backend/.env` se carga aunque se arranque desde la raíz (antes el token nunca se leía)
 - [x] Caché en disco (`backend/cache/deals.json`) y precarga al arrancar
 - [x] Detalle: sin gráfica inventada para ofertas reales (todavía no hay historial)
-- [ ] Agregar `MERCADO_LIBRE_CLIENT_SECRET` y `MERCADO_LIBRE_REFRESH_TOKEN` a `backend/.env` para que el token (dura 6 h) se renueve solo
+- [x] Solo se publican ofertas con descuento de 20% a 99% (`discountRange` en `backend/config/config.js`); antifraude sube de 95% a 99%
+- [x] Token de ML se renueva solo cada 6 h con "Client Credentials" (App ID + `MERCADO_LIBRE_CLIENT_SECRET` en `backend/.env`); probado con token vencido
+- [x] `scripts/meli-token.js`: autorización con cuenta de usuario (solo si algún día se necesitan datos de un usuario; hoy no hace falta)
 - [ ] Guardar precios en una base de datos para tener historial real y validar descuentos falsos
-- [ ] Los descuentos reales rondan 5-79%: el filtro "80%+" casi nunca tendrá resultados con datos reales
-- [ ] Sacar `node_modules/` de git (`git rm -r --cached node_modules`)
+- [ ] La clave secreta va solo en `backend/.env` (no se sube); compartirla con el equipo por privado
+
+## Git (pendiente - lo hace Pedro) 🧹
+- [x] Commit de todo lo de la Fase 5 ("Update")
+- [x] Sacar `node_modules/` de git sin borrarlo del disco: `git rm -r --cached node_modules` (pesa 48 MB / ~10,300 archivos; el `.gitignore` no saca lo que ya se había subido)
+- [x] Quitar `package-lock.json` del `.gitignore` (sí conviene subirlo: fija versiones para todo el equipo)
+- [ ] Después de eso, el equipo corre `npm install` tras hacer pull
+
+## Más tiendas / afiliados 🛒 (SIGUIENTE)
+No se agregan solas: cada tienda necesita su conector en el backend. Lo visual (menú Tiendas, filtros, conteos) sí se arma solo con lo que llega.
+Por cada tienda:
+1. Acceso a datos: API o feed de productos para afiliados (sin scraping, por el tema legal)
+2. Registrarse en su programa de afiliados (credenciales + formato de enlace con nuestro ID)
+3. Conector en `backend/api/` (como `meli-client.js`) que convierta sus productos al formato de oferta
+4. Enlace "Ver oferta" con el ID de afiliado
+- [ ] Cambio previo: hoy `fromDeal` en `frontend/js/data/products.js` pone "Mercado Libre" fijo; el backend debe mandar `store`/`storeCode` por oferta
+- [ ] Mercado Libre: programa de afiliados de ML y meter el enlace de afiliado en "Ver oferta"
+- [ ] G2A: revisar si su programa de afiliados da feed de productos con precios o solo enlaces; probablemente categoría nueva "Videojuegos" / "Digital"
+- [ ] Amazon México (Product Advertising API) y Liverpool: mismo proceso
 
 ## Ideas para lo siguiente 💡
 - [ ] Termómetro de ofertas estilo Promodescuentos (votar 🔥/❄️)
