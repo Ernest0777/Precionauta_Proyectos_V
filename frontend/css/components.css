@@ -1142,6 +1142,25 @@
   aspect-ratio: 16 / 11;
 }
 
+/* Foto real (ofertas de Mercado Libre): fondo blanco como en la tienda,
+   el producto completo sin recortar. */
+.product-card__media.has-photo {
+  background: #fff;
+}
+
+.product-card__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: var(--space-4);
+  transition: transform var(--duration-slow) var(--ease-out-expo);
+}
+
+.product-card:hover .product-card__photo,
+.product-card:focus-within .product-card__photo {
+  transform: scale(1.04);
+}
+
 /* Textura sin foto inventada: el icono de la categoría, enorme y girado,
    sangrando por la esquina. */
 .product-card__watermark {

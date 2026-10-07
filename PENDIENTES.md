@@ -45,6 +45,19 @@
 - [x] `temporada.html` (Buen Fin 2026): cuenta regresiva, mínimos históricos, +50%, guía con checklist, calendario de temporadas
 - [x] Barra superior del Buen Fin en todas las páginas (se puede cerrar) — fechas en `js/data/season.js` (marcadas como estimadas)
 
+## Fase 5: Frontend conectado a Mercado Libre ✅ (COMPLETADO - 2026-10-06)
+- [x] El frontend pide las ofertas a `http://localhost:3001/api/deals`; si el backend no corre, usa los 110 productos de ejemplo (`js/data/products.js`)
+- [x] Fotos, precio actual, precio anterior, specs y enlace reales de Mercado Libre (tarjetas, hero y Detalle con galería)
+- [x] ML cerró `/sites/MLM/search` e `/items` (403): el catálogo se arma con "más vendidos" por categoría + `/products/:id/items` (mejor oferta entre vendedores)
+- [x] Categorías del backend mapeadas a las del frontend (los IDs viejos estaban mal)
+- [x] `backend/.env` se carga aunque se arranque desde la raíz (antes el token nunca se leía)
+- [x] Caché en disco (`backend/cache/deals.json`) y precarga al arrancar
+- [x] Detalle: sin gráfica inventada para ofertas reales (todavía no hay historial)
+- [ ] Agregar `MERCADO_LIBRE_CLIENT_SECRET` y `MERCADO_LIBRE_REFRESH_TOKEN` a `backend/.env` para que el token (dura 6 h) se renueve solo
+- [ ] Guardar precios en una base de datos para tener historial real y validar descuentos falsos
+- [ ] Los descuentos reales rondan 5-79%: el filtro "80%+" casi nunca tendrá resultados con datos reales
+- [ ] Sacar `node_modules/` de git (`git rm -r --cached node_modules`)
+
 ## Ideas para lo siguiente 💡
 - [ ] Termómetro de ofertas estilo Promodescuentos (votar 🔥/❄️)
 - [ ] PWA instalable + notificaciones del navegador para las alertas
@@ -84,4 +97,4 @@
 
 ---
 
-**Última actualización:** 2026-10-05
+**Última actualización:** 2026-10-06

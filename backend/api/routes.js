@@ -7,16 +7,11 @@ const meliClient = require('./meli-client');
 // Endpoint 1: GET /api/deals - Obtener todas las ofertas
 router.get('/deals', async (req, res) => {
   try {
-    const { filter = 80, category = null } = req.query;
-    const minDiscount = parseInt(filter) || 80;
+    const { filter = 0, category = null } = req.query;
+    const minDiscount = parseInt(filter) || 0;
 
-    // Intentar obtener del cache
-    let deals = dealFetcher.getCachedDeals();
-
-    // Si no hay cache válido, fetchar de Mercado Libre
-    if (!deals) {
-      deals = await dealFetcher.fetchAllDeals(minDiscount);
-    }
+    // Caché fresca, o la última lista buena mientras se refresca, o consulta a ML
+    let deals = await dealFetcher.fetchAllDeals();
 
     // Aplicar filtro de categoría si se proporciona
     if (category) {
@@ -39,6 +34,7 @@ router.get('/deals', async (req, res) => {
       },
       total: deals.length,
       lastUpdated: dealFetcher.cache.lastUpdated,
+      source: dealFetcher.cache.source,
     });
   } catch (error) {
     console.error('❌ Error in GET /deals:', error.message);
@@ -204,7 +200,7 @@ router.get('/categories', (req, res) => {
 // Endpoint 6: GET /api/stats - Estadísticas globales
 router.get('/stats', async (req, res) => {
   try {
-    const deals = dealFetcher.getCachedDeals() || await dealFetcher.fetchAllDeals(60);
+    const deals = await dealFetcher.fetchAllDeals();
     const stats = dealFetcher.getStats(deals);
 
     res.json({

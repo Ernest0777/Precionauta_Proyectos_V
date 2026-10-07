@@ -59,7 +59,42 @@ function renderBreadcrumb() {
   document.title = `${product.name} - Precionauta`;
 }
 
+/** Fotos reales del producto (Mercado Libre). Sin fotos, la galería de iconos de abajo. */
+function renderPhotoGallery(images) {
+  const views = images
+    .map(
+      (src, index) => `
+        <div class="gallery__view gallery__view--photo ${index === 0 ? "is-active" : ""}" data-view="${index}">
+          <img src="${escapeHtml(src)}" alt="${index === 0 ? escapeHtml(product.name) : ""}" ${index === 0 ? "" : 'loading="lazy"'} />
+        </div>
+      `
+    )
+    .join("");
+  const thumbs = images
+    .map(
+      (src, index) => `
+        <button
+          type="button"
+          class="gallery__thumb gallery__thumb--photo ${index === 0 ? "is-active" : ""}"
+          data-view-target="${index}"
+          aria-label="Foto ${index + 1} de ${images.length}"
+          aria-pressed="${index === 0}"
+        >
+          <img src="${escapeHtml(src)}" alt="" loading="lazy" />
+        </button>
+      `
+    )
+    .join("");
+  return `
+    <div class="gallery">
+      <div class="gallery__main gallery__main--photo">${views}</div>
+      ${images.length > 1 ? `<div class="gallery__thumbs">${thumbs}</div>` : ""}
+    </div>
+  `;
+}
+
 function renderGallery() {
+  if (product.images?.length) return renderPhotoGallery(product.images);
   const iconName = CATEGORY_ICON_BY_SLUG[product.categorySlug] ?? "tag";
   const views = GALLERY_VIEWS.map(
     (treatment, index) => `
@@ -119,6 +154,13 @@ function renderInfoColumn() {
         <span class="store-line__mark">${product.storeCode}</span>
         <div>
           <div style="font-weight:700; font-size: var(--fs-sm);">Disponible en ${escapeHtml(product.store)}</div>
+          ${
+            product.offersCount > 1
+              ? `<div style="font-size: var(--fs-xs); color: var(--color-ink-500);">Mejor precio entre ${product.offersCount} vendedores${
+                  product.freeShipping ? " · Envío gratis" : ""
+                }</div>`
+              : ""
+          }
           <div style="font-size: var(--fs-xs); color: var(--color-ink-500);">Verificado ${formatHoursAgoLabel(
             product.checkedHoursAgo
           )}</div>
@@ -255,6 +297,25 @@ function renderPriceHistoryPanel() {
   if (!rangeEl || !chartEl) return;
 
   const { historicMinPrice: min, historicMaxPrice: max, currentPrice } = product;
+
+  // Ofertas reales: todavía no guardamos precios en el tiempo, y una gráfica
+  // inventada sería justo el "descuento falso" que Precionauta promete evitar.
+  if (min == null || max == null) {
+    const heading = document.getElementById("historyHeading");
+    if (heading) heading.textContent = "Historial de precio";
+    rangeEl.innerHTML = `
+      <div class="price-range__item price-range__item--max">
+        <div class="price-range__label">Precio anterior</div>
+        <div class="price-range__value tabular-nums">${formatPriceMXN(product.previousPrice)}</div>
+      </div>
+      <div class="price-range__item price-range__item--now">
+        <div class="price-range__label">Precio actual</div>
+        <div class="price-range__value tabular-nums">${formatPriceMXN(currentPrice)}</div>
+      </div>
+    `;
+    chartEl.innerHTML = `<p class="price-chart__empty">${icon("clock", { size: 16 })} Empezamos a registrar el precio de este producto. La gráfica de 90 días aparecerá conforme juntemos datos; el precio anterior es el que declara el vendedor en ${escapeHtml(product.store)}.</p>`;
+    return;
+  }
 
   rangeEl.innerHTML = `
     <div class="price-range__item price-range__item--max">

@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const config = require('./config/config');
 const routes = require('./api/routes');
+const dealFetcher = require('./api/deal-fetcher');
 
 const app = express();
 
@@ -38,6 +39,9 @@ app.listen(PORT, () => {
   console.log(`📡 Environment: ${config.server.env}`);
   console.log(`🔗 API Base: http://localhost:${PORT}/api`);
   console.log(`💚 Health check: http://localhost:${PORT}/health`);
+
+  // Precarga: la primera visita no espera la consulta completa a Mercado Libre.
+  dealFetcher.refresh();
 });
 
 module.exports = app;

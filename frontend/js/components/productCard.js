@@ -39,18 +39,26 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
       data-category="${product.categorySlug}"
       data-tone="${product.categorySlug}"
     >
-      <div class="product-card__media product-card__media--${product.categorySlug}">
-        <span class="product-card__watermark" aria-hidden="true">
-          ${icon(categoryIconName, { size: isFeatured ? 300 : 200 })}
-        </span>
+      <div class="product-card__media product-card__media--${product.categorySlug} ${product.image ? "has-photo" : ""}">
+        ${
+          product.image
+            ? ""
+            : `<span class="product-card__watermark" aria-hidden="true">
+                 ${icon(categoryIconName, { size: isFeatured ? 300 : 200 })}
+               </span>`
+        }
         <a
           href="producto.html?id=${encodeURIComponent(product.id)}"
           class="product-card__media-link"
           aria-label="Ver detalle de ${escapeAttr(product.name)}"
         >
-          <div class="product-card__glyph" aria-hidden="true">
-            ${icon(categoryIconName, { size: isFeatured ? 56 : 40 })}
-          </div>
+          ${
+            product.image
+              ? `<img class="product-card__photo" src="${escapeAttr(product.image)}" alt="" loading="lazy" decoding="async" />`
+              : `<div class="product-card__glyph" aria-hidden="true">
+                   ${icon(categoryIconName, { size: isFeatured ? 56 : 40 })}
+                 </div>`
+          }
         </a>
 
         ${

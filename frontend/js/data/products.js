@@ -244,4 +244,61 @@ const BASE_PRODUCTS = [
 ];
 
 /** Los 10 productos base (los que usan Detalle y los textos) + 100 generados. */
-export const PRODUCTS = [...BASE_PRODUCTS, ...GENERATED_PRODUCTS];
+export const SAMPLE_PRODUCTS = [...BASE_PRODUCTS, ...GENERATED_PRODUCTS];
+
+/**
+ * Catálogo real: ofertas de Mercado Libre que arma el backend
+ * (backend/api/deal-fetcher.js). Si el backend no está corriendo, la página
+ * usa los productos de ejemplo de arriba para no quedarse vacía.
+ * Se puede apuntar a otro servidor con `window.PRECIONAUTA_API`.
+ */
+const API_BASE = window.PRECIONAUTA_API ?? "http://localhost:3001/api";
+const API_TIMEOUT_MS = 6000;
+
+/** true si el catálogo viene de Mercado Libre; false si son los de ejemplo. */
+export let IS_LIVE = false;
+
+async function loadLiveProducts() {
+  try {
+    const response = await fetch(`${API_BASE}/deals`, { signal: AbortSignal.timeout(API_TIMEOUT_MS) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const body = await response.json();
+    // `demo` = el backend tampoco pudo hablar con ML: mejor el catálogo de ejemplo completo.
+    if (!body.success || body.source === "demo" || !body.data?.length) throw new Error(`sin datos (${body.source})`);
+    IS_LIVE = true;
+    return body.data.map((deal, index) => fromDeal(deal, index));
+  } catch (error) {
+    console.info(`[Precionauta] Backend no disponible (${error.message}); usando productos de ejemplo.`);
+    return SAMPLE_PRODUCTS;
+  }
+}
+
+/** Deal del backend -> la misma forma que los productos de ejemplo. */
+function fromDeal(deal, index) {
+  const checkedMs = Date.now() - new Date(deal.validatedAt).getTime();
+  return {
+    id: deal.id,
+    name: deal.title,
+    categorySlug: deal.category,
+    store: "Mercado Libre",
+    storeCode: "ML",
+    storeUrl: deal.permalink,
+    previousPrice: deal.originalPrice,
+    currentPrice: deal.currentPrice,
+    // Sin historial todavía (necesita base de datos): Detalle oculta la gráfica.
+    historicMinPrice: null,
+    historicMaxPrice: null,
+    checkedHoursAgo: Math.max(0, Math.floor(checkedMs / 3_600_000)),
+    verified: true,
+    featured: index === 0, // el backend los manda ordenados por descuento
+    description: deal.description ?? "",
+    specs: deal.specs ?? [],
+    image: deal.thumbnail,
+    images: deal.pictures ?? [],
+    offersCount: deal.offersCount,
+    freeShipping: deal.freeShipping,
+    live: true,
+  };
+}
+
+export const PRODUCTS = await loadLiveProducts();

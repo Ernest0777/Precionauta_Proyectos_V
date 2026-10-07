@@ -309,11 +309,8 @@
 }
 
 .price-range__item--max {
-  /* Pinned: same reasoning as .legal__callout - this chip's background
-     never themes, so --color-ink-900/--color-ink-500 inside it (the
-     label/value below) can't either. */
-  --color-ink-900: #262220;
-  --color-ink-500: #6b6259;
+  /* Con la paleta B/N, --color-accent-tint sí cambia con el tema (gris
+     oscuro en modo oscuro), así que el texto ya no se fija en oscuro. */
   background: var(--color-accent-tint);
 }
 
@@ -487,4 +484,45 @@
 /* El verde de WhatsApp solo en el icono: la marca se reconoce sin teñir la página. */
 .share-btn--whatsapp .icon {
   color: #1faa53;
+}
+
+/* ---- Fotos reales (Mercado Libre) ---- */
+.gallery__main--photo {
+  background: #fff;
+}
+
+.gallery__view--photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: var(--space-5);
+}
+
+.gallery__thumb--photo {
+  background: #fff;
+  overflow: hidden;
+  padding: var(--space-1);
+}
+
+.gallery__thumb--photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.price-chart__empty {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-soft);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  color: var(--color-ink-500);
+}
+
+.price-chart__empty .icon {
+  flex-shrink: 0;
+  margin-top: 2px;
 }

@@ -1,6 +1,6 @@
 class FraudDetector {
   constructor() {
-    this.suspiciousPriceDropThreshold = 0.95; // 95%+ descuento = sospechoso
+    this.suspiciousPriceDropThreshold = 0.99; // más de 99% = sospechoso (config.discountRange.max)
     this.minStockForDeal = 0; // Cualquier stock es válido en v1
     this.minTrustScore = 0; // Sin validación de vendedor en v1
   }
@@ -8,7 +8,7 @@ class FraudDetector {
   // Validación principal de fraude
   isFraud(deal) {
     // Validación 1: Descuento anormalmente alto
-    if (deal.discount > 95) {
+    if (deal.discount > 99) {
       console.warn(`⚠️ FRAUD ALERT: ${deal.title} - Discount too high (${deal.discount}%)`);
       return true;
     }

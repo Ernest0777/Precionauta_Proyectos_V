@@ -28,3 +28,6 @@ yarn-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Caché local de ofertas del backend (se regenera sola)
+backend/cache/
