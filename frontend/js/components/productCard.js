@@ -1,4 +1,5 @@
 import { icon, CATEGORY_ICON_BY_SLUG } from "../utils/icons.js";
+import { formatAge, formatWait } from "../utils/plan.js";
 import {
   formatPriceMXN,
   formatPriceHTML,
@@ -93,7 +94,9 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
             ? `<span class="chip chip--flame chip--pinned">${icon("sparkle", { size: 14 })} Destacada</span>`
             : isFeatured
               ? `<span class="chip chip--flame">${icon("flame", { size: 14 })} Oferta más caliente</span>`
-              : ""
+              : product.isNew
+                ? `<span class="chip chip--flame chip--new">${icon("lightning", { size: 14 })} Nueva · la ves antes por Plus</span>`
+                : ""
         }
 
         <span
@@ -145,6 +148,46 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
             rel="noopener sponsored"
           >
             Ver oferta
+            <span class="btn__icon-circle">${icon("arrowRight", { size: 14 })}</span>
+          </a>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+/**
+ * Adelanto bloqueado (plan Gratis): una oferta que apareció hace menos de 2 h.
+ * Muestra lo justo para antojar (categoría, descuento, cuánto falta) pero no
+ * el nombre ni el precio: con eso cualquiera la buscaría directo en la tienda.
+ */
+export function renderLockedCard(product, categoryLabel) {
+  const discountPercent = calculateDiscountPercent(product.previousPrice, product.currentPrice);
+  const categoryIconName = CATEGORY_ICON_BY_SLUG[product.categorySlug] ?? "tag";
+  const age = formatAge(Date.now() - product.firstSeenAt);
+  const wait = formatWait(product.unlocksAt - Date.now());
+  return `
+    <article class="product-card product-card--locked" data-product-id="${product.id}" data-unlocks-at="${product.unlocksAt}" data-tone="${product.categorySlug}">
+      <div class="product-card__media product-card__media--${product.categorySlug} ${product.image ? "has-photo" : ""}">
+        ${
+          product.image
+            ? `<img class="product-card__photo product-card__photo--blurred" src="${escapeAttr(product.image)}" alt="" loading="lazy" decoding="async" />`
+            : `<div class="product-card__glyph" aria-hidden="true">${icon(categoryIconName, { size: 40 })}</div>`
+        }
+        <span class="locked-card__lock" aria-hidden="true">${icon("lock", { size: 22 })}</span>
+        <span class="chip chip--store">${product.storeCode}</span>
+        <span class="badge badge--discount" aria-label="Descuento del ${discountPercent} por ciento">-${discountPercent}%</span>
+      </div>
+      <div class="product-card__body">
+        <p class="product-card__category">${categoryLabel}</p>
+        <h3 class="product-card__name">Oferta nueva ${age}</h3>
+        <p class="locked-card__text">
+          <strong>Plus la ve ahora.</strong>
+          <span>En Gratis se libera en <span class="tabular-nums" data-unlock-wait>${wait}</span>.</span>
+        </p>
+        <div class="product-card__footer">
+          <a class="btn btn--cta" href="planes.html">
+            Verla con Plus
             <span class="btn__icon-circle">${icon("arrowRight", { size: 14 })}</span>
           </a>
         </div>

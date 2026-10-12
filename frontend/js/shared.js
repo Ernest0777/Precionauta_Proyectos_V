@@ -9,6 +9,7 @@
 import { PRODUCTS } from "./data/products.js";
 import { calculateSavings, formatPriceMXN } from "./utils/format.js";
 import { track } from "./utils/recommender.js";
+import { PLAN_STORAGE_KEY } from "./utils/plan.js";
 
 export const SAVED_STORAGE_KEY = "precionauta:saved-offers";
 export const ALERTS_STORAGE_KEY = "precionauta:price-alerts";
@@ -49,7 +50,8 @@ export function persistAlertIds(set) {
 
 /* ================= PLAN (Gratis / Plus de demostración) ================= */
 
-export const PLAN_STORAGE_KEY = "precionauta:plan";
+// La clave y las reglas de cada plan viven en utils/plan.js (products.js también las usa).
+export { PLAN_STORAGE_KEY };
 export const ALERTS_CHANGED_EVENT = "alerts-changed";
 export const SAVED_CHANGED_EVENT = "saved-changed";
 export const PLAN_CHANGED_EVENT = "plan-changed";

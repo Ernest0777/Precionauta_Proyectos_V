@@ -1,4 +1,5 @@
-import { PRODUCTS, API_BASE } from "./data/products.js";
+import { PRODUCTS, LOCKED_PRODUCTS, API_BASE } from "./data/products.js";
+import { currentPlanId, formatAge, formatWait, HISTORY_DAYS } from "./utils/plan.js";
 import { CATEGORIES } from "./data/categories.js";
 import { renderProductCard } from "./components/productCard.js";
 import { renderPriceChart } from "./components/priceChart.js";
@@ -30,6 +31,8 @@ import { bindHeaderMenus } from "./components/headerMenus.js";
 import { ALERTS_CHANGED_EVENT, SAVED_CHANGED_EVENT } from "./shared.js";
 import { track } from "./utils/recommender.js";
 
+const PLAN_ID = currentPlanId();
+
 /** Plazos típicos de meses sin intereses en tiendas mexicanas. */
 const MSI_TERMS = [3, 6, 9, 12, 18];
 
@@ -44,9 +47,12 @@ const state = {
   alerts: loadAlertIds(),
 };
 
+const requestedId = new URLSearchParams(window.location.search).get("id");
+/** Oferta nueva que el plan Gratis todavía no puede ver (enlace compartido, por ejemplo). */
+const lockedProduct = LOCKED_PRODUCTS.find((p) => p.id === requestedId) ?? null;
+
 function getRequestedProduct() {
-  const id = new URLSearchParams(window.location.search).get("id");
-  return PRODUCTS.find((p) => p.id === id) ?? PRODUCTS[0];
+  return lockedProduct ?? PRODUCTS.find((p) => p.id === requestedId) ?? PRODUCTS[0];
 }
 
 const product = getRequestedProduct();
@@ -357,7 +363,7 @@ async function renderLiveHistory(rangeEl, chartEl) {
   const { currentPrice } = product;
   let rows = [];
   try {
-    const res = await fetch(`${API_BASE}/deals/${encodeURIComponent(product.id)}/history`);
+    const res = await fetch(`${API_BASE}/deals/${encodeURIComponent(product.id)}/history?days=${HISTORY_DAYS[PLAN_ID]}`);
     rows = (await res.json()).data ?? [];
   } catch {
     // Sin backend: se queda el mensaje de abajo.
@@ -407,7 +413,11 @@ async function renderLiveHistory(rangeEl, chartEl) {
   points.push({ day: span / DAY_MS, price: currentPrice });
 
   if (heading) heading.textContent = `Historial de precio real (${relativeStart(span).replace("hace ", "últimos ")})`;
-  chartEl.innerHTML = renderPriceChart(points, { min, max, currentPrice, startLabel: relativeStart(span) });
+  chartEl.innerHTML =
+    renderPriceChart(points, { min, max, currentPrice, startLabel: relativeStart(span) }) +
+    (PLAN_ID === "free"
+      ? `<p class="price-chart__note">Gratis muestra los últimos ${HISTORY_DAYS.free} días. <a href="planes.html">Con Plus ves 12 meses.</a></p>`
+      : "");
 }
 
 function renderRelated() {
@@ -517,9 +527,58 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;");
 }
 
+/** Candado de Detalle: lo mismo que la tarjeta bloqueada, en grande. */
+function renderLockedDetail() {
+  const container = document.getElementById("productDetail");
+  const discount = calculateDiscountPercent(product.previousPrice, product.currentPrice);
+  document.querySelector(".detail-panels")?.setAttribute("hidden", "");
+  document.title = `Oferta nueva de ${discount}% - Precionauta`;
+  document.getElementById("breadcrumbCategory").textContent = categoryLabel;
+  document.getElementById("breadcrumbProduct").textContent = "Oferta nueva";
+  container.innerHTML = `
+    <div class="gallery">
+      <div class="gallery__main gallery__main--photo locked-detail__media">
+        ${product.image ? `<img class="product-card__photo--blurred" src="${escapeHtml(product.image)}" alt="" />` : ""}
+        <span class="locked-card__lock" aria-hidden="true">${icon("lock", { size: 26 })}</span>
+      </div>
+    </div>
+    <div class="product-info">
+      <div class="product-info__badges">
+        <span class="badge-pill badge-pill--category">${categoryLabel}</span>
+        <span class="badge-pill">${icon("lightning", { size: 13 })} Nueva ${formatAge(Date.now() - product.firstSeenAt)}</span>
+      </div>
+      <h1>Oferta nueva <span class="price-panel__discount">-${discount}%</span></h1>
+      <p class="locked-detail__text">
+        Apareció ${formatAge(Date.now() - product.firstSeenAt)}. <strong>Con Plus la ves ahora mismo</strong>, con precio, tienda y enlace.
+        En el plan gratis se libera en <strong class="tabular-nums">${formatWait(product.unlocksAt - Date.now())}</strong>.
+        Las ofertas buenas suelen durar minutos.
+      </p>
+      <div class="product-info__actions">
+        <a class="btn btn--primary" href="planes.html">Verla ahora con Plus
+          <span class="btn__icon-circle">${icon("arrowRight", { size: 14 })}</span></a>
+        <a class="btn btn--outline" href="index.html#catalogo">Ver las ofertas disponibles</a>
+      </div>
+    </div>
+  `;
+}
+
 function init() {
   const yearEl = document.getElementById("footerYear");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+
+  if (lockedProduct) {
+    renderLockedDetail();
+    renderRelated();
+    renderSavingsSummary(state.saved);
+    bindRelatedActions();
+    bindHeaderMenus();
+    bindHeaderScrollShadow();
+    bindMobileMenu();
+    bindThemeToggle();
+    bindAuthModal();
+    bindSubscribeForm();
+    return;
+  }
 
   renderBreadcrumb();
   renderProductDetail();

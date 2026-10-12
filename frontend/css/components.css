@@ -2250,3 +2250,59 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* ================= PLANES: ofertas nuevas =================
+   Gratis ve las ofertas nuevas 2 h tarde (js/utils/plan.js). Mientras tanto
+   aparecen como adelanto bloqueado; en Plus llevan el sello "Nueva". */
+
+.product-card--locked .product-card__photo--blurred {
+  filter: blur(14px) saturate(0.6);
+  transform: scale(1.12); /* el desenfoque no deja borde claro */
+}
+
+.locked-card__lock {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+.locked-card__text {
+  display: grid;
+  gap: 2px;
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--color-ink-500);
+}
+
+.locked-card__text strong {
+  color: var(--color-ink-900);
+}
+
+.chip--new {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* Sección "Recién llegadas" (solo plan Gratis, cuando hay alguna). */
+.fresh {
+  padding-block: var(--space-6) var(--space-2);
+}
+
+.fresh__head {
+  margin-bottom: var(--space-5);
+  align-items: flex-end;
+}
+
+.fresh__lead {
+  max-width: 52ch;
+  margin-top: var(--space-2);
+}

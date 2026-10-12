@@ -1,6 +1,7 @@
-import { PRODUCTS } from "./data/products.js";
+import { PRODUCTS, LOCKED_PRODUCTS } from "./data/products.js";
+import { formatWait } from "./utils/plan.js";
 import { CATEGORIES, ALL_CATEGORIES_SLUG } from "./data/categories.js";
-import { renderProductCard } from "./components/productCard.js";
+import { renderProductCard, renderLockedCard } from "./components/productCard.js";
 import { ContinuousTabs } from "./components/continuousTabs.js";
 import { bindHeaderMenus } from "./components/headerMenus.js";
 import { maybeShowOnboarding, openOnboarding } from "./components/onboarding.js";
@@ -193,7 +194,10 @@ function renderExtremeZone() {
   const lead = document.getElementById("extremeLead");
   if (!rail) return;
   const extreme = getProductsByDiscount().filter((p) => discountOf(p) >= EXTREME_MIN);
-  const closest = extreme.length ? [] : getProductsByDiscount().slice(0, 4);
+  // En Gratis, las de 80%+ recién aparecidas salen como adelanto bloqueado:
+  // justo aquí es donde Plus vale la pena (duran minutos).
+  const lockedExtreme = LOCKED_PRODUCTS.filter((p) => discountOf(p) >= EXTREME_MIN);
+  const closest = extreme.length || lockedExtreme.length ? [] : getProductsByDiscount().slice(0, 4);
   const alertIds = loadAlertIds();
   const cards = (list) =>
     list
@@ -205,15 +209,51 @@ function renderExtremeZone() {
       )
       .join("");
 
-  if (extreme.length) {
-    lead.textContent = `${extreme.length} ${extreme.length === 1 ? "oferta" : "ofertas"} ahora mismo. Aparecen pocas veces y duran minutos: cada una pasó la verificación de historial.`;
-    rail.innerHTML = cards(extreme);
+  if (extreme.length || lockedExtreme.length) {
+    const total = extreme.length + lockedExtreme.length;
+    lead.textContent = `${total} ${total === 1 ? "oferta" : "ofertas"} ahora mismo. Aparecen pocas veces y duran minutos: cada una pasó la verificación de historial.${
+      lockedExtreme.length ? " Las nuevas las ves al instante con Plus." : ""
+    }`;
+    rail.innerHTML =
+      lockedExtreme.map((p) => renderLockedCard(p, CATEGORY_LABEL_BY_SLUG[p.categorySlug])).join("") + cards(extreme);
   } else {
     const best = closest[0] ? discountOf(closest[0]) : 0;
     lead.textContent = `Ahora mismo no hay ninguna: aparecen pocas veces y duran minutos. Mientras tanto, lo más cerca hoy llega a ${best}%.`;
     rail.innerHTML = cards(closest);
   }
   rail.querySelectorAll(".product-card").forEach((card) => card.classList.add("is-visible"));
+}
+
+/* ================= RECIÉN LLEGADAS (plan Gratis) ================= */
+
+/**
+ * Las ofertas de menos de 2 h que Gratis todavía no puede ver. Cada tarjeta
+ * cuenta hacia atrás; cuando una se libera, la página ofrece recargar.
+ */
+function renderFreshDeals() {
+  const section = document.getElementById("recien-llegadas");
+  if (!section || LOCKED_PRODUCTS.length === 0) return;
+  const locked = [...LOCKED_PRODUCTS].sort((a, b) => discountOf(b) - discountOf(a));
+  const best = discountOf(locked[0]);
+  document.getElementById("freshLead").textContent = `${locked.length} ${
+    locked.length === 1 ? "oferta apareció" : "ofertas aparecieron"
+  } en las últimas 2 horas, hasta de ${best}%. Con Plus las ves en tiempo real; en el plan gratis se liberan 2 h después.`;
+  const rail = document.getElementById("freshRail");
+  rail.innerHTML = locked.map((p) => renderLockedCard(p, CATEGORY_LABEL_BY_SLUG[p.categorySlug])).join("");
+  rail.querySelectorAll(".product-card").forEach((card) => card.classList.add("is-visible"));
+  section.hidden = false;
+  tickLockedCards();
+  setInterval(tickLockedCards, 30_000);
+}
+
+function tickLockedCards() {
+  document.querySelectorAll("[data-unlocks-at]").forEach((card) => {
+    const left = Number(card.dataset.unlocksAt) - Date.now();
+    const waitEl = card.querySelector("[data-unlock-wait]");
+    if (!waitEl) return;
+    if (left > 0) waitEl.textContent = formatWait(left);
+    else waitEl.closest(".locked-card__text").innerHTML = `<strong>Ya se liberó.</strong> <a href="index.html">Recarga para verla</a>`;
+  });
 }
 
 function bindExtremeZone() {
@@ -224,6 +264,7 @@ function bindExtremeZone() {
   // solo aparece si el backend tiene el bot activo (TELEGRAM_BOT_TOKEN).
   const alertButton = section.querySelector("[data-extreme-alert]");
   if (!alertButton) return;
+  // En Gratis el botón también aparece: el panel le ofrece Plus para los avisos al instante.
   const paint = () => (alertButton.hidden = !telegramState().enabled || telegramState().linked);
   paint();
   document.addEventListener(TELEGRAM_CHANGED_EVENT, paint);
@@ -726,6 +767,7 @@ function init() {
   renderHeroStores();
   renderDealTicker();
   renderExtremeZone();
+  renderFreshDeals();
   mountCategoryTabs();
   renderThresholdFilter();
   renderStoreFilter();

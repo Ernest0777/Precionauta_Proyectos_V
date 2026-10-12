@@ -15,6 +15,21 @@ const summaryStmt = db.prepare(`
   FROM prices GROUP BY deal_id
 `);
 
+// Lo que llegó en la primera consulta ya estaba ahí antes de que empezáramos a
+// guardar: no es "nuevo". Margen de 10 min por si esa consulta tardó.
+const BASELINE_MARGIN_MS = 10 * 60 * 1000;
+
+// La fecha de arranque se fija una sola vez (si se calculara con el registro más
+// viejo, cualquier dato raro movería la referencia y todo parecería nuevo).
+function trackingStartedAt() {
+  const saved = db.prepare("SELECT value FROM meta WHERE key = 'tracking_started_at'").get();
+  if (saved) return Number(saved.value);
+  const start = db.prepare('SELECT MIN(at) AS at FROM prices').get().at ?? Date.now();
+  db.prepare("INSERT OR IGNORE INTO meta (key, value) VALUES ('tracking_started_at', ?)").run(String(start));
+  return start;
+}
+const TRACKING_STARTED_AT = trackingStartedAt();
+
 let summaryCache = null;
 
 // Guarda el precio de cada oferta de una consulta a ML.
@@ -49,6 +64,16 @@ function summaryOf(dealId) {
   return summaries().get(dealId) || null;
 }
 
+/**
+ * Cuándo apareció la oferta por primera vez, o null si ya estaba desde el
+ * principio. Con esto el plan Gratis ve las nuevas 2 h tarde y Plus al instante.
+ */
+function firstSeen(dealId) {
+  const s = summaryOf(dealId);
+  if (!s) return Date.now(); // todavía no se guarda: es de esta misma consulta
+  return s.since - TRACKING_STARTED_AT > BASELINE_MARGIN_MS ? s.since : null;
+}
+
 // Lo que el historial dice de una oferta, en palabras (para la tienda y el panel).
 function verdict(deal) {
   const s = summaryOf(deal.id);
@@ -60,4 +85,4 @@ function verdict(deal) {
   return { days, lowest, inflated, maxSeen: s.max, minSeen: s.min };
 }
 
-module.exports = { record, series, summaries, summaryOf, verdict };
+module.exports = { record, series, summaries, summaryOf, verdict, firstSeen };

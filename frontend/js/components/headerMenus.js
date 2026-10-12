@@ -466,6 +466,17 @@ function renderAlertsBody(products) {
 function renderTelegramBlock() {
   const tg = telegramState();
   if (!tg.enabled) return "";
+  // Avisos al instante = ventaja de Plus. (Quien ya estaba conectado puede desconectarse.)
+  if (!isPlus() && !tg.linked) {
+    return `
+      <div class="alerts-telegram">
+        <p class="alerts-telegram__text">
+          ${icon("lightning", { size: 16 })}
+          <span><strong>Avisos al instante por Telegram</strong> cuando baje el precio o salga una oferta de 80%+. Es de Plus: esas ofertas duran minutos.</span>
+        </p>
+        <a class="btn btn--primary alerts-telegram__btn" href="planes.html">Activar con Plus</a>
+      </div>`;
+  }
   if (tg.linked) {
     return `
       <div class="alerts-telegram is-linked">

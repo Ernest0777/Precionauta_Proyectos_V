@@ -9,11 +9,14 @@ const telegram = require('../db/telegram');
 
 // Resumen del historial real de precios que acompaña a cada oferta.
 function withHistory(deal) {
+  const seen = priceHistory.firstSeen(deal.id);
+  const firstSeenAt = seen ? new Date(seen) : null; // null = estaba desde el principio
   const s = priceHistory.summaryOf(deal.id);
-  if (!s) return { ...deal, history: null };
+  if (!s) return { ...deal, firstSeenAt, history: null };
   const v = priceHistory.verdict(deal);
   return {
     ...deal,
+    firstSeenAt,
     history: { min: s.min, max: s.max, points: s.points, since: new Date(s.since), days: v.days, lowest: v.lowest },
   };
 }
@@ -238,7 +241,9 @@ router.get('/stats', async (req, res) => {
 
 // Endpoint 7: GET /api/deals/:id/history - precios registrados (90 días)
 router.get('/deals/:id/history', (req, res) => {
-  const points = priceHistory.series(req.params.id).map((p) => ({ at: new Date(p.at), price: p.price }));
+  // Gratis pide 30 días, Plus 365 (frontend/js/utils/plan.js).
+  const days = Math.min(Math.max(parseInt(req.query.days, 10) || 90, 1), 365);
+  const points = priceHistory.series(req.params.id, days).map((p) => ({ at: new Date(p.at), price: p.price }));
   res.json({ success: true, data: points });
 });
 
