@@ -20,6 +20,7 @@ class DealFetcher {
       source: null, // 'mercadolibre' | 'disk' | 'demo'
     };
     this.inFlight = null;
+    this.listeners = [];
     this.loadFromDisk();
   }
 
@@ -145,10 +146,11 @@ class DealFetcher {
     return {
       id: product.id,
       title: product.name.trim(),
-      originalPrice: Math.round(originalPrice),
-      currentPrice: Math.round(currentPrice),
+      // Precio exacto con centavos (124.89, no 125).
+      originalPrice: toCents(originalPrice),
+      currentPrice: toCents(currentPrice),
       discount: Math.round(discount * 10) / 10, // 1 decimal
-      savings: Math.round(originalPrice - currentPrice),
+      savings: toCents(originalPrice - currentPrice),
       category: categorySlug,
       seller: { id: offer.seller_id, officialStore: Boolean(offer.official_store_id) },
       thumbnail: product.pictures?.[0]?.url || null,
@@ -230,6 +232,12 @@ class DealFetcher {
     this.cache.deals = deals;
     this.cache.lastUpdated = new Date();
     this.cache.source = source;
+    this.listeners.forEach((fn) => fn(deals, this.cache.lastUpdated, source));
+  }
+
+  // Avisar cuando llega una lista nueva (el panel guarda el historial).
+  onUpdate(fn) {
+    this.listeners.push(fn);
   }
 
   // Limpiar cache si ha expirado
@@ -268,6 +276,11 @@ class DealFetcher {
       console.warn('⚠️ No se pudo guardar la caché en disco:', error.message);
     }
   }
+}
+
+// Dos decimales sin el ruido de los flotantes (2999 - 2369.11 = 629.8899999…).
+function toCents(amount) {
+  return Math.round(amount * 100) / 100;
 }
 
 function inDiscountRange(deal) {

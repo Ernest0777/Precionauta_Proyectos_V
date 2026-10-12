@@ -1,4 +1,4 @@
-import { PRODUCTS } from "./data/products.js";
+import { PRODUCTS, API_BASE } from "./data/products.js";
 import { CATEGORIES } from "./data/categories.js";
 import { renderProductCard } from "./components/productCard.js";
 import { renderPriceChart } from "./components/priceChart.js";
@@ -9,6 +9,7 @@ import {
   calculateSavings,
   formatHoursAgoLabel,
   formatPriceMXN,
+  formatPriceHTML,
 } from "./utils/format.js";
 import {
   loadSavedIds,
@@ -145,7 +146,7 @@ function renderInfoColumn() {
         <span class="price-panel__discount">-${discountPercent}%</span>
         <div>
           <div class="price-old tabular-nums">${formatPriceMXN(product.previousPrice)}</div>
-          <div class="price-panel__current tabular-nums">${formatPriceMXN(product.currentPrice)}</div>
+          <div class="price-panel__current tabular-nums">${formatPriceHTML(product.currentPrice)}</div>
           <span class="chip chip--savings">Ahorras ${formatPriceMXN(savings)}</span>
         </div>
       </div>
@@ -168,7 +169,7 @@ function renderInfoColumn() {
       </div>
 
       <div class="product-info__actions">
-        <a class="btn btn--primary" href="${product.storeUrl}" target="_blank" rel="noopener">
+        <a class="btn btn--primary" href="${product.storeUrl.replace("src=web", "src=detalle")}" target="_blank" rel="noopener sponsored">
           Ver oferta en ${escapeHtml(product.store)}
           <span class="btn__icon-circle">${icon("arrowRight", { size: 14 })}</span>
         </a>
@@ -192,7 +193,7 @@ function renderInfoColumn() {
         <button type="button" class="share-btn" id="copyLink">${icon("copy", { size: 16 })} Copiar enlace</button>
       </div>
 
-      <span class="product-info__meta">Precionauta verifica cada 4 horas · Última revisión ${formatHoursAgoLabel(
+      <span class="product-info__meta">Precionauta revisa el precio cada 5 minutos · Última revisión ${formatHoursAgoLabel(
         product.checkedHoursAgo
       )}</span>
     </div>
@@ -232,7 +233,7 @@ function bindMsiCalculator() {
   const detailEl = document.getElementById("msiDetail");
 
   const paint = (months) => {
-    const monthly = Math.ceil(product.currentPrice / months);
+    const monthly = Math.ceil((product.currentPrice * 100) / months) / 100; // al centavo, hacia arriba
     monthlyEl.textContent = `${formatPriceMXN(monthly)} al mes`;
     detailEl.textContent = `durante ${months} meses · total ${formatPriceMXN(product.currentPrice)}, sin intereses`;
   };
@@ -298,8 +299,13 @@ function renderPriceHistoryPanel() {
 
   const { historicMinPrice: min, historicMaxPrice: max, currentPrice } = product;
 
-  // Ofertas reales: todavía no guardamos precios en el tiempo, y una gráfica
-  // inventada sería justo el "descuento falso" que Precionauta promete evitar.
+  // Ofertas reales: la gráfica sale del historial que guarda el backend.
+  // Nunca inventamos puntos: sería justo el "descuento falso" que prometemos evitar.
+  if (product.live) {
+    renderLiveHistory(rangeEl, chartEl);
+    return;
+  }
+
   if (min == null || max == null) {
     const heading = document.getElementById("historyHeading");
     if (heading) heading.textContent = "Historial de precio";
@@ -334,6 +340,74 @@ function renderPriceHistoryPanel() {
 
   const points = generatePriceHistory(product);
   chartEl.innerHTML = renderPriceChart(points, { min, max, currentPrice });
+}
+
+const DAY_MS = 86_400_000;
+
+function relativeStart(ms) {
+  const days = Math.floor(ms / DAY_MS);
+  if (days >= 1) return `hace ${days} ${days === 1 ? "día" : "días"}`;
+  const hours = Math.floor(ms / 3_600_000);
+  if (hours >= 1) return `hace ${hours} ${hours === 1 ? "hora" : "horas"}`;
+  const minutes = Math.max(1, Math.round(ms / 60_000));
+  return `hace ${minutes} min`;
+}
+
+async function renderLiveHistory(rangeEl, chartEl) {
+  const { currentPrice } = product;
+  let rows = [];
+  try {
+    const res = await fetch(`${API_BASE}/deals/${encodeURIComponent(product.id)}/history`);
+    rows = (await res.json()).data ?? [];
+  } catch {
+    // Sin backend: se queda el mensaje de abajo.
+  }
+
+  const prices = rows.map((r) => r.price);
+  const min = Math.min(currentPrice, ...prices);
+  const max = Math.max(currentPrice, ...prices);
+  const heading = document.getElementById("historyHeading");
+
+  rangeEl.innerHTML = `
+    <div class="price-range__item price-range__item--max">
+      <div class="price-range__label">${rows.length > 1 ? "Máximo que vimos" : "Precio anterior"}</div>
+      <div class="price-range__value tabular-nums">${formatPriceMXN(rows.length > 1 ? max : product.previousPrice)}</div>
+    </div>
+    ${
+      rows.length > 1
+        ? `<div class="price-range__item price-range__item--min">
+             <div class="price-range__label">Mínimo que vimos</div>
+             <div class="price-range__value tabular-nums">${formatPriceMXN(min)}</div>
+           </div>`
+        : ""
+    }
+    <div class="price-range__item price-range__item--now">
+      <div class="price-range__label">Precio actual</div>
+      <div class="price-range__value tabular-nums">${formatPriceMXN(currentPrice)}</div>
+    </div>
+  `;
+
+  if (rows.length < 2) {
+    if (heading) heading.textContent = "Historial de precio";
+    chartEl.innerHTML = `<p class="price-chart__empty">${icon("clock", { size: 16 })} Empezamos a registrar el precio de este producto${
+      rows[0] ? ` ${relativeStart(Date.now() - new Date(rows[0].at))}` : ""
+    }. Lo revisamos cada 5 minutos: la gráfica aparece en cuanto tengamos un segundo registro. El precio anterior es el que declara el vendedor en ${escapeHtml(product.store)}.</p>`;
+    return;
+  }
+
+  // Gráfica escalonada: un precio vale hasta que lo vemos cambiar, y se extiende hasta hoy.
+  const first = new Date(rows[0].at).getTime();
+  const span = Math.max(Date.now() - first, 1);
+  const points = [];
+  rows.forEach((r, i) => {
+    const day = (new Date(r.at).getTime() - first) / DAY_MS;
+    if (i > 0) points.push({ day, price: rows[i - 1].price });
+    points.push({ day, price: r.price });
+  });
+  points.push({ day: span / DAY_MS, price: currentPrice });
+
+  if (heading) heading.textContent = `Historial de precio real (${relativeStart(span).replace("hace ", "últimos ")})`;
+  chartEl.innerHTML = renderPriceChart(points, { min, max, currentPrice, startLabel: relativeStart(span) });
 }
 
 function renderRelated() {

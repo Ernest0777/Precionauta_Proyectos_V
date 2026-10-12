@@ -12,6 +12,7 @@ import {
   ACTIVITY_CHANGED_EVENT,
 } from "./utils/recommender.js";
 import { normalize } from "./components/morphingDiscoveryBar.js";
+import { telegramState, TELEGRAM_CHANGED_EVENT } from "./utils/telegram.js";
 import { icon, CATEGORY_ICON_BY_SLUG } from "./utils/icons.js";
 import { formatCheckedAtLabel, formatPriceMXN, formatPriceHTML } from "./utils/format.js";
 import {
@@ -132,14 +133,104 @@ function getVisibleProducts() {
     return matchesCategory && matchesThreshold && matchesStore && matchesQuery(p, state.query);
   });
 
-  return [...filtered].sort(SORT_OPTIONS[state.sortBy].compare);
+  const compare = SORT_OPTIONS[state.sortBy].compare;
+  // Con el orden por defecto, las destacadas en el panel van primero. Si la
+  // persona elige otro orden, se respeta tal cual.
+  if (state.sortBy === "discount-desc") {
+    return [...filtered].sort((a, b) => Number(b.pinned) - Number(a.pinned) || compare(a, b));
+  }
+  return [...filtered].sort(compare);
 }
 
 function renderStats() {
   const distinctStores = new Set(PRODUCTS.map((p) => p.store)).size;
-  els.statStores.textContent = String(distinctStores);
-  els.statOffers.textContent = String(PRODUCTS.length);
+  const totalSavings = PRODUCTS.reduce((sum, p) => sum + Math.max(p.previousPrice - p.currentPrice, 0), 0);
+  const storesLabel = document.getElementById("statStoresLabel");
+  if (storesLabel) storesLabel.textContent = distinctStores === 1 ? "tienda rastreada" : "tiendas rastreadas";
   els.statChecked.textContent = formatCheckedAtLabel(new Date());
+
+  // Los números suben desde 0 cuando la franja entra en pantalla.
+  countUpWhenVisible(els.statStores, distinctStores, (n) => String(Math.round(n)));
+  countUpWhenVisible(els.statOffers, PRODUCTS.length, (n) => String(Math.round(n)));
+  countUpWhenVisible(document.getElementById("statSavings"), totalSavings, (n) => formatPriceMXN(Math.round(n)));
+}
+
+function countUpWhenVisible(el, to, format) {
+  if (!el) return;
+  // La cifra real queda escrita desde el inicio; solo al entrar en pantalla
+  // vuelve a 0 y sube. Si la animación nunca corre, el número sigue siendo correcto.
+  el.textContent = format(to);
+  if (reduceMotion.matches || !("IntersectionObserver" in window)) return;
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      observer.disconnect();
+      const start = performance.now();
+      const duration = 1400;
+      const tick = (now) => {
+        const t = Math.min((now - start) / duration, 1);
+        el.textContent = format(to * (1 - Math.pow(1 - t, 4)));
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    },
+    { threshold: 0.6 }
+  );
+  observer.observe(el);
+}
+
+/* ================= ZONA 80%+ ================= */
+
+const EXTREME_MIN = 80;
+
+/**
+ * La sección especial: solo descuentos de 80% o más. Casi siempre está vacía
+ * (son raros y duran minutos), así que sin ofertas muestra lo más cercano y
+ * ofrece el aviso por Telegram en lugar de un hueco.
+ */
+function renderExtremeZone() {
+  const rail = document.getElementById("extremeRail");
+  const lead = document.getElementById("extremeLead");
+  if (!rail) return;
+  const extreme = getProductsByDiscount().filter((p) => discountOf(p) >= EXTREME_MIN);
+  const closest = extreme.length ? [] : getProductsByDiscount().slice(0, 4);
+  const alertIds = loadAlertIds();
+  const cards = (list) =>
+    list
+      .map((product) =>
+        renderProductCard(product, CATEGORY_LABEL_BY_SLUG[product.categorySlug], {
+          saved: state.saved.has(product.id),
+          alerted: alertIds.has(product.id),
+        })
+      )
+      .join("");
+
+  if (extreme.length) {
+    lead.textContent = `${extreme.length} ${extreme.length === 1 ? "oferta" : "ofertas"} ahora mismo. Aparecen pocas veces y duran minutos: cada una pasó la verificación de historial.`;
+    rail.innerHTML = cards(extreme);
+  } else {
+    const best = closest[0] ? discountOf(closest[0]) : 0;
+    lead.textContent = `Ahora mismo no hay ninguna: aparecen pocas veces y duran minutos. Mientras tanto, lo más cerca hoy llega a ${best}%.`;
+    rail.innerHTML = cards(closest);
+  }
+  rail.querySelectorAll(".product-card").forEach((card) => card.classList.add("is-visible"));
+}
+
+function bindExtremeZone() {
+  const section = document.getElementById("zona-extrema");
+  if (!section) return;
+  bindCardActions(document.getElementById("extremeRail"));
+  // El panel "Mis alertas" del header tiene la conexión con Telegram. El botón
+  // solo aparece si el backend tiene el bot activo (TELEGRAM_BOT_TOKEN).
+  const alertButton = section.querySelector("[data-extreme-alert]");
+  if (!alertButton) return;
+  const paint = () => (alertButton.hidden = !telegramState().enabled || telegramState().linked);
+  paint();
+  document.addEventListener(TELEGRAM_CHANGED_EVENT, paint);
+  alertButton.addEventListener("click", (event) => {
+    event.stopPropagation(); // el panel se cierra con clics fuera de él
+    document.querySelector("[data-alerts-trigger]")?.click();
+  });
 }
 
 /* ================= HERO ================= */
@@ -203,7 +294,8 @@ function animatePriceDrop(card, product) {
     const start = performance.now();
     const tick = (now) => {
       const t = Math.min((now - start) / duration, 1);
-      priceEl.innerHTML = formatPriceHTML(Math.round(from - (from - to) * easeOutExpo(t)));
+      // En pesos enteros mientras baja; el último cuadro muestra el precio exacto.
+      priceEl.innerHTML = formatPriceHTML(t < 1 ? Math.round(from - (from - to) * easeOutExpo(t)) : to);
       if (t < 1) requestAnimationFrame(tick);
       else card.classList.replace("is-dropping", "has-dropped");
     };
@@ -490,7 +582,7 @@ function renderEmptyState() {
       <span class="empty-state__icon" aria-hidden="true">${icon("search", { size: 26 })}</span>
       <p class="empty-state__title">${title}</p>
       <p class="empty-state__body">
-        Seguimos rastreando Amazon México, Mercado Libre y Liverpool cada 4 horas.
+        Revisamos los precios cada 5 minutos: vuelve pronto.
         Prueba con otra categoría o quita algún filtro.
       </p>
       ${hasActiveFilters() ? `<button type="button" class="btn btn--outline" data-reset-filters>Quitar filtros</button>` : ""}
@@ -633,6 +725,7 @@ function init() {
   renderHero();
   renderHeroStores();
   renderDealTicker();
+  renderExtremeZone();
   mountCategoryTabs();
   renderThresholdFilter();
   renderStoreFilter();
@@ -682,6 +775,7 @@ function init() {
   bindScrollToCatalogLinks();
   bindSubscribeForm();
   bindRecommendations();
+  bindExtremeZone();
   maybeShowOnboarding();
 }
 

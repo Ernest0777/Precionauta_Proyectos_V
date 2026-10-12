@@ -252,7 +252,9 @@ export const SAMPLE_PRODUCTS = [...BASE_PRODUCTS, ...GENERATED_PRODUCTS];
  * usa los productos de ejemplo de arriba para no quedarse vacía.
  * Se puede apuntar a otro servidor con `window.PRECIONAUTA_API`.
  */
-const API_BASE = window.PRECIONAUTA_API ?? "http://localhost:3001/api";
+export const API_BASE = window.PRECIONAUTA_API ?? "http://localhost:3001/api";
+/** Raíz del backend (sin /api): ahí vive /go/:id, que cuenta el clic y lleva a la tienda. */
+export const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "");
 const API_TIMEOUT_MS = 6000;
 
 /** true si el catálogo viene de Mercado Libre; false si son los de ejemplo. */
@@ -266,7 +268,9 @@ async function loadLiveProducts() {
     // `demo` = el backend tampoco pudo hablar con ML: mejor el catálogo de ejemplo completo.
     if (!body.success || body.source === "demo" || !body.data?.length) throw new Error(`sin datos (${body.source})`);
     IS_LIVE = true;
-    return body.data.map((deal, index) => fromDeal(deal, index));
+    // Las que el equipo destacó en el panel llegan primero y con `featured`.
+    const anyPinned = body.data.some((deal) => deal.featured);
+    return body.data.map((deal, index) => fromDeal(deal, index, anyPinned));
   } catch (error) {
     console.info(`[Precionauta] Backend no disponible (${error.message}); usando productos de ejemplo.`);
     return SAMPLE_PRODUCTS;
@@ -274,23 +278,29 @@ async function loadLiveProducts() {
 }
 
 /** Deal del backend -> la misma forma que los productos de ejemplo. */
-function fromDeal(deal, index) {
+function fromDeal(deal, index, anyPinned) {
   const checkedMs = Date.now() - new Date(deal.validatedAt).getTime();
+  // Historial real (backend/db/price-history.js). Con un solo registro todavía no hay rango.
+  const history = deal.history?.points >= 2 ? deal.history : null;
   return {
     id: deal.id,
     name: deal.title,
     categorySlug: deal.category,
     store: "Mercado Libre",
     storeCode: "ML",
-    storeUrl: deal.permalink,
+    // Pasa por el backend: cuenta el clic y agrega el enlace de afiliado.
+    storeUrl: `${API_ORIGIN}/go/${encodeURIComponent(deal.id)}?src=web`,
     previousPrice: deal.originalPrice,
     currentPrice: deal.currentPrice,
-    // Sin historial todavía (necesita base de datos): Detalle oculta la gráfica.
-    historicMinPrice: null,
-    historicMaxPrice: null,
+    historicMinPrice: history ? history.min : null,
+    historicMaxPrice: history ? history.max : null,
+    historyDays: history ? history.days : 0,
+    lowestSeen: Boolean(history?.lowest && history.days >= 1),
     checkedHoursAgo: Math.max(0, Math.floor(checkedMs / 3_600_000)),
     verified: true,
-    featured: index === 0, // el backend los manda ordenados por descuento
+    // `pinned` = destacada a mano en el panel. Si nadie destacó nada, la de mayor descuento.
+    pinned: Boolean(deal.featured),
+    featured: anyPinned ? Boolean(deal.featured) : index === 0,
     description: deal.description ?? "",
     specs: deal.specs ?? [],
     image: deal.thumbnail,

@@ -9,9 +9,9 @@ const PAD_BOTTOM = 32;
 /**
  * Gráfico de historial de precio en SVG puro (sin librería de charts).
  * @param {Array<{day:number, price:number}>} points
- * @param {{ min: number, max: number, currentPrice: number }} range
+ * @param {{ min: number, max: number, currentPrice: number, startLabel?: string }} range
  */
-export function renderPriceChart(points, { min, max, currentPrice }) {
+export function renderPriceChart(points, { min, max, currentPrice, startLabel = "hace 90 días" }) {
   const plotWidth = WIDTH - PAD_X * 2;
   const plotHeight = HEIGHT - PAD_TOP - PAD_BOTTOM;
   const lastDay = points[points.length - 1].day;
@@ -32,9 +32,9 @@ export function renderPriceChart(points, { min, max, currentPrice }) {
       class="price-chart__svg"
       viewBox="0 0 ${WIDTH} ${HEIGHT}"
       role="img"
-      aria-label="Historial de precio de los últimos 90 días, desde ${formatPriceMXN(
+      aria-label="Historial de precio desde ${startLabel}: máximo ${formatPriceMXN(
         max
-      )} hasta el precio actual de ${formatPriceMXN(currentPrice)}"
+      )}, mínimo ${formatPriceMXN(min)}, precio actual ${formatPriceMXN(currentPrice)}"
       preserveAspectRatio="none"
     >
       <line x1="${PAD_X}" y1="${(PAD_TOP + plotHeight).toFixed(1)}" x2="${WIDTH - PAD_X}" y2="${(
@@ -47,7 +47,7 @@ export function renderPriceChart(points, { min, max, currentPrice }) {
       <circle cx="${x(minPoint.day).toFixed(1)}" cy="${y(minPoint.price).toFixed(1)}" r="4" class="price-chart__dot price-chart__dot--min" />
       <circle cx="${x(lastPoint.day).toFixed(1)}" cy="${y(lastPoint.price).toFixed(1)}" r="5" class="price-chart__dot price-chart__dot--now" />
 
-      <text x="${PAD_X}" y="${HEIGHT - 8}" class="price-chart__label">hace 90 días</text>
+      <text x="${PAD_X}" y="${HEIGHT - 8}" class="price-chart__label">${startLabel}</text>
       <text x="${WIDTH - PAD_X}" y="${HEIGHT - 8}" text-anchor="end" class="price-chart__label">hoy</text>
     </svg>
   `;

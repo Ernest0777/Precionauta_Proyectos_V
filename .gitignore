@@ -30,3 +30,6 @@ Thumbs.db
 
 # Caché local de ofertas del backend (se regenera sola)
 backend/cache/
+
+# Base de datos local (historial de precios, clics, alertas de Telegram)
+backend/data/

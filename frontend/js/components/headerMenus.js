@@ -18,6 +18,13 @@ import { formatPriceMXN } from "../utils/format.js";
 import { getAllStats, getCategoryStats, discountOf } from "../utils/catalogStats.js";
 import { SEASON, getSeasonStatus, splitDuration } from "../data/season.js";
 import {
+  initTelegram,
+  connectTelegram,
+  disconnectTelegram,
+  telegramState,
+  TELEGRAM_CHANGED_EVENT,
+} from "../utils/telegram.js";
+import {
   loadAlertIds,
   persistAlertIds,
   loadSavedIds,
@@ -225,7 +232,7 @@ function renderMegaMenu(allStat, stats) {
         </ul>
         <p class="mega-menu__note">
           ${icon("clock", { size: 14 })}
-          Rastreamos Amazon México, Mercado Libre y Liverpool cada 4 horas.
+          Revisamos los precios cada 5 minutos y guardamos su historial.
         </p>
       </div>
       <div class="mega-menu__aside" data-mega-preview aria-live="polite">
@@ -361,7 +368,7 @@ function bindStoreMenu({ onStore } = {}) {
         )
         .join("")}
     </ul>
-    <p class="store-menu__note">${icon("clock", { size: 14 })} Verificamos cada tienda cada 4 horas.</p>
+    <p class="store-menu__note">${icon("clock", { size: 14 })} Revisamos los precios de cada tienda cada 5 minutos.</p>
   `;
   header.appendChild(panel);
 
@@ -455,9 +462,37 @@ function renderAlertsBody(products) {
   return `<ul class="alerts-list">${products.map(renderAlertItem).join("")}</ul>`;
 }
 
+/** Bloque "Recibir en Telegram" del panel (utils/telegram.js). */
+function renderTelegramBlock() {
+  const tg = telegramState();
+  if (!tg.enabled) return "";
+  if (tg.linked) {
+    return `
+      <div class="alerts-telegram is-linked">
+        <p class="alerts-telegram__text">${icon("checkCircle", { size: 16 })} <span>Conectado a Telegram: te escribimos ahí cuando baje el precio y cuando salga una oferta de 80%+.</span></p>
+        <button type="button" class="alerts-telegram__link" data-tg-disconnect>Desconectar</button>
+      </div>`;
+  }
+  return `
+    <div class="alerts-telegram">
+      <p class="alerts-telegram__text">
+        ${icon("bell", { size: 16 })}
+        <span>${
+          tg.waiting
+            ? "Toca <strong>Iniciar</strong> en Telegram y vuelve aquí; se conecta solo."
+            : "Recibe estos avisos en tu celular, y las ofertas nuevas de 80% o más."
+        }</span>
+      </p>
+      <a class="btn btn--primary alerts-telegram__btn" href="${tg.url}" target="_blank" rel="noopener" data-tg-connect>
+        ${tg.waiting ? "Esperando a Telegram…" : "Recibir en Telegram"}
+      </a>
+    </div>`;
+}
+
 function bindAlertsMenu() {
   const triggers = [...document.querySelectorAll("[data-alerts-trigger]")];
   if (triggers.length === 0) return;
+  initTelegram();
 
   const panel = document.createElement("div");
   panel.id = "alertsPanel";
@@ -490,6 +525,7 @@ function bindAlertsMenu() {
         </button>
       </div>
       <div class="alerts-panel__body">${renderAlertsBody(products)}</div>
+      ${renderTelegramBlock()}
       <p class="alerts-panel__foot">
         ${icon("shieldCheck", { size: 14 })}
         ${
@@ -558,9 +594,18 @@ function bindAlertsMenu() {
       document.dispatchEvent(new CustomEvent(ALERTS_CHANGED_EVENT, { detail: { source: "panel" } }));
       return;
     }
+    if (event.target.closest("[data-tg-connect]")) {
+      connectTelegram(); // el enlace abre el bot en otra pestaña; el panel se queda abierto
+      return;
+    }
+    if (event.target.closest("[data-tg-disconnect]")) {
+      disconnectTelegram();
+      return;
+    }
     if (event.target.closest("[data-alerts-close]")) close({ restoreFocus: true });
     if (event.target.closest("a")) close();
   });
+  document.addEventListener(TELEGRAM_CHANGED_EVENT, () => isOpen() && render());
 
   panel.addEventListener("keydown", (event) => {
     if (event.key === "Escape") close({ restoreFocus: true });
