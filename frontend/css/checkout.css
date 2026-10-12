@@ -1,0 +1,579 @@
+/* =====================================================================
+   Checkout animado (js/components/checkout.js)
+   Formulario -> tarjeta al centro "procesando" -> recibo que sale de ella.
+   Blanco y negro: la tarjeta es negra en ambos temas.
+   ===================================================================== */
+
+.checkout .checkout__body {
+  padding: 0;
+  gap: 0;
+}
+
+.pay {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.85fr);
+}
+
+.pay__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  min-width: 0;
+}
+
+.pay__summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  background: var(--color-surface-soft);
+  border-left: 1px solid var(--color-border-soft);
+}
+
+.pay__summary h3 {
+  font-size: var(--fs-lg);
+  padding-top: var(--space-1);
+}
+
+@media (max-width: 760px) {
+  .pay {
+    grid-template-columns: 1fr;
+  }
+  .pay__summary {
+    border-left: 0;
+    border-top: 1px solid var(--color-border-soft);
+  }
+}
+
+/* ---- Pestañas con píldora deslizante ---- */
+.pay-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+}
+
+.pay-tabs__pill {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  height: calc(100% - 8px);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  transition: transform var(--duration-slow) var(--ease-out-expo), width var(--duration-slow) var(--ease-out-expo);
+}
+
+.pay-tabs__tab {
+  position: relative;
+  z-index: 1;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-ink-500);
+  transition: color var(--duration-base);
+}
+
+.pay-tabs__tab[aria-selected="true"] {
+  color: var(--color-on-accent);
+}
+
+.pay__panel {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pay__panel.is-entering {
+  animation: pay-panel-in var(--duration-slow) var(--ease-out-expo);
+}
+
+@keyframes pay-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+/* ---- Tarjeta 3D ---- */
+.pay-card {
+  width: min(100%, 22rem);
+  aspect-ratio: 1.586; /* proporción de una tarjeta real */
+  margin-inline: auto;
+  perspective: 1000px;
+}
+
+.pay-card__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 700ms var(--ease-out-expo);
+}
+
+.pay-card.is-flipped .pay-card__inner {
+  transform: rotateY(180deg);
+}
+
+.pay-card__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 7% 8%;
+  border-radius: 16px;
+  color: #fafafa;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(255, 255, 255, 0.14), transparent 55%),
+    linear-gradient(135deg, #1c1c1c, #0a0a0a 60%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow-lg);
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+
+.pay-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pay-card__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.pay-card__chip {
+  width: 38px;
+  height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d9d9d9, #8f8f8f);
+}
+
+.pay-card__number {
+  margin-top: auto;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(1rem, 0.8rem + 1vw, 1.3rem);
+  letter-spacing: 0.08em;
+}
+
+.pay-card__bottom {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-5);
+  margin-top: var(--space-4);
+  font-size: 0.8rem;
+}
+
+.pay-card__bottom div span {
+  display: block;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+}
+
+.pay-card__brand {
+  margin-left: auto;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-style: italic;
+}
+
+/* El campo enfocado se ilumina en la tarjeta. */
+.pay-card [data-zone] {
+  border-radius: 6px;
+  outline: 1px solid transparent;
+  outline-offset: 4px;
+  transition: outline-color var(--duration-base);
+}
+
+.pay-card [data-zone].is-focus {
+  outline-color: rgba(255, 255, 255, 0.55);
+}
+
+.pay-card__back {
+  transform: rotateY(180deg);
+  padding-inline: 0;
+}
+
+.pay-card__stripe {
+  height: 22%;
+  margin-top: 4%;
+  background: #000;
+}
+
+.pay-card__sign {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 18%;
+  margin: 8% 8% 0;
+  padding-right: 12px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(45deg, #f2f2f2, #f2f2f2 6px, #e2e2e2 6px, #e2e2e2 12px);
+  color: #0a0a0a;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.pay-card__fine {
+  margin: auto 8% 0;
+  font-size: 0.62rem;
+  opacity: 0.6;
+}
+
+/* ---- Campos (solo lectura en la demo; con Stripe serán sus Elements) ---- */
+.pay-fields {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pay-fields__row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.9fr 0.7fr;
+  gap: var(--space-3);
+}
+
+.pay-field {
+  display: grid;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-ink-700);
+  min-width: 0;
+}
+
+.pay-field input {
+  width: 100%;
+  height: 42px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink-900);
+  font: inherit;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-field input:focus {
+  outline: 2px solid var(--color-ink-900);
+  outline-offset: -1px;
+}
+
+.pay-test-note {
+  display: flex;
+  gap: var(--space-2);
+  font-size: var(--fs-2xs);
+  color: var(--color-ink-500);
+}
+
+.pay-test-note .icon {
+  flex-shrink: 0;
+}
+
+/* ---- Comprobantes de OXXO y SPEI ---- */
+.pay-voucher {
+  width: min(100%, 22rem);
+  margin-inline: auto;
+  padding: var(--space-5);
+  border-radius: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+}
+
+.pay-voucher__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.pay-voucher__head strong {
+  font-size: var(--fs-lg);
+}
+
+.pay-voucher__head span,
+.pay-voucher__label,
+.pay-voucher__fine {
+  font-size: var(--fs-xs);
+  color: var(--color-ink-500);
+}
+
+.pay-voucher__label {
+  margin-top: var(--space-4);
+}
+
+.pay-voucher__ref {
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.pay-voucher__barcode {
+  height: 48px;
+  margin: var(--space-3) 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-ink-900) 0 2px,
+    transparent 2px 4px,
+    var(--color-ink-900) 4px 7px,
+    transparent 7px 9px,
+    var(--color-ink-900) 9px 10px,
+    transparent 10px 13px
+  );
+}
+
+.pay-voucher__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  font-size: var(--fs-sm);
+}
+
+.pay-voucher__list div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pay-voucher__list dt {
+  color: var(--color-ink-500);
+}
+
+.pay__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+/* ---- Resumen ---- */
+.pay-summary__list,
+.pay-summary__perks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pay-summary__list li {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border-soft);
+  font-size: var(--fs-sm);
+}
+
+.pay-summary__list li.is-muted {
+  font-size: var(--fs-xs);
+  color: var(--color-ink-500);
+}
+
+.pay-summary__list li.is-total {
+  border-bottom: 0;
+  font-size: var(--fs-base);
+  font-weight: 800;
+}
+
+.pay-summary__perks {
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--color-ink-700);
+}
+
+.pay-summary__perks li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pay-summary__secure {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+  font-size: var(--fs-xs);
+  color: var(--color-ink-700);
+}
+
+.pay-summary__secure .icon {
+  flex-shrink: 0;
+}
+
+/* ---- Escena: procesando y recibo ---- */
+.checkout.is-processing {
+  width: min(30rem, calc(100vw - 2rem));
+}
+
+.pay-stage {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
+  padding: var(--space-12) var(--space-6) var(--space-8);
+  text-align: center;
+  transition: padding 900ms var(--ease-out-expo);
+}
+
+.checkout.is-done .pay-stage {
+  padding-top: calc(var(--space-12) + 8.5rem);
+}
+
+.pay-stage__card {
+  position: relative;
+  width: min(100%, 20rem);
+}
+
+.pay-stage__card .pay-card,
+.pay-stage__card .pay-voucher {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+/* El recibo espera detrás de la tarjeta y sube al terminar. */
+.pay-receipt {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 0;
+  z-index: 0;
+  padding: var(--space-4) var(--space-4) var(--space-8);
+  border-radius: 10px 10px 0 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+  font-size: var(--fs-xs);
+  opacity: 0;
+  transition: transform 900ms var(--ease-out-expo), opacity 300ms;
+}
+
+.checkout.is-done .pay-receipt {
+  opacity: 1;
+  transform: translateY(-78%);
+}
+
+.pay-receipt__title {
+  margin-bottom: var(--space-2);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: var(--fs-2xs);
+}
+
+.pay-receipt dl {
+  display: grid;
+  gap: 4px;
+}
+
+.pay-receipt dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.pay-receipt dt {
+  color: var(--color-ink-500);
+}
+
+.pay-receipt dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.pay-receipt .is-total {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--color-border);
+  font-size: var(--fs-sm);
+}
+
+.pay-stage__status {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+.pay-stage__hint {
+  font-size: var(--fs-xs);
+  color: var(--color-ink-500);
+}
+
+.pay-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-ink-900);
+  animation: pay-spin 0.8s linear infinite;
+}
+
+@keyframes pay-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Palomita que se dibuja sola. */
+.pay-check {
+  width: 52px;
+  height: 52px;
+  fill: none;
+  stroke: var(--color-ink-900);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pay-check circle {
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: pay-draw 600ms var(--ease-out-expo) forwards;
+}
+
+.pay-check path {
+  stroke-dasharray: 36;
+  stroke-dashoffset: 36;
+  animation: pay-draw 400ms 450ms var(--ease-out-expo) forwards;
+}
+
+@keyframes pay-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.pay-stage__done {
+  font-size: var(--fs-lg);
+}
+
+.pay-stage__actions {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pay-card__inner,
+  .pay-receipt,
+  .pay-tabs__pill,
+  .pay-stage {
+    transition: none;
+  }
+  .pay-check circle,
+  .pay-check path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

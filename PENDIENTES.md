@@ -83,6 +83,9 @@ Inspirado en el CRM "Halden" (codeandchill), en blanco y negro. Detalles en el R
 - [x] Cifras del inicio con contador animado (idea de Norda) + ahorro total disponible
 - [x] PWA instalable (manifest, service worker, íconos); favicon pasado a negro
 - [x] El backend consulta ML cada 5 min solo (antes solo cuando alguien entraba)
+- [x] Planes: Gratis ve las ofertas nuevas 2 h después (adelanto bloqueado con cuenta regresiva, sección "Recién llegadas", candado en Detalle); Plus en tiempo real con sello "Nueva", Telegram al instante y 12 meses de historial (`js/utils/plan.js`)
+- [x] Checkout animado (tarjeta que gira en el CVC, OXXO, SPEI, "procesando", recibo) en `js/components/checkout.js`; demo con tarjeta de prueba de Stripe, listo para Stripe Elements
+- [ ] Stripe real + inicio de sesión: hasta entonces el plan vive en el navegador y el retraso de 2 h se puede saltar
 - [ ] **Pedro**: solicitar Mercado Libre Afiliados y pegar los parámetros en `backend/.env`
 - [ ] **Pedro**: crear el bot con @BotFather y pegar `TELEGRAM_BOT_TOKEN` en `backend/.env`
 - [ ] Publicar en internet (Render/Railway para backend con disco persistente para SQLite; Netlify/Vercel para la tienda) y poner `PUBLIC_URL` + `window.PRECIONAUTA_API`

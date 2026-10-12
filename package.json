@@ -5,7 +5,7 @@
   "main": "backend/server.js",
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run frontend:dev\"",
-    "frontend:dev": "http-server frontend -p 4173 -c-1 && start http://localhost:4173 || http-server frontend -p 4173 -c-1 && open http://localhost:4173",
+    "frontend:dev": "http-server frontend -p 4173 -c-1 -o",
     "server:dev": "nodemon backend/server.js",
     "server": "node backend/server.js",
     "start": "npm run dev",

@@ -51,6 +51,12 @@ db.exec(`
     PRIMARY KEY (code, deal_id)
   );
 
+  -- Datos sueltos de la base (p. ej. cuándo empezamos a guardar precios).
+  CREATE TABLE IF NOT EXISTS meta (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
   -- Ofertas de 80%+ ya anunciadas, para no repetir el aviso.
   CREATE TABLE IF NOT EXISTS extreme_notified (
     deal_id TEXT PRIMARY KEY,

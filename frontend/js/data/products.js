@@ -14,6 +14,7 @@
  */
 
 import { GENERATED_PRODUCTS } from "./generatedProducts.js";
+import { currentPlanId, FREE_DELAY_MS } from "../utils/plan.js";
 
 const BASE_PRODUCTS = [
   {
@@ -308,7 +309,28 @@ function fromDeal(deal, index, anyPinned) {
     offersCount: deal.offersCount,
     freeShipping: deal.freeShipping,
     live: true,
+    // Cuándo apareció (null = ya estaba cuando empezamos a guardar historial).
+    firstSeenAt: deal.firstSeenAt ? new Date(deal.firstSeenAt).getTime() : null,
   };
 }
 
-export const PRODUCTS = await loadLiveProducts();
+const ALL_PRODUCTS = await loadLiveProducts();
+const PLAN_ID = currentPlanId();
+const NOW = Date.now();
+
+/** Ofertas que aparecieron hace menos de 2 h (Plus las ve; Gratis todavía no). */
+const isFresh = (p) => p.firstSeenAt != null && NOW - p.firstSeenAt < FREE_DELAY_MS;
+
+for (const p of ALL_PRODUCTS) {
+  if (isFresh(p)) {
+    p.isNew = true;
+    p.unlocksAt = p.firstSeenAt + FREE_DELAY_MS;
+  }
+}
+
+/**
+ * Lo que este plan puede ver completo. En Gratis, las nuevas quedan fuera y
+ * van a LOCKED_PRODUCTS: se muestran como adelanto bloqueado ("Plus la ve ahora").
+ */
+export const PRODUCTS = PLAN_ID === "plus" ? ALL_PRODUCTS : ALL_PRODUCTS.filter((p) => !p.isNew);
+export const LOCKED_PRODUCTS = PLAN_ID === "plus" ? [] : ALL_PRODUCTS.filter((p) => p.isNew);

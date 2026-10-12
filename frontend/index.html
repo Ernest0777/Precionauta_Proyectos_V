@@ -264,8 +264,8 @@
             <svg class="icon" width="19" height="19" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg>
           </span>
           <div>
-            <div class="trust-item__value">5 min</div>
-            <div class="trust-item__label">entre cada revisión de precios</div>
+            <div class="trust-item__value">Tiempo real</div>
+            <div class="trust-item__label">ofertas nuevas con Plus · Gratis 2 h después</div>
           </div>
         </div>
 
@@ -288,6 +288,20 @@
           </button>
         </div>
         <div class="reco__rail extreme__rail" id="extremeRail" tabindex="0" aria-label="Ofertas de 80% o más, desliza para ver más"></div>
+      </div>
+    </section>
+
+    <!-- Solo plan Gratis y solo si hay ofertas de menos de 2 h (js/main.js renderFreshDeals). -->
+    <section id="recien-llegadas" class="fresh" aria-labelledby="freshTitle" hidden>
+      <div class="container">
+        <div class="section-head fresh__head">
+          <div>
+            <h2 id="freshTitle">Recién <em>llegadas</em></h2>
+            <p class="fresh__lead" id="freshLead"></p>
+          </div>
+          <a class="btn btn--primary" href="planes.html">Verlas ahora con Plus</a>
+        </div>
+        <div class="reco__rail" id="freshRail" tabindex="0" aria-label="Ofertas nuevas, desliza para ver más"></div>
       </div>
     </section>
 
