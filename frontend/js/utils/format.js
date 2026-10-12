@@ -9,14 +9,32 @@ const mxn = new Intl.NumberFormat("es-MX", {
   maximumFractionDigits: 0,
 });
 
-/** Formats a number as Mexican pesos, e.g. 1559 -> "$1,559". */
+const mxnCents = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/**
+ * Precio exacto en pesos: sin decimales si es entero (1559 -> "$1,559"),
+ * con centavos si los tiene (124.89 -> "$124.89", 124.9 -> "$124.90").
+ */
 export function formatPriceMXN(amount) {
-  return mxn.format(amount);
+  const cents = Math.round(amount * 100);
+  return cents % 100 === 0 ? mxn.format(cents / 100) : mxnCents.format(cents / 100);
 }
 
-/** Precio grande estilo marketplace: "$" pequeño y alzado (ver .price-cur). */
+/**
+ * Precio grande estilo marketplace: "$" y centavos pequeños y alzados
+ * (ver .price-cur y .price-cents). El punto queda solo para lectores de pantalla.
+ */
 export function formatPriceHTML(amount) {
-  return formatPriceMXN(amount).replace("$", '<span class="price-cur" aria-hidden="true">$</span>');
+  const [whole, cents] = formatPriceMXN(amount).replace("$", "").split(".");
+  return (
+    `<span class="price-cur" aria-hidden="true">$</span>${whole}` +
+    (cents ? `<span class="price-dot">.</span><span class="price-cents">${cents}</span>` : "")
+  );
 }
 
 /**
@@ -34,7 +52,7 @@ export function calculateDiscountPercent(previousPrice, currentPrice) {
 
 /** Ahorro absoluto en pesos entre el precio anterior y el actual. */
 export function calculateSavings(previousPrice, currentPrice) {
-  return Math.max(previousPrice - currentPrice, 0);
+  return Math.max(Math.round((previousPrice - currentPrice) * 100) / 100, 0);
 }
 
 /** "hace 2 h" / "hace 45 min" a partir de una fecha ISO. */

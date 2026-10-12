@@ -19,9 +19,24 @@ module.exports = {
     userId: env('MERCADO_LIBRE_USER_ID'),
     apiBase: 'https://api.mercadolibre.com',
   },
+  // Panel de administración (http://localhost:3001/admin). Sin contraseña no deja entrar.
+  admin: {
+    password: env('ADMIN_PASSWORD'),
+    secret: env('ADMIN_SECRET'), // opcional: mantiene la sesión entre reinicios
+  },
+  // Parámetros que da el programa de afiliados de ML (p. ej. "matt_tool=123&matt_word=precionauta").
+  affiliate: {
+    meliParams: env('MELI_AFFILIATE_PARAMS'),
+  },
+  // Bot de Telegram para las alertas (lo creas con @BotFather).
+  telegram: {
+    token: env('TELEGRAM_BOT_TOKEN'),
+  },
   server: {
     port: process.env.PORT || 3001,
     env: process.env.NODE_ENV || 'development',
+    // URL pública del backend ya desplegado (para enlaces en Telegram). Vacía en local.
+    publicUrl: env('PUBLIC_URL')?.replace(/\/$/, ''),
   },
   // Solo se publican ofertas con descuento dentro de este rango.
   discountRange: {

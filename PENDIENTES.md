@@ -59,6 +59,36 @@
 - [ ] Guardar precios en una base de datos para tener historial real y validar descuentos falsos
 - [ ] La clave secreta va solo en `backend/.env` (no se sube); compartirla con el equipo por privado
 
+## Panel de administración ✅ (COMPLETADO - 2026-10-11, sin commit todavía)
+Inspirado en el CRM "Halden" (codeandchill), en blanco y negro. Detalles en el README.
+- [x] `admin/` servido por el backend en `http://localhost:3001/admin`; la tienda no lo enlaza y tiene `noindex`
+- [x] Acceso con `ADMIN_PASSWORD` (backend/.env), sesión firmada de 8 h, 5 intentos fallidos cada 15 min por IP
+- [x] Resumen, Moderación (tablero arrastrable + `Alt`+flechas + menú "⋯" + anuncios para lector de pantalla) y Reportes (rango que redibuja todo)
+- [x] Panel lateral con detalle, riesgo con motivos escritos y cambio de estado
+- [x] Rechazar oculta la oferta en `/api/deals`; destacar la pone primero (`featured: true`)
+- [x] `nodemon.json`: nodemon ya no se reinicia al escribir `backend/cache/` (antes entraba en bucle consultando ML cada 3 s)
+- [x] Sello negro "Destacada" en la tienda; la destacada va al hero y primero en el catálogo
+- [x] Clics de afiliado: cada "Ver oferta" pasa por `/go/:id` y se ve en Reportes y Resumen
+- [ ] Para producción: mover usuarios del panel a la base de datos (hoy es una sola contraseña compartida)
+
+## Mejoras 2026-10-11 ✅ (sin commit al momento de escribir)
+- [x] Precios exactos con centavos (backend ya no redondea) y centavos chiquitos elevados en precios grandes
+- [x] Mensaje nuevo: "Las mejores ofertas, verificadas" + sección **Zona 80%+** (si no hay, muestra lo más cercano)
+- [x] Textos honestos: 5 min entre revisiones (no 4 h), "1 tienda rastreada", sin prometer Amazon/Liverpool
+- [x] Base de datos SQLite (`backend/db/`): historial de precios, clics y alertas de Telegram
+- [x] Detalle con gráfica de historial real; tarjeta dice "el precio más bajo que hemos visto"
+- [x] Anti-fraude con historial: "precio anterior inflado" manda la oferta a revisión con el motivo
+- [x] Enlace de afiliado de ML configurable (`MELI_AFFILIATE_PARAMS`) + aviso de afiliados en "Cómo funciona"
+- [x] Alertas por Telegram (`TELEGRAM_BOT_TOKEN`): bajas de precio y ofertas nuevas de 80%+
+- [x] Cifras del inicio con contador animado (idea de Norda) + ahorro total disponible
+- [x] PWA instalable (manifest, service worker, íconos); favicon pasado a negro
+- [x] El backend consulta ML cada 5 min solo (antes solo cuando alguien entraba)
+- [ ] **Pedro**: solicitar Mercado Libre Afiliados y pegar los parámetros en `backend/.env`
+- [ ] **Pedro**: crear el bot con @BotFather y pegar `TELEGRAM_BOT_TOKEN` en `backend/.env`
+- [ ] Publicar en internet (Render/Railway para backend con disco persistente para SQLite; Netlify/Vercel para la tienda) y poner `PUBLIC_URL` + `window.PRECIONAUTA_API`
+- [ ] Stock visible en la tarjeta (otra idea de Norda): ML no lo da en el endpoint que usamos; revisar `available_quantity` por oferta
+- [ ] Segunda tienda: AliExpress Portals (tiene API de productos con precios) o Admitad (Coppel, Shein)
+
 ## Git (pendiente - lo hace Pedro) 🧹
 - [x] Commit de todo lo de la Fase 5 ("Update")
 - [x] Sacar `node_modules/` de git sin borrarlo del disco: `git rm -r --cached node_modules` (pesa 48 MB / ~10,300 archivos; el `.gitignore` no saca lo que ya se había subido)
@@ -116,4 +146,4 @@ Por cada tienda:
 
 ---
 
-**Última actualización:** 2026-10-06
+**Última actualización:** 2026-10-11
