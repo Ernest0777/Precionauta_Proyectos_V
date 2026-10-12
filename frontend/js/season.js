@@ -76,7 +76,7 @@ function renderCountdown() {
   } else {
     label.textContent = "Terminó";
     note.textContent = "Las ofertas de abajo siguen vigentes; vuelve el próximo año.";
-    lead.textContent = "El Buen Fin terminó, pero seguimos verificando ofertas cada 4 horas.";
+    lead.textContent = "El Buen Fin terminó, pero seguimos verificando ofertas cada 5 minutos.";
   }
 }
 

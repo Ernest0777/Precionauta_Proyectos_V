@@ -11,10 +11,10 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Precionauta - Rastreador de ofertas extremas en México</title>
+  <title>Precionauta - Las mejores ofertas verificadas de México</title>
   <meta
     name="description"
-    content="Precionauta rastrea Amazon México, Mercado Libre y Liverpool cada 4 horas y verifica cada descuento contra su historial de precio real."
+    content="Precionauta revisa precios cada 5 minutos, guarda su historial real y descarta los descuentos inflados. Las mejores ofertas verificadas de México, con una zona especial de 80% o más."
   />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 
@@ -24,6 +24,10 @@
   <link rel="stylesheet" href="css/components.css" />
   <!-- Watermelon UI Components -->
   <link rel="stylesheet" href="css/components-watermelon.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
+  <script type="module" src="js/pwa.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#catalogo">Saltar al catálogo de ofertas</a>
@@ -195,9 +199,9 @@
     <section id="inicio" class="hero">
       <div class="container hero__grid">
         <div class="hero__copy">
-          <h1 class="hero__headline">Encuentra el error de precio <em>primero.</em></h1>
+          <h1 class="hero__headline">Las mejores ofertas, <em>verificadas.</em></h1>
           <p class="hero__subtext">
-            Rastreamos Amazon, Mercado Libre y Liverpool cada 4 horas y comparamos contra el precio histórico real.
+            Revisamos los precios cada 5 minutos y comparamos cada descuento contra su historial real. Si el «precio anterior» está inflado, no lo publicamos.
           </p>
           <div class="hero__actions">
             <button type="button" class="btn btn--primary" data-scroll-to-catalog>
@@ -231,7 +235,7 @@
           </span>
           <div>
             <div class="trust-item__value tabular-nums" id="statStores">3</div>
-            <div class="trust-item__label">tiendas rastreadas</div>
+            <div class="trust-item__label" id="statStoresLabel">tiendas rastreadas</div>
           </div>
         </div>
 
@@ -247,17 +251,43 @@
 
         <div class="trust-item">
           <span class="trust-item__icon">
+            <svg class="icon" width="19" height="19" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M152,120H136V56h8a32,32,0,0,1,32,32,8,8,0,0,0,16,0,48.05,48.05,0,0,0-48-48h-8V24a8,8,0,0,0-16,0V40h-8a48,48,0,0,0,0,96h8v64H104a32,32,0,0,1-32-32,8,8,0,0,0-16,0,48.05,48.05,0,0,0,48,48h16v16a8,8,0,0,0,16,0V216h16a48,48,0,0,0,0-96Zm-40,0a32,32,0,0,1,0-64h8v64Zm40,80H136V136h16a32,32,0,0,1,0,64Z"/></svg>
+          </span>
+          <div>
+            <div class="trust-item__value tabular-nums" id="statSavings">$0</div>
+            <div class="trust-item__label">de ahorro disponible hoy</div>
+          </div>
+        </div>
+
+        <div class="trust-item">
+          <span class="trust-item__icon">
             <svg class="icon" width="19" height="19" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg>
           </span>
           <div>
-            <div class="trust-item__value">4 h</div>
-            <div class="trust-item__label">frecuencia de verificación</div>
+            <div class="trust-item__value">5 min</div>
+            <div class="trust-item__label">entre cada revisión de precios</div>
           </div>
         </div>
 
         <div class="trust-item trust-item--updated">
           Actualizado <span id="statChecked" class="tabular-nums"></span>
         </div>
+      </div>
+    </section>
+
+    <section id="zona-extrema" class="extreme" aria-labelledby="extremeTitle">
+      <div class="container">
+        <div class="section-head extreme__head">
+          <div>
+            <p class="extreme__eyebrow"><span class="extreme__mark tabular-nums">80%+</span> Zona extrema</p>
+            <h2 id="extremeTitle">Descuentos de <em>80% o más</em></h2>
+            <p class="extreme__lead" id="extremeLead">Aparecen pocas veces y duran minutos. Cada uno pasó la verificación de historial.</p>
+          </div>
+          <button type="button" class="btn btn--outline extreme__alert" data-extreme-alert>
+            Avisarme cuando aparezcan
+          </button>
+        </div>
+        <div class="reco__rail extreme__rail" id="extremeRail" tabindex="0" aria-label="Ofertas de 80% o más, desliza para ver más"></div>
       </div>
     </section>
 
