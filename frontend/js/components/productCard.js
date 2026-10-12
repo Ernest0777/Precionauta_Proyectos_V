@@ -89,9 +89,11 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
         <span class="chip chip--store">${product.storeCode}</span>
 
         ${
-          isFeatured
-            ? `<span class="chip chip--flame">${icon("flame", { size: 14 })} Oferta más caliente</span>`
-            : ""
+          product.pinned
+            ? `<span class="chip chip--flame chip--pinned">${icon("sparkle", { size: 14 })} Destacada</span>`
+            : isFeatured
+              ? `<span class="chip chip--flame">${icon("flame", { size: 14 })} Oferta más caliente</span>`
+              : ""
         }
 
         <span
@@ -122,7 +124,12 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
                  ${icon("shieldCheck", { size: 16 })}
                  ${belowHistoricMinPercent}% por debajo de su precio mínimo histórico
                </p>`
-            : ""
+            : product.lowestSeen
+              ? `<p class="product-card__proof">
+                   ${icon("shieldCheck", { size: 16 })}
+                   El precio más bajo que hemos visto en ${product.historyDays} ${product.historyDays === 1 ? "día" : "días"}
+                 </p>`
+              : ""
         }
 
         <div class="product-card__footer">
@@ -135,7 +142,7 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
             class="btn btn--cta"
             href="${product.storeUrl}"
             target="_blank"
-            rel="noopener"
+            rel="noopener sponsored"
           >
             Ver oferta
             <span class="btn__icon-circle">${icon("arrowRight", { size: 14 })}</span>

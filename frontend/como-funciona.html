@@ -20,6 +20,10 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/legal.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
+  <script type="module" src="js/pwa.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -202,16 +206,17 @@
 
         <h2>1. Rastreamos varias tiendas a la vez</h2>
         <p>
-          Seguimos productos en Amazon México, Mercado Libre y Liverpool, revisando su precio cada 4
-          horas. La idea es no depender de una sola tienda para encontrar la mejor oferta.
+          Hoy seguimos miles de productos de Mercado Libre y revisamos su precio cada 5 minutos.
+          Estamos sumando más tiendas para no depender de una sola a la hora de encontrar la mejor oferta.
         </p>
 
         <h2>2. Comparamos contra el historial, no contra lo que dice la tienda</h2>
         <p>
-          Un "-70%" no significa nada si el "precio anterior" fue inflado. Por eso cada producto
-          guarda su propio historial de precio, y calculamos el descuento real comparando el precio
-          de hoy contra ese historial - no contra una cifra que la tienda puso ayer. Cuando un precio
-          está en su punto más bajo registrado, lo marcamos como "oferta más caliente".
+          Un "-70%" no significa nada si el "precio anterior" fue inflado. Por eso guardamos cada
+          precio que vemos y armamos el historial real de cada producto. Si después de una semana
+          nunca vimos el producto cerca del "precio anterior" que declara el vendedor, la oferta pasa a
+          revisión de nuestro equipo y puede quedar fuera. Cuando un precio es el más bajo que hemos
+          registrado, te lo decimos en la tarjeta.
         </p>
 
         <div class="legal__callout">
@@ -227,16 +232,22 @@
           vende nada ni procesa pagos - compras exactamente igual que si hubieras llegado ahí por tu
           cuenta, solo que encontraste la oferta más rápido.
         </p>
+        <p>
+          Algunos enlaces son de afiliado: si compras después de dar clic, la tienda nos puede pagar
+          una pequeña comisión. A ti no te cuesta nada extra, y no cambia qué ofertas mostramos ni en
+          qué orden.
+        </p>
 
         <h2>Guardar ofertas y alertas de precio</h2>
         <p>
           Puedes marcar cualquier oferta con el corazón para llevar la cuenta de cuánto has ahorrado
           (se guarda en tu navegador, no requiere cuenta). También puedes activar "Avisarme si baja
-          más" en la ficha de un producto - por ahora es una función que estamos construyendo.
+          más" con la campana; si conectas Telegram desde «Mis alertas», te escribimos ahí en cuanto
+          baje el precio o aparezca una oferta de 80% o más.
         </p>
 
         <h2>Qué tan seguido verificamos</h2>
-        <p>Cada 4 horas revisamos los precios de las tiendas que rastreamos y actualizamos el catálogo.</p>
+        <p>Cada 5 minutos revisamos los precios de las tiendas que rastreamos, actualizamos el catálogo y guardamos cada precio en nuestro historial.</p>
       </div>
     </section>
   </main>

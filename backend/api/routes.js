@@ -3,6 +3,20 @@ const router = express.Router();
 const dealFetcher = require('./deal-fetcher');
 const fraudDetector = require('../validators/fraud-detection');
 const meliClient = require('./meli-client');
+const moderation = require('../admin/moderation');
+const priceHistory = require('../db/price-history');
+const telegram = require('../db/telegram');
+
+// Resumen del historial real de precios que acompaña a cada oferta.
+function withHistory(deal) {
+  const s = priceHistory.summaryOf(deal.id);
+  if (!s) return { ...deal, history: null };
+  const v = priceHistory.verdict(deal);
+  return {
+    ...deal,
+    history: { min: s.min, max: s.max, points: s.points, since: new Date(s.since), days: v.days, lowest: v.lowest },
+  };
+}
 
 // Endpoint 1: GET /api/deals - Obtener todas las ofertas
 router.get('/deals', async (req, res) => {
@@ -10,8 +24,9 @@ router.get('/deals', async (req, res) => {
     const { filter = 0, category = null } = req.query;
     const minDiscount = parseInt(filter) || 0;
 
-    // Caché fresca, o la última lista buena mientras se refresca, o consulta a ML
-    let deals = await dealFetcher.fetchAllDeals();
+    // Caché fresca, o la última lista buena mientras se refresca, o consulta a ML.
+    // Sin las rechazadas en el panel y con las destacadas primero.
+    let deals = moderation.applyPublic(await dealFetcher.fetchAllDeals()).map(withHistory);
 
     // Aplicar filtro de categoría si se proporciona
     if (category) {
@@ -218,6 +233,39 @@ router.get('/stats', async (req, res) => {
       success: false,
       error: error.message,
     });
+  }
+});
+
+// Endpoint 7: GET /api/deals/:id/history - precios registrados (90 días)
+router.get('/deals/:id/history', (req, res) => {
+  const points = priceHistory.series(req.params.id).map((p) => ({ at: new Date(p.at), price: p.price }));
+  res.json({ success: true, data: points });
+});
+
+// Endpoint 8: Telegram - estado del bot y vínculo de este navegador
+router.get('/telegram/status', (req, res) => {
+  res.json({ success: true, data: telegram.status() });
+});
+
+router.get('/telegram/link/:code', (req, res) => {
+  res.json({ success: true, data: telegram.linkStatus(req.params.code) });
+});
+
+router.delete('/telegram/link/:code', (req, res) => {
+  telegram.unlink(req.params.code);
+  res.json({ success: true });
+});
+
+// Endpoint 9: POST /api/alerts/sync { code, ids } - ofertas que sigue este navegador
+router.post('/alerts/sync', async (req, res) => {
+  try {
+    const { code, ids } = req.body || {};
+    if (!Array.isArray(ids)) return res.status(400).json({ success: false, error: 'ids debe ser una lista' });
+    const deals = await dealFetcher.fetchAllDeals();
+    const count = telegram.syncAlerts(code, ids, new Map(deals.map((d) => [d.id, d])));
+    res.json({ success: true, data: { following: count } });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
   }
 });
 

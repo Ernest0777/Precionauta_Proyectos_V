@@ -34,7 +34,8 @@ const PLANS = [
       { text: "Todas las ofertas verificadas" },
       { text: "Filtros por categoría, tienda y descuento" },
       { text: `Hasta ${FREE_ALERT_LIMIT} alertas de precio` },
-      { text: "Verificación cada 4 horas" },
+      { text: "Precios revisados cada 5 minutos" },
+      { text: "Avisos por Telegram cuando baje el precio" },
     ],
   },
   {
@@ -48,7 +49,6 @@ const PLANS = [
       { text: "Alertas ilimitadas" },
       { text: "Aviso por correo cuando baje el precio", soon: true },
       { text: "Historial de precio de 12 meses", soon: true },
-      { text: "Verificación cada hora", soon: true },
     ],
   },
   {
