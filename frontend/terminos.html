@@ -20,12 +20,14 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/legal.css" />
+  <link rel="stylesheet" href="css/neobrutalism.css" />
+  <link rel="stylesheet" href="css/content-neobrutalism.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="theme-color" content="#ffe638" />
   <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
   <script type="module" src="js/pwa.js"></script>
 </head>
-<body>
+<body class="neo-site neo-content">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
   <header id="siteHeader" class="site-header">
@@ -198,6 +200,8 @@
   <main>
     <section id="contenido">
       <div class="container legal">
+        <a class="content-back" href="index.html#catalogo">← Volver a las ofertas</a>
+        <span class="content-eyebrow">Las reglas, bien claras</span>
         <p class="legal__updated">Última actualización: 21 de septiembre de 2026</p>
         <h1>Términos y condiciones</h1>
         <p>
@@ -205,14 +209,26 @@
           <a href="aviso-privacidad.html">aviso de privacidad</a>.
         </p>
 
-        <h2>Qué es Precionauta</h2>
+        <nav class="legal-toc" aria-label="En esta página">
+          <strong class="legal-toc__title">En esta página</strong>
+          <ol>
+            <li><a href="#que-es-precionauta">Qué es Precionauta</a></li>
+            <li><a href="#que-no-es-precionauta">Qué NO es Precionauta</a></li>
+            <li><a href="#enlaces-salientes">Enlaces salientes</a></li>
+            <li><a href="#uso-aceptable">Uso aceptable</a></li>
+            <li><a href="#cambios-a-estos-terminos">Cambios a estos términos</a></li>
+            <li><a href="#ley-aplicable">Ley aplicable</a></li>
+          </ol>
+        </nav>
+
+        <h2 id="que-es-precionauta">Qué es Precionauta</h2>
         <p>
           Precionauta es un agregador informativo de ofertas y descuentos de comercio electrónico.
           Rastreamos precios en tiendas como Amazon México, Mercado Libre y Liverpool, los comparamos
           contra su historial y mostramos los que consideramos descuentos reales.
         </p>
 
-        <h2>Qué NO es Precionauta</h2>
+        <h2 id="que-no-es-precionauta">Qué NO es Precionauta</h2>
         <ul>
           <li>No vendemos productos ni operamos una tienda en línea.</li>
           <li>No procesamos pagos, envíos ni devoluciones.</li>
@@ -227,27 +243,27 @@
           </p>
         </div>
 
-        <h2>Enlaces salientes</h2>
+        <h2 id="enlaces-salientes">Enlaces salientes</h2>
         <p>
           El botón "Ver oferta" te redirige al sitio de la tienda de origen. Esa tienda es la única
           responsable de la información, el precio final, el inventario y el proceso de compra.
         </p>
 
-        <h2>Uso aceptable</h2>
+        <h2 id="uso-aceptable">Uso aceptable</h2>
         <p>
           Puedes usar Precionauta para consultar información pública sobre precios. No está permitido
           extraer masivamente (scraping) el contenido de este sitio, intentar vulnerar su
           funcionamiento, ni usarlo para fines fraudulentos.
         </p>
 
-        <h2>Cambios a estos términos</h2>
+        <h2 id="cambios-a-estos-terminos">Cambios a estos términos</h2>
         <p>
           Como el proyecto sigue en construcción, estos términos pueden actualizarse conforme se
           agreguen funciones (cuentas de usuario, alertas, checkout de terceros). Marcaremos la fecha
           de la última actualización en la parte superior de esta página.
         </p>
 
-        <h2>Ley aplicable</h2>
+        <h2 id="ley-aplicable">Ley aplicable</h2>
         <p>Estos términos se rigen por las leyes aplicables en México.</p>
       </div>
     </section>

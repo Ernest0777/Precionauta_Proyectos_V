@@ -1,8 +1,9 @@
 # Precionauta - Frontend
 
-HTML/CSS/JS estático, sin build ni dependencias de npm. Identidad Scandinavian
-(terracota `#c1602e` + crema + charcoal, Cormorant Garamond + Inter) - ver
-`PRODUCT.md` en la raíz del repo para el porqué y el historial de decisiones.
+HTML/CSS/JS estático, sin build. Identidad neobrutalista: crema, amarillo,
+lavanda, bordes negros y tipografía Inter. El sistema compartido vive en
+`css/neobrutalism.css`; cada página carga su composición específica después.
+Consulta `DESIGN.md` en la raíz para las reglas visuales y el alcance del retoque.
 
 ## Cómo abrir
 

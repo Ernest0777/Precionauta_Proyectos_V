@@ -20,12 +20,14 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/legal.css" />
+  <link rel="stylesheet" href="css/neobrutalism.css" />
+  <link rel="stylesheet" href="css/content-neobrutalism.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="theme-color" content="#ffe638" />
   <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
   <script type="module" src="js/pwa.js"></script>
 </head>
-<body>
+<body class="neo-site neo-content">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
   <header id="siteHeader" class="site-header">
@@ -198,6 +200,8 @@
   <main>
     <section id="contenido">
       <div class="container legal">
+        <a class="content-back" href="index.html#catalogo">← Volver a las ofertas</a>
+        <span class="content-eyebrow">Las reglas, bien claras</span>
         <p class="legal__updated">Última actualización: 21 de septiembre de 2026</p>
         <h1>Política de cookies</h1>
 
@@ -205,7 +209,17 @@
           <p>Precionauta no usa cookies de rastreo ni de terceros hoy. No verás un banner de consentimiento de cookies porque, honestamente, no hay ninguna cookie de la que consentir.</p>
         </div>
 
-        <h2>Cookies vs. almacenamiento local</h2>
+        <nav class="legal-toc" aria-label="En esta página">
+          <strong class="legal-toc__title">En esta página</strong>
+          <ol>
+            <li><a href="#cookies-vs-almacenamiento-local">Cookies vs. almacenamiento local</a></li>
+            <li><a href="#que-guardamos-con-localstorage">Qué guardamos con localStorage</a></li>
+            <li><a href="#que-pasara-cuando-agreguemos-analitica">Qué pasará cuando agreguemos analítica</a></li>
+            <li><a href="#como-controlar-tu-almacenamiento-local">Cómo controlar tu almacenamiento local</a></li>
+          </ol>
+        </nav>
+
+        <h2 id="cookies-vs-almacenamiento-local">Cookies vs. almacenamiento local</h2>
         <p>
           Una cookie es un archivo que el navegador envía automáticamente al servidor en cada
           solicitud. Precionauta no las usa. En su lugar, usamos <code>localStorage</code>, una
@@ -213,21 +227,21 @@
           recibimos ni podemos leer desde un servidor.
         </p>
 
-        <h2>Qué guardamos con localStorage</h2>
+        <h2 id="que-guardamos-con-localstorage">Qué guardamos con localStorage</h2>
         <ul>
           <li>Las ofertas que marcas como favoritas (para calcular tu ahorro acumulado).</li>
           <li>Las alertas de precio que activas en una ficha de producto.</li>
         </ul>
         <p>Nada de esto se comparte, se vende ni se analiza. Es solo para que el sitio recuerde tus preferencias entre visitas.</p>
 
-        <h2>Qué pasará cuando agreguemos analítica</h2>
+        <h2 id="que-pasara-cuando-agreguemos-analitica">Qué pasará cuando agreguemos analítica</h2>
         <p>
           Si en una etapa futura integramos una herramienta de analítica (por ejemplo, para medir qué
           ofertas generan más clics), actualizaremos esta política y agregaremos un banner de
           consentimiento antes de activarla - no después.
         </p>
 
-        <h2>Cómo controlar tu almacenamiento local</h2>
+        <h2 id="como-controlar-tu-almacenamiento-local">Cómo controlar tu almacenamiento local</h2>
         <p>
           Puedes borrarlo en cualquier momento desde la configuración de tu navegador ("Configuración
           del sitio" → Precionauta → Borrar datos), o navegando en modo privado.

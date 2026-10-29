@@ -32,7 +32,7 @@ const PLANS = [
     price: { mensual: 0, anual: 0 },
     features: [
       { text: "Todas las ofertas verificadas" },
-      { text: "Ofertas nuevas 2 h después de que aparecen" },
+      { text: "Catálogo inicial disponible; ofertas nuevas 2 h después" },
       { text: `Hasta ${FREE_ALERT_LIMIT} alertas de precio` },
       { text: `Historial de precio de ${HISTORY_DAYS.free} días` },
       { text: "Filtros por categoría, tienda y descuento" },

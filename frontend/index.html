@@ -24,12 +24,14 @@
   <link rel="stylesheet" href="css/components.css" />
   <!-- Watermelon UI Components -->
   <link rel="stylesheet" href="css/components-watermelon.css" />
+  <link rel="stylesheet" href="css/neobrutalism.css" />
+  <link rel="stylesheet" href="css/home-neobrutalism.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="theme-color" content="#ffe638" />
   <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
   <script type="module" src="js/pwa.js"></script>
 </head>
-<body>
+<body class="neo-site home-neo">
   <a class="skip-link" href="#catalogo">Saltar al catálogo de ofertas</a>
 
   <header id="siteHeader" class="site-header">
@@ -199,18 +201,19 @@
     <section id="inicio" class="hero">
       <div class="container hero__grid">
         <div class="hero__copy">
-          <h1 class="hero__headline">Las mejores ofertas, <em>verificadas.</em></h1>
+          <p class="neo-eyebrow">Encuentra. Compara. Ahorra.</p>
+          <h1 class="hero__headline">Buenos precios.<br /><em>Sin tantas vueltas.</em></h1>
           <p class="hero__subtext">
-            Revisamos los precios cada 5 minutos y comparamos cada descuento contra su historial real. Si el «precio anterior» está inflado, no lo publicamos.
+            Tú eliges qué te gusta. Nosotros seguimos los precios. Explora ofertas y consulta su historial antes de ir a la tienda.
           </p>
           <div class="hero__actions">
             <button type="button" class="btn btn--primary" data-scroll-to-catalog>
-              Ver ofertas de hoy
+              Explorar ofertas
               <span class="btn__icon-circle">
                 <svg class="icon" width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></svg>
               </span>
             </button>
-            <a class="hero__link" href="como-funciona.html">Cómo verificamos cada precio</a>
+            <a class="hero__link" href="como-funciona.html">Cómo funciona</a>
           </div>
           <div class="hero__stores">
             <p class="hero__stores-label">Ofertas activas en</p>
@@ -219,6 +222,7 @@
         </div>
 
         <div class="hero__visual">
+          <span class="neo-sticker" aria-hidden="true">Precio<br />en la mira ↗</span>
           <div class="hero-deck" id="heroDeck"></div>
           <div id="heroSpotlight" class="hero__spotlight"></div>
         </div>
@@ -275,6 +279,40 @@
       </div>
     </section>
 
+    <section id="catalogo" aria-label="Catálogo de ofertas">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <p class="neo-section-label">El radar de hoy</p>
+            <h2>Ofertas para poner <em>en la mira.</em></h2>
+          </div>
+          <p>Encuentra lo tuyo. Filtra por categoría, compara precios y elige tu próxima oferta.</p>
+        </div>
+
+        <!-- Watermelon: Continuous Tabs (filtro de categoría) -->
+        <div id="catalogTabs"></div>
+
+        <div class="catalog-filters">
+          <div class="threshold-filter" id="thresholdFilter" role="group" aria-label="Filtrar por descuento mínimo"></div>
+          <span class="catalog-filters__divider" aria-hidden="true"></span>
+          <div class="threshold-filter" id="storeFilter" role="group" aria-label="Filtrar por tienda"></div>
+        </div>
+
+        <div class="catalog-toolbar">
+          <p class="results-count" id="resultsCount" aria-live="polite"></p>
+
+          <label class="select-wrap">
+            <span class="sr-only">Ordenar ofertas</span>
+            <select id="sortSelect" aria-label="Ordenar ofertas"></select>
+            <svg class="icon" width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+          </label>
+        </div>
+
+        <div id="catalogGrid" class="catalog-grid"></div>
+        <div id="catalogMore" class="catalog-more" aria-live="polite"></div>
+      </div>
+    </section>
+
     <section id="zona-extrema" class="extreme" aria-labelledby="extremeTitle">
       <div class="container">
         <div class="section-head extreme__head">
@@ -316,37 +354,6 @@
         </div>
         <div class="reco__interests" id="recoInterests"></div>
         <div class="reco__rail" id="recoRail" tabindex="0" aria-label="Recomendaciones, desliza para ver más"></div>
-      </div>
-    </section>
-
-    <section id="catalogo" aria-label="Catálogo de ofertas">
-      <div class="container">
-        <div class="section-head">
-          <h2>Ofertas <em>verificadas</em> hoy</h2>
-          <p>Cada insignia de descuento se calcula en vivo a partir del precio anterior y el precio actual, nunca a mano.</p>
-        </div>
-
-        <!-- Watermelon: Continuous Tabs (filtro de categoría) -->
-        <div id="catalogTabs"></div>
-
-        <div class="catalog-filters">
-          <div class="threshold-filter" id="thresholdFilter" role="group" aria-label="Filtrar por descuento mínimo"></div>
-          <span class="catalog-filters__divider" aria-hidden="true"></span>
-          <div class="threshold-filter" id="storeFilter" role="group" aria-label="Filtrar por tienda"></div>
-        </div>
-
-        <div class="catalog-toolbar">
-          <p class="results-count" id="resultsCount" aria-live="polite"></p>
-
-          <label class="select-wrap">
-            <span class="sr-only">Ordenar ofertas</span>
-            <select id="sortSelect" aria-label="Ordenar ofertas"></select>
-            <svg class="icon" width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
-          </label>
-        </div>
-
-        <div id="catalogGrid" class="catalog-grid"></div>
-        <div id="catalogMore" class="catalog-more" aria-live="polite"></div>
       </div>
     </section>
 

@@ -4,6 +4,10 @@
 
 ## 🍉 Descripción Rápida
 
+El sitio público usa un diseño neobrutalista consistente en Inicio, Detalle,
+Planes, checkout de demostración, Temporada y páginas informativas. Consulta
+[DESIGN.md](DESIGN.md) para colores, componentes y organización de estilos.
+
 Precionauta es un agregador en tiempo real de ofertas extremas (80%-99% de descuento) de plataformas de e-commerce mexicanas como Amazon, Mercado Libre y Liverpool.
 
 ## 🚀 Quick Start
@@ -118,4 +122,4 @@ Proyecto Universitario - Semestre 5 (12 semanas)
 
 ---
 
-**Diseño Scandinavian | Accesibilidad WCAG AA | Responsive Mobile-First**
+**Diseño neobrutalista | Temas claro y oscuro | Adaptación a celular**

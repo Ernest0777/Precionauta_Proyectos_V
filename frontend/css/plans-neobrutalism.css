@@ -1,0 +1,268 @@
+/* Plans and demonstration checkout. Behaviors remain in the existing modules. */
+.neo-plans .plans-hero {
+  padding-block: 60px 36px;
+  border-bottom: var(--neo-line);
+  background-image: radial-gradient(var(--color-border-soft) .8px, transparent .8px);
+  background-size: 18px 18px;
+}
+
+.neo-plans .plans-hero__inner { gap: 24px; }
+.neo-plans .plans-eyebrow {
+  display: inline-block;
+  padding: 8px 14px;
+  background: var(--neo-lilac);
+  color: var(--neo-ink);
+  border: var(--neo-line);
+  border-radius: 3px;
+  box-shadow: 3px 3px 0 var(--neo-ink);
+  font-size: .75rem;
+  font-weight: 850;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  transform: rotate(-1deg);
+}
+
+.neo-plans .plans-hero__title {
+  max-width: 20ch;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 900;
+  letter-spacing: -.055em;
+  line-height: 1.08;
+}
+
+.neo-plans .plans-hero__title em {
+  color: var(--color-ink-900);
+  background: linear-gradient(transparent 66%, var(--neo-yellow) 66%);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.neo-plans .plans-hero__lead { max-width: 64ch; font-size: 1rem; line-height: 1.65; }
+.neo-plans .plans-demo-note {
+  max-width: 62ch;
+  padding: 12px 16px;
+  border: var(--neo-line);
+  border-radius: 3px;
+  background: var(--color-surface);
+  font-size: .75rem;
+  line-height: 1.55;
+  text-align: left;
+}
+.neo-plans .plans-demo-note .icon { flex-shrink: 0; }
+.neo-plans .billing-toggle {
+  margin-top: 2px;
+  padding: 5px;
+  gap: 6px;
+  border: var(--neo-line);
+  border-radius: 4px;
+  box-shadow: 4px 4px 0 var(--neo-ink);
+}
+.neo-plans .billing-toggle__option {
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 2px solid transparent;
+  border-radius: 2px;
+  font-weight: 800;
+  color: var(--color-ink-700);
+}
+.neo-plans .billing-toggle__option.is-active {
+  color: var(--neo-ink);
+  background: var(--neo-yellow);
+  border-color: var(--neo-ink);
+}
+.neo-plans .billing-toggle__save {
+  padding: 3px 6px;
+  border: 1px solid var(--neo-ink);
+  border-radius: 2px;
+  background: var(--neo-lilac);
+  color: var(--neo-ink);
+  font-size: .625rem;
+  font-weight: 850;
+}
+
+.neo-plans .plans { padding-block: 48px 56px; }
+.neo-plans .plans-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 72rem;
+  margin: 0 auto 32px;
+}
+.neo-plans .plans-section-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: .75rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--color-ink-700);
+}
+.neo-plans .plans-section-heading h2 { font-size: clamp(1.65rem, 3vw, 2.3rem); letter-spacing: -.04em; line-height: 1.15; }
+.neo-plans .plans-section-heading > p { max-width: 29ch; font-size: .875rem; color: var(--color-ink-700); }
+.neo-plans .plans-grid { max-width: 72rem; gap: 24px; align-items: stretch; }
+.neo-plans .plan-card {
+  padding: 32px 26px 28px;
+  border: var(--neo-line);
+  border-radius: 5px;
+  box-shadow: 6px 6px 0 var(--neo-ink);
+  background: var(--color-surface);
+  gap: 12px;
+  min-width: 0;
+}
+.neo-plans .plan-card--featured {
+  --color-surface: var(--neo-lilac);
+  --color-surface-soft: #e6d8fa;
+  --color-ink-900: #171717;
+  --color-ink-700: #37352f;
+  --color-ink-500: #49424d;
+  --color-border-soft: #171717;
+  --color-accent-600: #ffe638;
+  --color-accent-700: #ffed65;
+  --color-on-accent: #171717;
+  padding-top: 60px;
+  transform: none;
+  background: var(--neo-lilac);
+  box-shadow: 8px 8px 0 var(--neo-ink);
+}
+.neo-plans .plan-card__flag {
+  top: -14px;
+  right: 20px;
+  padding: 7px 12px;
+  border: var(--neo-line);
+  border-radius: 2px;
+  background: var(--neo-yellow);
+  color: var(--neo-ink);
+  box-shadow: 3px 3px 0 var(--neo-ink);
+  text-transform: uppercase;
+  letter-spacing: .045em;
+  font-size: .65rem;
+  transform: rotate(2deg);
+}
+.neo-plans .plan-card__name { font-size: 1.65rem; font-weight: 900; letter-spacing: -.035em; }
+.neo-plans .plan-card__tagline { min-height: 2.8em; line-height: 1.5; }
+.neo-plans .plan-card__price { gap: 6px; flex-wrap: wrap; }
+.neo-plans .plan-card__amount { font-size: clamp(2.6rem, 4vw, 3.35rem); font-weight: 900; }
+.neo-plans .plan-card__cta { min-height: 48px; margin-block: 14px 12px; }
+.neo-plans .plan-card--featured .btn--primary { background: var(--neo-yellow); color: var(--neo-ink); }
+.neo-plans .plan-card__cta--current {
+  color: var(--color-ink-700);
+  background: var(--color-surface-soft);
+  border: 2px dashed var(--neo-ink);
+  box-shadow: none;
+  opacity: 1;
+}
+.neo-plans .plan-card__features { gap: 16px; padding-top: 22px; border-top: 2px solid var(--color-ink-900); }
+.neo-plans .plan-card__features li { font-size: .8125rem; line-height: 1.55; }
+.neo-plans .plan-card__features .icon { margin-top: 2px; }
+.neo-plans .soon-tag { margin-top: 3px; padding: 1px 5px; border: 1px solid currentColor; border-radius: 2px; font-size: .6rem; }
+.neo-plans .plans-footnote { margin-top: 30px; line-height: 1.6; }
+
+.neo-plans .plans-faq { padding-block: 56px 68px; border-top: var(--neo-line); background: var(--color-surface-soft); }
+.neo-plans .plans-faq__inner { max-width: 56rem; }
+.neo-plans .plans-faq h2 { margin-bottom: 26px; font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -.04em; }
+.neo-plans .faq-list { display: grid; gap: 14px; }
+.neo-plans .faq-item { border: var(--neo-line); border-radius: 4px; background: var(--color-surface); box-shadow: 4px 4px 0 var(--neo-ink); }
+.neo-plans .faq-item summary { padding: 20px 22px; font-size: .9rem; }
+.neo-plans .faq-item summary::after { display: grid; place-items: center; flex-shrink: 0; width: 27px; height: 27px; background: var(--neo-yellow); color: var(--neo-ink); border: var(--neo-line); border-radius: 2px; font-weight: 800; }
+.neo-plans .faq-item[open] { background: var(--color-surface); }
+.neo-plans .faq-item[open] summary { border-bottom: 2px solid var(--color-border-soft); }
+.neo-plans .faq-item p { max-width: none; padding: 18px 22px 22px; font-size: .875rem; line-height: 1.7; }
+
+/* Preserve the native dialog, its keyboard behavior and the payment animation. */
+.neo-plans .checkout {
+  border: var(--neo-line);
+  border-radius: 6px;
+  box-shadow: 10px 10px 0 var(--neo-ink);
+  max-height: calc(100dvh - 3rem);
+}
+.neo-plans .checkout::backdrop { background: rgb(23 23 23 / .7); }
+.neo-plans .pay__main { padding: 28px; gap: 24px; }
+.neo-plans .checkout__head h2 { font-size: 1.5rem; letter-spacing: -.035em; font-weight: 850; }
+.neo-plans .pay__summary {
+  --color-ink-900: #171717;
+  --color-ink-700: #37352f;
+  --color-ink-500: #49424d;
+  --color-border-soft: #9f8ab9;
+  --color-border: #171717;
+  padding: 28px;
+  background: var(--neo-lilac);
+  border-left: var(--neo-line);
+  color: var(--neo-ink);
+}
+.neo-plans .pay__summary h3 { font-weight: 850; font-size: 1.25rem; }
+.neo-plans .pay-tabs { border: var(--neo-line); border-radius: 3px; background: var(--color-surface-soft); }
+.neo-plans .pay-tabs__pill { display: none; }
+.neo-plans .pay-tabs__tab { height: 38px; border: 2px solid transparent; border-radius: 1px; font-weight: 800; color: var(--color-ink-700); }
+.neo-plans .pay-tabs__tab[aria-selected="true"] { border-color: var(--neo-ink); background: var(--neo-yellow); color: var(--neo-ink); }
+.neo-plans .pay-card__face { border: var(--neo-line); border-radius: 6px; background: var(--neo-yellow); box-shadow: 5px 5px 0 var(--neo-ink); color: var(--neo-ink); }
+.neo-plans .pay-card__chip { border: 1px solid var(--neo-ink); border-radius: 3px; background: var(--neo-lilac); }
+.neo-plans .pay-card__label { font-weight: 900; opacity: 1; }
+.neo-plans .pay-card__bottom div span,
+.neo-plans .pay-card__fine { opacity: .8; }
+.neo-plans .pay-card [data-zone].is-focus { outline-color: var(--neo-ink); }
+.neo-plans .pay-field input { min-height: 44px; border: var(--neo-line); border-radius: 3px; background: var(--color-surface); }
+.neo-plans .pay-field input:focus { outline: 3px solid var(--neo-lilac); outline-offset: 2px; }
+.neo-plans .pay-test-note { line-height: 1.6; }
+.neo-plans .pay-voucher { border: var(--neo-line); border-radius: 4px; box-shadow: 5px 5px 0 var(--neo-ink); }
+.neo-plans .pay-voucher__ref { font-size: clamp(1.1rem, 3vw, 1.4rem); overflow-wrap: anywhere; }
+.neo-plans .pay-voucher__list div { gap: 12px; }
+.neo-plans .pay-voucher__list dd { text-align: right; }
+.neo-plans .pay-summary__list li { gap: 12px; }
+.neo-plans .pay-summary__list li > span:last-child { white-space: nowrap; }
+.neo-plans .pay-summary__list li.is-total { margin-top: 6px; padding-block: 16px; border-top: var(--neo-line); font-size: 1.15rem; }
+.neo-plans .pay-summary__secure { border: var(--neo-line); border-radius: 3px; background: var(--neo-paper); color: var(--neo-ink); line-height: 1.6; }
+.neo-plans .pay-summary__perks { line-height: 1.5; }
+.neo-plans .pay-receipt { border: var(--neo-line); border-radius: 3px 3px 0 0; box-shadow: 4px 4px 0 var(--neo-ink); }
+.neo-plans .pay-receipt dl div { flex-wrap: wrap; }
+.neo-plans .pay-check { padding: 5px; width: 58px; height: 58px; background: var(--neo-yellow); border: var(--neo-line); border-radius: 50%; stroke: var(--neo-ink); }
+.neo-plans .pay-stage__hint { line-height: 1.55; }
+
+:root[data-theme="dark"] .neo-plans .plans-hero__title em { background: none; color: var(--neo-yellow); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .neo-plans .plans-hero__title em { background: none; color: var(--neo-yellow); }
+}
+
+@media (max-width: 900px) {
+  .neo-plans .plans-grid { max-width: 36rem; gap: 30px; }
+  .neo-plans .plan-card--featured { order: 0; padding-top: 38px; }
+  .neo-plans .plan-card__tagline { min-height: 0; }
+  .neo-plans .plans-section-heading { max-width: 36rem; align-items: start; flex-direction: column; gap: 12px; }
+}
+
+@media (max-width: 760px) {
+  .neo-plans .pay__summary { border-left: 0; border-top: var(--neo-line); }
+  .neo-plans .pay__summary h3 { padding-top: 0; }
+}
+
+@media (max-width: 520px) {
+  .neo-plans .plans-hero { padding-block: 38px 30px; }
+  .neo-plans .plans-hero__inner { gap: 20px; }
+  .neo-plans .plans-eyebrow { font-size: .59rem; padding: 8px 10px; }
+  .neo-plans .plans-hero__title { font-size: 2.65rem; }
+  .neo-plans .plans-hero__lead { font-size: .9rem; }
+  .neo-plans .billing-toggle { max-width: 100%; gap: 3px; }
+  .neo-plans .billing-toggle__option { padding: 8px 10px; gap: 6px; font-size: .8rem; }
+  .neo-plans .billing-toggle__save { font-size: .53rem; }
+  .neo-plans .plans { padding-block: 34px 40px; }
+  .neo-plans .plan-card { padding: 28px 22px 26px; }
+  .neo-plans .plan-card--featured { padding-top: 36px; }
+  .neo-plans .plans-faq { padding-block: 36px 44px; }
+  .neo-plans .faq-item summary { padding: 16px; font-size: .8125rem; }
+  .neo-plans .faq-item p { padding: 16px; font-size: .8125rem; }
+  .neo-plans .checkout { width: calc(100vw - 24px); max-height: calc(100dvh - 32px); box-shadow: 5px 5px 0 var(--neo-ink); }
+  .neo-plans .pay__main,
+  .neo-plans .pay__summary { padding: 22px 18px; }
+  .neo-plans .pay-fields__row { grid-template-columns: 1fr 1fr; }
+  .neo-plans .pay-fields__row .pay-field:first-child { grid-column: 1 / -1; }
+  .neo-plans .pay__actions { gap: 12px; }
+  .neo-plans .pay__submit { padding-inline: 12px; }
+  .neo-plans .pay-card__number { font-size: .97rem; }
+  .neo-plans .pay-card__bottom { gap: 14px; font-size: .67rem; }
+  .neo-plans .pay-stage { padding-inline: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neo-plans .billing-toggle__option,
+  .neo-plans .faq-item summary::after { transition: none; }
+}

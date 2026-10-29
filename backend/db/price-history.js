@@ -23,12 +23,14 @@ const BASELINE_MARGIN_MS = 10 * 60 * 1000;
 // viejo, cualquier dato raro movería la referencia y todo parecería nuevo).
 function trackingStartedAt() {
   const saved = db.prepare("SELECT value FROM meta WHERE key = 'tracking_started_at'").get();
-  if (saved) return Number(saved.value);
-  const start = db.prepare('SELECT MIN(at) AS at FROM prices').get().at ?? Date.now();
-  db.prepare("INSERT OR IGNORE INTO meta (key, value) VALUES ('tracking_started_at', ?)").run(String(start));
+  const earliest = db.prepare('SELECT MIN(at) AS at FROM prices').get().at;
+  // Arrancar sin datos (o con demo) no inicia el seguimiento real.
+  if (earliest == null) return null;
+  const start = saved ? Math.max(Number(saved.value), earliest) : earliest;
+  db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('tracking_started_at', ?)").run(String(start));
   return start;
 }
-const TRACKING_STARTED_AT = trackingStartedAt();
+let TRACKING_STARTED_AT = trackingStartedAt();
 
 let summaryCache = null;
 
@@ -44,6 +46,7 @@ function record(deals, at = Date.now()) {
       }
     }
   });
+  if (inserted && TRACKING_STARTED_AT == null) TRACKING_STARTED_AT = trackingStartedAt();
   summaryCache = null;
   return inserted;
 }
@@ -71,7 +74,7 @@ function summaryOf(dealId) {
 function firstSeen(dealId) {
   const s = summaryOf(dealId);
   if (!s) return Date.now(); // todavía no se guarda: es de esta misma consulta
-  return s.since - TRACKING_STARTED_AT > BASELINE_MARGIN_MS ? s.since : null;
+  return TRACKING_STARTED_AT != null && s.since - TRACKING_STARTED_AT > BASELINE_MARGIN_MS ? s.since : null;
 }
 
 // Lo que el historial dice de una oferta, en palabras (para la tienda y el panel).

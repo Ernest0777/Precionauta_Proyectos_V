@@ -1,4 +1,4 @@
-import { PRODUCTS, LOCKED_PRODUCTS } from "./data/products.js";
+import { PRODUCTS, LOCKED_PRODUCTS, CATALOG_SOURCE } from "./data/products.js";
 import { formatWait } from "./utils/plan.js";
 import { CATEGORIES, ALL_CATEGORIES_SLUG } from "./data/categories.js";
 import { renderProductCard, renderLockedCard } from "./components/productCard.js";
@@ -148,7 +148,11 @@ function renderStats() {
   const totalSavings = PRODUCTS.reduce((sum, p) => sum + Math.max(p.previousPrice - p.currentPrice, 0), 0);
   const storesLabel = document.getElementById("statStoresLabel");
   if (storesLabel) storesLabel.textContent = distinctStores === 1 ? "tienda rastreada" : "tiendas rastreadas";
-  els.statChecked.textContent = formatCheckedAtLabel(new Date());
+  els.statChecked.textContent = CATALOG_SOURCE === "demo"
+    ? "Backend conectado · productos de demostración"
+    : CATALOG_SOURCE === "local"
+      ? "Sin conexión al backend · catálogo de ejemplo"
+      : formatCheckedAtLabel(new Date());
 
   // Los números suben desde 0 cuando la franja entra en pantalla.
   countUpWhenVisible(els.statStores, distinctStores, (n) => String(Math.round(n)));
@@ -285,6 +289,13 @@ function bindExtremeZone() {
 function renderHero() {
   if (!els.heroSpotlight) return;
   const featured = PRODUCTS.find((p) => p.featured) ?? PRODUCTS[0];
+  if (!featured) {
+    els.heroSpotlight.innerHTML = LOCKED_PRODUCTS.length
+      ? renderLockedCard(LOCKED_PRODUCTS[0], CATEGORY_LABEL_BY_SLUG[LOCKED_PRODUCTS[0].categorySlug])
+      : '<p class="hero-empty">No hay ofertas disponibles en este momento. Intenta de nuevo más tarde.</p>';
+    if (els.heroDeck) els.heroDeck.innerHTML = "";
+    return;
+  }
   els.heroSpotlight.innerHTML = renderProductCard(
     featured,
     CATEGORY_LABEL_BY_SLUG[featured.categorySlug],

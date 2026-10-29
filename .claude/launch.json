@@ -4,13 +4,13 @@
     {
       "name": "precionauta-backend",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["C:\\Users\\narva\\OneDrive\\Documentos\\GITHUB\\Precionauta_Proyectos_V\\backend\\server.js"],
+      "runtimeArgs": ["backend/server.js"],
       "port": 3001
     },
     {
       "name": "precionauta-frontend",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "C:\\Users\\narva\\OneDrive\\Documentos\\GITHUB\\Precionauta_Proyectos_V\\frontend"],
+      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "frontend"],
       "port": 4173
     }
   ]

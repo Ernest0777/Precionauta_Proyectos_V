@@ -260,15 +260,16 @@ const API_TIMEOUT_MS = 6000;
 
 /** true si el catálogo viene de Mercado Libre; false si son los de ejemplo. */
 export let IS_LIVE = false;
+export let CATALOG_SOURCE = "local";
 
 async function loadLiveProducts() {
   try {
     const response = await fetch(`${API_BASE}/deals`, { signal: AbortSignal.timeout(API_TIMEOUT_MS) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const body = await response.json();
-    // `demo` = el backend tampoco pudo hablar con ML: mejor el catálogo de ejemplo completo.
-    if (!body.success || body.source === "demo" || !body.data?.length) throw new Error(`sin datos (${body.source})`);
-    IS_LIVE = true;
+    if (!body.success || !Array.isArray(body.data)) throw new Error("respuesta de catálogo inválida");
+    CATALOG_SOURCE = body.source ?? "backend";
+    IS_LIVE = CATALOG_SOURCE !== "demo";
     // Las que el equipo destacó en el panel llegan primero y con `featured`.
     const anyPinned = body.data.some((deal) => deal.featured);
     return body.data.map((deal, index) => fromDeal(deal, index, anyPinned));
@@ -297,8 +298,8 @@ function fromDeal(deal, index, anyPinned) {
     historicMaxPrice: history ? history.max : null,
     historyDays: history ? history.days : 0,
     lowestSeen: Boolean(history?.lowest && history.days >= 1),
-    checkedHoursAgo: Math.max(0, Math.floor(checkedMs / 3_600_000)),
-    verified: true,
+    checkedHoursAgo: Number.isFinite(checkedMs) ? Math.max(0, Math.floor(checkedMs / 3_600_000)) : 0,
+    verified: IS_LIVE,
     // `pinned` = destacada a mano en el panel. Si nadie destacó nada, la de mayor descuento.
     pinned: Boolean(deal.featured),
     featured: anyPinned ? Boolean(deal.featured) : index === 0,
@@ -308,7 +309,7 @@ function fromDeal(deal, index, anyPinned) {
     images: deal.pictures ?? [],
     offersCount: deal.offersCount,
     freeShipping: deal.freeShipping,
-    live: true,
+    live: IS_LIVE,
     // Cuándo apareció (null = ya estaba cuando empezamos a guardar historial).
     firstSeenAt: deal.firstSeenAt ? new Date(deal.firstSeenAt).getTime() : null,
   };
@@ -318,8 +319,8 @@ const ALL_PRODUCTS = await loadLiveProducts();
 const PLAN_ID = currentPlanId();
 const NOW = Date.now();
 
-/** Ofertas que aparecieron hace menos de 2 h (Plus las ve; Gratis todavía no). */
-const isFresh = (p) => p.firstSeenAt != null && NOW - p.firstSeenAt < FREE_DELAY_MS;
+/** La primera carga es visible; las ofertas posteriores esperan en Gratis. */
+const isFresh = (p) => p.live && p.firstSeenAt != null && NOW - p.firstSeenAt < FREE_DELAY_MS;
 
 for (const p of ALL_PRODUCTS) {
   if (isFresh(p)) {
@@ -329,8 +330,7 @@ for (const p of ALL_PRODUCTS) {
 }
 
 /**
- * Lo que este plan puede ver completo. En Gratis, las nuevas quedan fuera y
- * van a LOCKED_PRODUCTS: se muestran como adelanto bloqueado ("Plus la ve ahora").
+ * Gratis ve la carga inicial y las ofertas liberadas; Plus ve también las nuevas.
  */
 export const PRODUCTS = PLAN_ID === "plus" ? ALL_PRODUCTS : ALL_PRODUCTS.filter((p) => !p.isNew);
 export const LOCKED_PRODUCTS = PLAN_ID === "plus" ? [] : ALL_PRODUCTS.filter((p) => p.isNew);

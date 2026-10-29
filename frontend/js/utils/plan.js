@@ -1,9 +1,8 @@
 /**
  * Reglas de cada plan, en un solo lugar.
  *
- * Gratis ve las ofertas nuevas 2 h después de que aparecen; Plus las ve en
- * tiempo real. Vive aparte de shared.js porque data/products.js lo necesita
- * al cargar (shared.js importa products.js, y al revés sería un ciclo).
+ * La carga inicial está disponible en todos los planes. Las ofertas que llegan
+ * después esperan 2 horas en Gratis; Plus las ve al instante.
  *
  * Ojo: hoy el plan se guarda solo en este navegador (checkout de demostración).
  * La restricción real llega con Stripe + inicio de sesión: el backend tendrá
@@ -11,7 +10,7 @@
  */
 export const PLAN_STORAGE_KEY = "precionauta:plan";
 
-/** Retraso con el que Gratis ve una oferta nueva. */
+/** Espera para ofertas posteriores a la carga inicial. */
 export const FREE_DELAY_MS = 2 * 60 * 60 * 1000;
 
 /** Días de historial de precio que muestra Detalle. */

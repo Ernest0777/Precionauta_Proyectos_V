@@ -20,12 +20,14 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/legal.css" />
+  <link rel="stylesheet" href="css/neobrutalism.css" />
+  <link rel="stylesheet" href="css/content-neobrutalism.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="theme-color" content="#ffe638" />
   <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
   <script type="module" src="js/pwa.js"></script>
 </head>
-<body>
+<body class="neo-site neo-content">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
   <header id="siteHeader" class="site-header">
@@ -198,6 +200,8 @@
   <main>
     <section id="contenido">
       <div class="container legal">
+        <a class="content-back" href="index.html#catalogo">← Volver a las ofertas</a>
+        <span class="content-eyebrow">Las reglas, bien claras</span>
         <p class="legal__updated">Última actualización: 21 de septiembre de 2026</p>
         <h1>Aviso de privacidad</h1>
         <p>
@@ -213,7 +217,18 @@
           </p>
         </div>
 
-        <h2>Qué guardamos y dónde</h2>
+        <nav class="legal-toc" aria-label="En esta página">
+          <strong class="legal-toc__title">En esta página</strong>
+          <ol>
+            <li><a href="#que-guardamos-y-donde">Qué guardamos y dónde</a></li>
+            <li><a href="#enlaces-a-tiendas-externas">Enlaces a tiendas externas</a></li>
+            <li><a href="#cuando-el-proyecto-avance">Cuando el proyecto avance</a></li>
+            <li><a href="#como-borrar-lo-que-ya-esta-guardado">Cómo borrar lo que ya está guardado</a></li>
+            <li><a href="#contacto">Contacto</a></li>
+          </ol>
+        </nav>
+
+        <h2 id="que-guardamos-y-donde">Qué guardamos y dónde</h2>
         <ul>
           <li>
             <strong>Favoritos y alertas de precio:</strong> se guardan con <code>localStorage</code>,
@@ -232,14 +247,14 @@
           </li>
         </ul>
 
-        <h2>Enlaces a tiendas externas</h2>
+        <h2 id="enlaces-a-tiendas-externas">Enlaces a tiendas externas</h2>
         <p>
           Al dar clic en "Ver oferta" te llevamos al sitio de la tienda original (Amazon México,
           Mercado Libre o Liverpool). Esas tiendas tienen sus propias políticas de privacidad,
           independientes de esta. Te recomendamos revisarlas antes de comprar.
         </p>
 
-        <h2>Cuando el proyecto avance</h2>
+        <h2 id="cuando-el-proyecto-avance">Cuando el proyecto avance</h2>
         <p>
           Las siguientes etapas de Precionauta (ver nuestro cronograma) incluyen cuentas de usuario y
           alertas de precio por correo o Telegram, lo que implicará guardar tu correo electrónico en
@@ -247,7 +262,7 @@
           tiempo, antes de activar esas funciones.
         </p>
 
-        <h2>Cómo borrar lo que ya está guardado</h2>
+        <h2 id="como-borrar-lo-que-ya-esta-guardado">Cómo borrar lo que ya está guardado</h2>
         <p>
           Todo lo que guarda este sitio hoy vive en el almacenamiento local de tu navegador. Puedes
           borrarlo desde la configuración de tu navegador ("Borrar datos de navegación" /
@@ -255,7 +270,7 @@
           de navegación privada.
         </p>
 
-        <h2>Contacto</h2>
+        <h2 id="contacto">Contacto</h2>
         <p>
           Este proyecto todavía no tiene un correo de contacto oficial configurado. Mientras tanto,
           cualquier duda puede canalizarse a través del equipo del proyecto (Pedro Narváez, Ernesto

@@ -1,0 +1,189 @@
+/* Public guides and seasonal pages: the same bold identity, comfortable reading. */
+.neo-site .content-eyebrow {
+  display: table;
+  max-width: 100%;
+  padding: 7px 11px;
+  border: var(--neo-line);
+  background: var(--neo-lilac);
+  color: var(--neo-ink);
+  box-shadow: 3px 3px 0 var(--neo-ink);
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .055em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.neo-content main {
+  padding: clamp(28px, 5vw, 64px) var(--container-pad) clamp(44px, 6vw, 80px);
+}
+.neo-content #contenido { padding-block: 0; }
+
+.neo-content .legal {
+  width: 100%;
+  max-width: 960px;
+  padding: clamp(24px, 5vw, 64px);
+  border: var(--neo-line);
+  border-radius: 4px;
+  background: var(--color-surface);
+  box-shadow: 8px 8px 0 var(--neo-ink);
+  overflow-wrap: anywhere;
+}
+
+.neo-content .legal .content-back {
+  display: table;
+  margin-bottom: 28px;
+  color: var(--color-ink-700);
+  font-size: .875rem;
+  font-weight: 700;
+  text-decoration-thickness: 1px;
+}
+
+.neo-content .content-eyebrow { margin-bottom: 24px; }
+
+.neo-content .legal__updated {
+  margin-bottom: 12px;
+  font-size: .8rem;
+  font-weight: 600;
+}
+
+.neo-content .legal h1 {
+  max-width: 17ch;
+  padding-bottom: 24px;
+  margin-bottom: 26px;
+  border-bottom: 4px solid var(--neo-yellow);
+  font-size: clamp(2.1rem, 4.8vw, 3.8rem);
+  font-weight: 900;
+  line-height: 1.04;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+
+.neo-content .legal h2 {
+  margin-top: 38px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -.025em;
+  scroll-margin-top: 120px;
+}
+
+.neo-content .legal :is(p, li) { line-height: 1.8; }
+.neo-content .legal li::marker { color: var(--color-ink-900); font-weight: 800; }
+.neo-content .legal a { color: var(--color-ink-900); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.neo-content .legal a:hover { text-decoration-style: double; }
+
+.neo-content .legal__callout {
+  margin-block: 28px;
+  padding: 22px;
+  border: var(--neo-line);
+  border-radius: 3px;
+  background: var(--neo-yellow);
+  box-shadow: 4px 4px 0 var(--neo-ink);
+  color: var(--neo-ink);
+}
+
+.neo-content .legal__callout :is(p, strong, a, code) { color: var(--neo-ink); }
+.neo-content .legal code { padding: 2px 5px; border: 1px solid currentColor; border-radius: 2px; font-size: .88em; }
+
+.neo-content .legal-toc {
+  margin-block: 30px;
+  padding: 20px 24px;
+  border: var(--neo-line);
+  border-radius: 3px;
+  background: var(--color-surface-soft);
+}
+
+.neo-content .legal-toc__title { display: block; margin-bottom: 14px; font-size: .75rem; letter-spacing: .07em; text-transform: uppercase; }
+.neo-content .legal-toc ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; padding-left: 20px; margin: 0; list-style: decimal; }
+.neo-content .legal-toc li { margin: 0; padding-left: 2px; font-size: .85rem; line-height: 1.5; }
+.neo-content .legal-toc a { color: var(--color-ink-900); font-weight: 600; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+.neo-content .legal table { width: 100%; border-collapse: collapse; margin-block: 24px; font-size: .875rem; }
+.neo-content .legal :is(th, td) { padding: 12px; border: var(--neo-line); text-align: left; vertical-align: top; }
+.neo-content .legal th { background: var(--neo-lilac); color: var(--neo-ink); }
+
+.neo-season .season-hero {
+  padding-block: clamp(36px, 6vw, 72px);
+  background: var(--neo-yellow);
+  color: var(--neo-ink);
+  border-bottom: var(--neo-line);
+}
+
+.neo-season .season-hero__inner { gap: 56px; }
+.neo-season .season-hero .content-eyebrow { margin-bottom: 28px; }
+.neo-season .season-hero__title { font-size: clamp(3.5rem, 7vw, 6.4rem); font-weight: 900; letter-spacing: -.065em; }
+.neo-season .season-hero__title em { display: block; color: var(--neo-ink); -webkit-text-stroke: 1px var(--neo-ink); }
+.neo-season .season-hero__lead { max-width: 45ch; color: #343126; font-size: 1.05rem; }
+.neo-season .season-hero .hero__link { color: var(--neo-ink); text-decoration-color: currentColor; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.neo-season .season-hero .btn--primary { background: var(--neo-ink); color: var(--neo-paper); }
+.neo-season .season-hero .btn--primary:hover { background: var(--neo-paper); color: var(--neo-ink); }
+
+.neo-season .countdown {
+  padding: clamp(22px, 3vw, 36px);
+  background: var(--neo-lilac);
+  color: var(--neo-ink);
+  border: var(--neo-line);
+  border-radius: 4px;
+  box-shadow: 8px 8px 0 var(--neo-ink);
+  transform: rotate(1.5deg);
+}
+
+.neo-season .countdown__label { font-size: .85rem; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; opacity: 1; }
+.neo-season .countdown__grid { gap: 12px; margin-top: 20px; }
+.neo-season .countdown__cell { padding-block: 23px; border: var(--neo-line); border-radius: 2px; background: var(--neo-paper); }
+.neo-season .countdown__num { font-weight: 900; }
+.neo-season .countdown__unit { font-weight: 700; opacity: 1; }
+.neo-season .countdown__note { line-height: 1.6; opacity: 1; }
+
+.neo-season .season-section { padding-block: clamp(36px, 5vw, 64px); }
+.neo-season .season-section--alt { background: var(--color-surface-soft); border-block: var(--neo-line); }
+.neo-season :is(.section-head h2, .season-guide h2) { font-weight: 900; letter-spacing: -.045em; }
+.neo-season :is(.section-head h2, .season-guide h2) em { color: var(--neo-ink); background: var(--neo-lilac); box-decoration-break: clone; -webkit-box-decoration-break: clone; box-shadow: 4px 0 0 var(--neo-lilac), -4px 0 0 var(--neo-lilac); font-style: normal; }
+.neo-season .season-guide { gap: 56px; }
+.neo-season .season-guide__lead { line-height: 1.7; font-size: .95rem; }
+.neo-season .checklist { gap: 12px; }
+.neo-season .check-item { gap: 16px; padding: 20px; border: var(--neo-line); border-radius: 3px; box-shadow: 4px 4px 0 var(--neo-ink); }
+.neo-season .check-item:hover { background: var(--color-surface-soft); border-color: var(--neo-ink); }
+.neo-season .check-item__box { border: var(--neo-line); border-radius: 2px; background: var(--color-surface); }
+.neo-season .check-item input:checked + .check-item__box { border-color: var(--neo-ink); background: var(--neo-yellow); color: var(--neo-ink); }
+.neo-season .check-item__text { gap: 5px; line-height: 1.65; }
+.neo-season .check-item__text strong { font-size: .95rem; font-weight: 800; }
+.neo-season .season-calendar { gap: 20px; }
+.neo-season .season-calendar__item { gap: 10px; padding: 24px; border: var(--neo-line); border-radius: 3px; background: var(--color-surface); box-shadow: 4px 4px 0 var(--neo-ink); line-height: 1.65; }
+.neo-season .season-calendar__item strong { font-size: 1.05rem; font-weight: 800; line-height: 1.35; }
+.neo-season .season-calendar__month { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+.neo-season .season-calendar__item.is-current { background: var(--neo-lilac); color: var(--neo-ink); border-color: var(--neo-ink); }
+.neo-season .season-calendar__item.is-current :is(span:last-child, .season-calendar__month) { color: var(--neo-ink); }
+
+@media (max-width: 1024px) {
+  .neo-content .legal h2 { scroll-margin-top: 185px; }
+}
+
+@media (max-width: 900px) {
+  .neo-season .season-hero__inner { gap: 36px; }
+  .neo-season .season-hero__copy { max-width: 640px; }
+  .neo-season .countdown { max-width: 560px; transform: none; }
+  .neo-season .season-guide { gap: 28px; }
+  .neo-season .season-calendar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .neo-content main { padding-inline: 16px; }
+  .neo-content .legal { padding: 24px 20px; box-shadow: 5px 5px 0 var(--neo-ink); }
+  .neo-content .legal .content-back { margin-bottom: 24px; }
+  .neo-content .legal-toc { padding: 18px; }
+  .neo-content .legal-toc ol { grid-template-columns: 1fr; gap: 10px; }
+  .neo-content .legal__callout { padding: 18px; }
+  .neo-season .season-hero__actions { align-items: flex-start; gap: 20px; }
+  .neo-season .season-hero__actions .btn { width: 100%; }
+  .neo-season .season-hero__title { font-size: clamp(3.2rem, 14vw, 4.5rem); }
+  .neo-season .countdown { padding: 22px 18px; box-shadow: 5px 5px 0 var(--neo-ink); }
+  .neo-season .countdown__grid { gap: 8px; }
+  .neo-season .countdown__cell { padding: 18px 4px; }
+  .neo-season .countdown__num { font-size: 2.4rem; }
+  .neo-season .check-item { padding: 16px; gap: 12px; }
+  .neo-season .season-calendar { grid-template-columns: 1fr; }
+}

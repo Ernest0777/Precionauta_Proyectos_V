@@ -20,12 +20,14 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/legal.css" />
+  <link rel="stylesheet" href="css/neobrutalism.css" />
+  <link rel="stylesheet" href="css/content-neobrutalism.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="theme-color" content="#ffe638" />
   <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
   <script type="module" src="js/pwa.js"></script>
 </head>
-<body>
+<body class="neo-site neo-content">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
   <header id="siteHeader" class="site-header">
@@ -198,6 +200,8 @@
   <main>
     <section id="contenido">
       <div class="container legal">
+        <a class="content-back" href="index.html#catalogo">← Volver a las ofertas</a>
+        <span class="content-eyebrow">Las reglas, bien claras</span>
         <p class="legal__updated">Última actualización: 21 de septiembre de 2026</p>
         <h1>Política de reembolsos</h1>
 
@@ -205,7 +209,16 @@
           <p>Precionauta no vende productos ni procesa pagos. No podemos emitir reembolsos porque nunca recibimos tu dinero.</p>
         </div>
 
-        <h2>Dónde compraste, ahí se resuelve</h2>
+        <nav class="legal-toc" aria-label="En esta página">
+          <strong class="legal-toc__title">En esta página</strong>
+          <ol>
+            <li><a href="#donde-compraste-ahi-se-resuelve">Dónde compraste, ahí se resuelve</a></li>
+            <li><a href="#que-hacer-si-tienes-un-problema-con-una-compra">Qué hacer si tienes un problema con una compra</a></li>
+            <li><a href="#precios-y-disponibilidad">Precios y disponibilidad</a></li>
+          </ol>
+        </nav>
+
+        <h2 id="donde-compraste-ahi-se-resuelve">Dónde compraste, ahí se resuelve</h2>
         <p>
           Cuando das clic en "Ver oferta", la compra se realiza completamente en el sitio de la
           tienda de origen (Amazon México, Mercado Libre, Liverpool, u otra que agreguemos más
@@ -218,14 +231,14 @@
           <li>Atender un problema con el envío.</li>
         </ul>
 
-        <h2>Qué hacer si tienes un problema con una compra</h2>
+        <h2 id="que-hacer-si-tienes-un-problema-con-una-compra">Qué hacer si tienes un problema con una compra</h2>
         <p>
           Contacta directamente al servicio al cliente de la tienda donde compraste, usando el número
           de pedido que ellos te dieron. Precionauta no tiene acceso a esa información ni puede
           intervenir en la transacción.
         </p>
 
-        <h2>Precios y disponibilidad</h2>
+        <h2 id="precios-y-disponibilidad">Precios y disponibilidad</h2>
         <p>
           Verificamos los precios que mostramos con la frecuencia indicada en cada oferta, pero el
           precio final, el stock y las condiciones de venta son siempre los que la tienda muestra en

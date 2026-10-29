@@ -20,12 +20,14 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/legal.css" />
+  <link rel="stylesheet" href="css/neobrutalism.css" />
+  <link rel="stylesheet" href="css/content-neobrutalism.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="theme-color" content="#ffe638" />
   <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
   <script type="module" src="js/pwa.js"></script>
 </head>
-<body>
+<body class="neo-site neo-content">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
   <header id="siteHeader" class="site-header">
@@ -198,19 +200,32 @@
   <main>
     <section id="contenido">
       <div class="container legal">
+        <a class="content-back" href="index.html#catalogo">← Volver a las ofertas</a>
+        <span class="content-eyebrow">Compra con más información</span>
         <h1>Cómo funciona Precionauta</h1>
         <p>
           Tres pasos, sin trucos: rastreamos precios, los comparamos contra su historial real y te
           llevamos directo a la tienda cuando el descuento es genuino.
         </p>
 
-        <h2>1. Rastreamos varias tiendas a la vez</h2>
+        <nav class="legal-toc" aria-label="En esta página">
+          <strong class="legal-toc__title">En esta página</strong>
+          <ol>
+            <li><a href="#1-rastreamos-varias-tiendas-a-la-vez">1. Rastreamos varias tiendas a la vez</a></li>
+            <li><a href="#2-comparamos-contra-el-historial-no-contra-lo-que-dice-la-tienda">2. Comparamos contra el historial, no contra lo que dice la tienda</a></li>
+            <li><a href="#3-te-llevamos-directo-a-la-tienda">3. Te llevamos directo a la tienda</a></li>
+            <li><a href="#guardar-ofertas-y-alertas-de-precio">Guardar ofertas y alertas de precio</a></li>
+            <li><a href="#que-tan-seguido-verificamos">Qué tan seguido verificamos</a></li>
+          </ol>
+        </nav>
+
+        <h2 id="1-rastreamos-varias-tiendas-a-la-vez">1. Rastreamos varias tiendas a la vez</h2>
         <p>
           Hoy seguimos miles de productos de Mercado Libre y revisamos su precio cada 5 minutos.
           Estamos sumando más tiendas para no depender de una sola a la hora de encontrar la mejor oferta.
         </p>
 
-        <h2>2. Comparamos contra el historial, no contra lo que dice la tienda</h2>
+        <h2 id="2-comparamos-contra-el-historial-no-contra-lo-que-dice-la-tienda">2. Comparamos contra el historial, no contra lo que dice la tienda</h2>
         <p>
           Un "-70%" no significa nada si el "precio anterior" fue inflado. Por eso guardamos cada
           precio que vemos y armamos el historial real de cada producto. Si después de una semana
@@ -226,7 +241,7 @@
           </p>
         </div>
 
-        <h2>3. Te llevamos directo a la tienda</h2>
+        <h2 id="3-te-llevamos-directo-a-la-tienda">3. Te llevamos directo a la tienda</h2>
         <p>
           El botón "Ver oferta" te manda al sitio original donde está el producto. Precionauta no
           vende nada ni procesa pagos - compras exactamente igual que si hubieras llegado ahí por tu
@@ -238,7 +253,7 @@
           qué orden.
         </p>
 
-        <h2>Guardar ofertas y alertas de precio</h2>
+        <h2 id="guardar-ofertas-y-alertas-de-precio">Guardar ofertas y alertas de precio</h2>
         <p>
           Puedes marcar cualquier oferta con el corazón para llevar la cuenta de cuánto has ahorrado
           (se guarda en tu navegador, no requiere cuenta). También puedes activar "Avisarme si baja
@@ -246,7 +261,7 @@
           baje el precio o aparezca una oferta de 80% o más.
         </p>
 
-        <h2>Qué tan seguido verificamos</h2>
+        <h2 id="que-tan-seguido-verificamos">Qué tan seguido verificamos</h2>
         <p>Cada 5 minutos revisamos los precios de las tiendas que rastreamos, actualizamos el catálogo y guardamos cada precio en nuestro historial.</p>
       </div>
     </section>
