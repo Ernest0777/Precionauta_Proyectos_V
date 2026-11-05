@@ -1,5 +1,6 @@
 import { icon, CATEGORY_ICON_BY_SLUG } from "../utils/icons.js";
 import { formatAge, formatWait } from "../utils/plan.js";
+import { productImages } from "../utils/images.js";
 import {
   formatPriceMXN,
   formatPriceHTML,
@@ -18,6 +19,7 @@ import {
  * @param {{ variant?: "standard" | "featured", saved?: boolean, alerted?: boolean, showSaveButton?: boolean, reason?: string }} [opts]
  */
 export function renderProductCard(product, categoryLabel, opts = {}) {
+  product = { ...product, image: productImages(product)[0] };
   const { variant = "standard", saved = false, alerted = false, showSaveButton = true, reason = "" } = opts;
   const isFeatured = variant === "featured";
 
@@ -55,7 +57,7 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
         >
           ${
             product.image
-              ? `<img class="product-card__photo" src="${escapeAttr(product.image)}" alt="" loading="lazy" decoding="async" />`
+              ? `<img class="product-card__photo" data-product-image data-image-label="${escapeAttr(product.name)}" src="${escapeAttr(product.image)}" alt="" width="480" height="480" loading="lazy" decoding="async" />`
               : `<div class="product-card__glyph" aria-hidden="true">
                    ${icon(categoryIconName, { size: isFeatured ? 56 : 40 })}
                  </div>`
@@ -171,7 +173,7 @@ export function renderLockedCard(product, categoryLabel) {
       <div class="product-card__media product-card__media--${product.categorySlug} ${product.image ? "has-photo" : ""}">
         ${
           product.image
-            ? `<img class="product-card__photo product-card__photo--blurred" src="${escapeAttr(product.image)}" alt="" loading="lazy" decoding="async" />`
+            ? `<img class="product-card__photo product-card__photo--blurred" data-product-image src="${escapeAttr(product.image)}" alt="" width="480" height="480" loading="lazy" decoding="async" />`
             : `<div class="product-card__glyph" aria-hidden="true">${icon(categoryIconName, { size: 40 })}</div>`
         }
         <span class="locked-card__lock" aria-hidden="true">${icon("lock", { size: 22 })}</span>

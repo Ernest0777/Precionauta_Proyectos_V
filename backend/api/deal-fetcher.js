@@ -101,21 +101,21 @@ class DealFetcher {
 
       // 2) Detalle + ofertas de cada producto
       const built = await mapLimit(jobs, CONCURRENCY, ({ id, slug }) => this.buildDeal(id, slug));
-      const deals = built
-        .filter(Boolean)
+      const validatedDeals = built.filter(Boolean);
+      if (validatedDeals.length === 0) throw new Error('Mercado Libre no devolvió productos verificables');
+      const deals = validatedDeals
         .filter((deal) => inDiscountRange(deal)) // fuera de rango no es oferta (y no es fraude)
         .filter((deal) => !fraudDetector.isFraud(deal))
         .sort((a, b) => b.discount - a.discount);
 
-      if (deals.length === 0) throw new Error('Mercado Libre no devolvió ofertas');
-
-      this.setCache(deals, 'mercadolibre');
+      this.setCache(deals, 'mercadolibre', validatedDeals);
       this.saveToDisk();
       console.log(`✅ ${deals.length} ofertas reales de ${jobs.length} productos (${Date.now() - t0} ms)`);
       return deals;
     } catch (error) {
       console.error('❌ Error consultando Mercado Libre:', error.message);
-      if (this.cache.deals.length > 0) return this.cache.deals; // seguimos con lo último bueno
+      if (this.cache.lastUpdated && this.cache.source !== 'demo') return this.cache.deals; // incluso una consulta vacía puede ser la última válida
+      if (this.cache.deals.length > 0) return this.cache.deals;
       console.log('🧪 Usando ofertas DEMO');
       this.setCache(this.getDemoDeals(), 'demo');
       return this.cache.deals;
@@ -128,9 +128,13 @@ class DealFetcher {
         meliClient.getCatalogProduct(productId),
         meliClient.getProductOffers(productId),
       ]);
-      const best = pickBestOffer(offers);
+      const possiblyAvailable = offers.filter((offer) => offer.available_quantity !== 0);
+      const best = pickBestOffer(possiblyAvailable.length ? possiblyAvailable : offers);
       if (!best || !product.name) return null;
-      return this.formatDeal(product, best, offers.length, slug);
+      const deal = this.formatDeal(product, best, offers.length, slug);
+      // La oferta elegida agotada no implica que todos los vendedores lo estén.
+      if (deal.stock === 0 && !offers.every((offer) => offer.available_quantity === 0)) delete deal.stock;
+      return deal;
     } catch (error) {
       console.warn(`⚠️ ${productId}: ${error.response?.status || error.message}`);
       return null;
@@ -140,7 +144,8 @@ class DealFetcher {
   // Producto de catálogo + oferta de ML -> Deal
   formatDeal(product, offer, offersCount, categorySlug) {
     const currentPrice = offer.price;
-    const originalPrice = offer.original_price && offer.original_price > currentPrice ? offer.original_price : currentPrice;
+    const originalPriceConfirmed = Number.isFinite(offer.original_price) && offer.original_price > 0 && offer.original_price >= currentPrice;
+    const originalPrice = originalPriceConfirmed ? offer.original_price : currentPrice;
     const discount = ((originalPrice - currentPrice) / originalPrice) * 100;
 
     return {
@@ -148,6 +153,7 @@ class DealFetcher {
       title: product.name.trim(),
       // Precio exacto con centavos (124.89, no 125).
       originalPrice: toCents(originalPrice),
+      originalPriceConfirmed,
       currentPrice: toCents(currentPrice),
       discount: Math.round(discount * 10) / 10, // 1 decimal
       savings: toCents(originalPrice - currentPrice),
@@ -162,6 +168,7 @@ class DealFetcher {
         .slice(0, 8)
         .map((a) => ({ label: a.name, value: a.value_name })),
       offersCount,
+      ...(Number.isInteger(offer.available_quantity) && offer.available_quantity >= 0 ? { stock: offer.available_quantity } : {}),
       freeShipping: Boolean(offer.shipping?.free_shipping),
       validatedAt: new Date(),
       expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 horas
@@ -228,11 +235,12 @@ class DealFetcher {
     return stats;
   }
 
-  setCache(deals, source) {
+  setCache(deals, source, validatedDeals = deals) {
     this.cache.deals = deals;
     this.cache.lastUpdated = new Date();
     this.cache.source = source;
-    this.listeners.forEach((fn) => fn(deals, this.cache.lastUpdated, source));
+    this.cache.validatedDeals = validatedDeals;
+    this.listeners.forEach((fn) => fn(deals, this.cache.lastUpdated, source, validatedDeals));
   }
 
   // Avisar cuando llega una lista nueva (el panel guarda el historial).

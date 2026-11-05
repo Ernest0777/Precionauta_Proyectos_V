@@ -21,7 +21,7 @@ export const pct = (n, digits = 0) => `${(n || 0).toFixed(digits)}%`;
 export const int = (n) => Math.round(n || 0).toLocaleString("es-MX");
 
 export const STATUS = {
-  review: { label: "Por revisar", hint: "Sigue visible hasta que alguien decida" },
+  review: { label: "Por revisar", hint: "Las revisiones confirmadas se ocultan; las propuestas de observación conservan su publicación" },
   published: { label: "Publicada", hint: "Visible en la tienda" },
   featured: { label: "Destacada", hint: "Visible y primero en la tienda" },
   rejected: { label: "Rechazada", hint: "Oculta en la tienda" },

@@ -412,6 +412,16 @@
   background: var(--tone-tint);
 }
 
+.mega-preview__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 16px;
+  background: #fff;
+}
+
 .mega-preview__watermark {
   position: absolute;
   right: -2.5rem;
@@ -981,79 +991,6 @@
   background: var(--color-accent-600);
   border-color: var(--color-accent-600);
   color: var(--color-on-accent);
-}
-
-/* ================= STAY CONNECTED ================= */
-
-.subscribe-form input {
-  flex: 1;
-  min-width: 0;
-  background: transparent;
-  border: none;
-  border-bottom: 1.5px solid color-mix(in srgb, var(--color-inverted-text) 45%, transparent);
-  color: var(--color-surface);
-  font-size: var(--fs-base);
-  padding-block: var(--space-2);
-  transition: border-color var(--duration-fast) var(--ease-out-expo);
-}
-
-.subscribe-form input::placeholder {
-  /* 0.82: on the terracotta band anything lighter drops under 4.5:1. */
-  color: color-mix(in srgb, var(--color-inverted-text) 78%, transparent);
-}
-
-.subscribe-form input:focus-visible {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.subscribe-form input[aria-invalid="true"] {
-  border-color: var(--color-inverted-text);
-}
-
-.subscribe-form button {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: var(--radius-pill);
-  background: var(--color-accent);
-  color: var(--color-ink-900);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--duration-fast) var(--ease-out-expo),
-    transform var(--duration-fast) var(--ease-out-expo);
-}
-
-.subscribe-form button:hover {
-  opacity: 0.85;
-}
-
-.subscribe-form button:active {
-  transform: scale(0.94);
-}
-
-.subscribe-feedback {
-  margin-top: var(--space-4);
-  font-size: var(--fs-sm);
-  color: var(--color-inverted-text);
-  min-height: 1.4em;
-}
-
-.subscribe-feedback.is-error {
-  color: var(--color-inverted-text);
-}
-
-.subscribe-consent {
-  margin-top: var(--space-2);
-  font-size: var(--fs-2xs);
-  color: color-mix(in srgb, var(--color-inverted-text) 78%, transparent);
-}
-
-.subscribe-consent a {
-  color: var(--color-surface);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 /* ================= STATS / TRUST ITEMS ================= */

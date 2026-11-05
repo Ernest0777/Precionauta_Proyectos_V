@@ -2,10 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const fraudDetector = require('../validators/fraud-detection');
 const priceHistory = require('../db/price-history');
+const db = require('../db/database');
+db.exec('CREATE TABLE IF NOT EXISTS moderation_decisions (deal_id TEXT PRIMARY KEY, decision TEXT NOT NULL)');
 
 // Decisiones del panel + historial de cada consulta a ML. Vive junto a la caché
 // de ofertas (backend/cache/, fuera de git) para sobrevivir reinicios.
-const STORE_FILE = path.join(__dirname, '..', 'cache', 'moderation.json');
+const STORE_FILE = process.env.PRECIONAUTA_MODERATION_FILE || path.join(__dirname, '..', 'cache', 'moderation.json');
 const MAX_HISTORY = 500;
 const MAX_LOG = 300;
 
@@ -22,14 +24,26 @@ class Moderation {
   }
 
   load() {
-    try {
-      const saved = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
-      this.decisions = saved.decisions || {};
-      this.history = saved.history || [];
-      this.log = saved.log || [];
-    } catch {
-      // Primera vez: no hay archivo todavía.
+    let saved = {};
+    try { saved = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8')); }
+    catch (error) {
+      const migrated = db.prepare("SELECT value FROM meta WHERE key='moderation_sqlite_migrated'").get();
+      if (error.code !== 'ENOENT' && !migrated) throw error;
     }
+    this.history = saved.history || [];
+    this.log = saved.log || [];
+    db.transaction(() => {
+      if (!db.prepare("SELECT value FROM meta WHERE key='moderation_sqlite_migrated'").get()) {
+        const insert = db.prepare('INSERT OR IGNORE INTO moderation_decisions(deal_id,decision) VALUES(?,?)');
+        for (const [id, decision] of Object.entries(saved.decisions || {})) insert.run(id, JSON.stringify(decision));
+        db.prepare("INSERT INTO meta(key,value) VALUES('moderation_sqlite_migrated','1')").run();
+      }
+    });
+    this.reloadDecisions();
+  }
+
+  reloadDecisions() {
+    this.decisions = Object.fromEntries(db.prepare('SELECT deal_id,decision FROM moderation_decisions').all().map(row => [row.deal_id, JSON.parse(row.decision)]));
   }
 
   save() {
@@ -98,22 +112,25 @@ class Moderation {
 
   // Lo que ve la tienda: sin rechazadas y con las destacadas primero.
   applyPublic(deals) {
-    const visible = deals.filter((deal) => this.decisions[deal.id]?.status !== 'rejected');
+    const visible = deals.filter((deal) => {
+      const decision = this.decisions[deal.id];
+      return decision?.status !== 'rejected' && !(decision?.status === 'review' && decision.actor);
+    });
     const featured = visible.filter((deal) => this.decisions[deal.id]?.status === 'featured');
     const rest = visible.filter((deal) => this.decisions[deal.id]?.status !== 'featured');
     return [...featured.map((deal) => ({ ...deal, featured: true })), ...rest];
   }
 
-  setStatus(deal, status) {
+  setStatus(deal, status, actor = 'manual', options = {}) {
     if (!STATUSES.includes(status)) throw new Error(`Estado inválido: ${status}`);
     const from = this.statusOf(deal);
     const at = new Date().toISOString();
-    this.decisions[deal.id] = { status, at };
-    if (from !== status) {
-      this.log.unshift({ at, dealId: deal.id, title: deal.title, from, to: status });
-      this.log = this.log.slice(0, MAX_LOG);
-    }
-    this.save();
+    const decision = { status, at, actor, ...(options.eventId ? { eventId: options.eventId } : {}) };
+    db.prepare('INSERT INTO moderation_decisions(deal_id,decision) VALUES(?,?) ON CONFLICT(deal_id) DO UPDATE SET decision=excluded.decision').run(String(deal.id), JSON.stringify(decision));
+    this.decisions[deal.id] = decision;
+    this.log.unshift({ at, dealId: deal.id, title: deal.title, from, to: status, actor });
+    this.log = this.log.slice(0, MAX_LOG);
+    if (!options.deferSave) this.save();
     return { from, to: status, at };
   }
 
@@ -137,3 +154,4 @@ class Moderation {
 
 module.exports = new Moderation();
 module.exports.STATUSES = STATUSES;
+module.exports.Moderation = Moderation;

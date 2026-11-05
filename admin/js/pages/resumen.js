@@ -1,8 +1,9 @@
 // Resumen: el estado de la tienda de un vistazo.
 
 import { api } from "../api.js";
-import { loadDeals } from "../store.js";
+import { loadDeals, findDeal } from "../store.js";
 import { openDeal } from "../drawer.js";
+import { automationMarkup, loadAutomation, bindAutomation, markSummarySeen } from "./automation.js";
 import {
   STATUS,
   STATUS_ORDER,
@@ -24,7 +25,8 @@ const REFRESH_ICON = `<svg class="icon" viewBox="0 0 256 256" aria-hidden="true"
 
 export async function renderResumen(root) {
   if (!root.dataset.ready) root.innerHTML = skeleton();
-  const data = await api.overview();
+  const [data, automation] = await Promise.all([api.overview(), loadAutomation()]);
+  if (root.hidden) return;
   root.dataset.ready = "1";
 
   const { stats, statusCounts, bands, categories, atRisk, top, system } = data;
@@ -49,6 +51,7 @@ export async function renderResumen(root) {
       </div>
     </div>
 
+    ${automationMarkup(automation)}
     <div class="grid">
       <article class="card hero-card span-7 wide-md" data-reveal style="--i:1">
         <div>
@@ -189,6 +192,7 @@ export async function renderResumen(root) {
 
   runCounters(root);
   growBars(root);
+  markSummarySeen();
 }
 
 function skeleton() {
@@ -200,10 +204,15 @@ function skeleton() {
 }
 
 export function bindResumen(root, rerender) {
+  bindAutomation(root, rerender);
   root.addEventListener("click", async (e) => {
     const open = e.target.closest("[data-open]");
     if (open) {
       await loadDeals();
+      if (!findDeal(open.dataset.open)) {
+        toast("Esta oferta ya no está en el catálogo actual. Puedes atender su reporte desde el resumen.");
+        return;
+      }
       openDeal(open.dataset.open);
       return;
     }

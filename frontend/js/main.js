@@ -30,7 +30,6 @@ import {
   renderSavingsSummary,
   bindHeaderScrollShadow,
   bindMobileMenu,
-  bindSubscribeForm,
   bindThemeToggle,
   bindAuthModal,
   observeReveal,
@@ -826,7 +825,6 @@ function init() {
   bindThemeToggle();
   bindAuthModal();
   bindScrollToCatalogLinks();
-  bindSubscribeForm();
   bindRecommendations();
   bindExtremeZone();
   maybeShowOnboarding();

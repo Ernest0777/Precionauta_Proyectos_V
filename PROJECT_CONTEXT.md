@@ -1,90 +1,55 @@
-# Project Context - Precionauta
+# Contexto del proyecto — Precionauta
 
-## 📊 Estado Actual
+Actualizado: 2026-11-04. Rama actual: `Neo_Brutalism`.
 
-**Rama:** `claude/frontend-scandinavian-redesign`  
-**Fase:** Frontend base + Watermelon UI integration (COMPLETADA ✅)
+## Objetivo de la entrega
 
-## 🎯 Objetivo Actual
+Consolidar Cuenta gratuita y Plus, conectar la cuenta real al backend y conservar el diseño neobrutalista actual. Cazador queda fusionado con Plus. Afiliados y tiendas nuevas se retoman después; el conector actual sigue siendo Mercado Libre.
 
-Integrar componentes Watermelon UI con diseño Scandinavian en la página principal, manteniendo HTML vanilla sin build tools.
+## Decisiones vigentes
 
-## ✅ Completado
+| Estado | Guardados | Alertas | Historial | Ofertas nuevas | Temporadas |
+|---|---|---|---|---|---|
+| Visitante | Locales | Ninguna | Ninguno | 2 horas de espera después de la primera carga | 3 en total por evento |
+| Cuenta gratuita | En cuenta | 3 activas | Hasta 30 días | 2 horas de espera después de la primera carga | 3 en total por evento |
+| Plus | En cuenta | Ilimitadas | Hasta 365 días | Inmediatas | Todas las disponibles |
 
-### Watermelon UI Components (3200+ líneas)
-- ✅ Continuous Tabs (navegación de categorías)
-- ✅ Morphing Discovery Bar (búsqueda inteligente)
-- ✅ Alert System (notificaciones Toast)
-- ✅ Dropdown Menu (menús desplegables)
-- ✅ Disclosure/Accordion (acordeones)
-- ✅ Popover (tooltips flotantes)
-- ✅ CSS System (1400 líneas con dark mode)
+Plus cuesta $79 MXN/mes o $790 MXN/año, IVA incluido. El anual ahorra $158, equivalentes a 2 mensualidades. El número de días determina la ventana accesible, no garantiza que exista toda esa historia para cada producto.
 
-### Integración
-- ✅ CSS Watermelon importado en index.html
-- ✅ Scripts módulos ES6 funcionando
-- ✅ Tabs animados en producción
-- ✅ Barra de búsqueda mejorada lista
-- ✅ package.json con scripts dev/serve
+Visitante no es un plan comercial. Puede explorar sin registrarse. Al bajar de Plus se conservan guardados y alertas; las excedentes del límite gratuito quedan pausadas.
 
-### Documentación
-- ✅ WATERMELON_COMPONENTS_GUIDE.md (API completa)
-- ✅ watermelon-demo.html (demo interactivo)
-- ✅ watermelonInit.js (inicializador limpio)
-- ✅ Memoria de proyecto actualizada
+## Integración actual
 
-## 🔄 Próximo Paso
+- Frontend HTML/CSS/JavaScript con módulos ES, sin compilación obligatoria.
+- Backend Express; datos de cuenta e historial en SQLite. Requisito local: Node.js 22.21 o posterior.
+- Autenticación de esta entrega: correo y contraseña, con sesión mediante cookie. El servidor determina el acceso.
+- Perfil: nombre, correo, dirección opcional y plan.
+- Checkout de demostración: sin cobro ni captura de tarjeta real. La activación requiere cuenta y respuesta satisfactoria del backend; un error no cambia el plan.
+- Catálogo: Mercado Libre cuando hay datos; ejemplos identificables como respaldo cuando el backend no está disponible.
+- Temporadas: fechas oficiales cuando estén anunciadas; estado pendiente cuando no lo estén. El límite gratuito es por evento completo.
 
-### Fase 2: Deal Grid & Alerts
-1. Conectar API de ofertas (backend)
-2. Mostrar cards con datos reales
-3. Implementar sistema de paginación
-4. Alertas en tiempo real
+La integración de cuentas y permisos se está cerrando en esta entrega. La revisión final en navegador debe quedar registrada antes de declararla verificada.
 
-## 💻 Stack Confirmado
+## Límites explícitos
 
-- **Frontend:** HTML5 + Vanilla JS (sin build tool)
-- **UI Framework:** Watermelon UI (adaptado)
-- **Estilos:** CSS custom properties + dark mode
-- **Servidor:** http-server (npm)
-- **Deploy eventual:** Vercel/Netlify
+No hay pagos reales ni OAuth de Google/Facebook. La recuperación por Resend ya está implementada, pendiente de credenciales y remitente autorizado. Las referencias a afiliados no acreditan cuentas aprobadas. La existencia de una integración de Telegram en el repositorio no demuestra que haya un bot configurado ni entrega de avisos comprobada en este entorno.
 
-## 📝 Notas Importantes
+## Diseño
 
-- **Accesibilidad:** WCAG 2.1 AA implementada
-- **Responsive:** Mobile-first + desktop optimizado
-- **Performance:** Cero dependencias externas
-- **Diseño:** Scandinavian minimalista
-- **Browser:** Chrome, Firefox, Safari, Edge
+La identidad vigente es neobrutalista: bordes marcados, contraste, crema, amarillo y lavanda, con temas claro y oscuro. [DESIGN.md](DESIGN.md) describe el sistema. Las notas antiguas sobre Scandinavian, Watermelon o blanco y negro son antecedentes y no definen la entrega actual.
 
-## 🚀 Para Correr
+## Desarrollo y validación
+
+El panel administrativo abre un resumen de moderación automática al entrar. El motor empieza en observación y persiste modo, propuestas, acciones y reversiones en SQLite; se ejecuta tras cada consulta real y registro de precios, antes de Telegram. Las decisiones manuales prevalecen. Los reportes de la comunidad se atienden desde ese resumen y no retiran ofertas por sí solos. Detalle registra las consultas autorizadas para permitir reportar una oferta vista si desaparece antes de enviar.
+
+Desde la raíz:
 
 ```bash
 npm install
-npm run dev        # Abre navegador automáticamente
+npm run dev
+npm test
 ```
 
-## 📚 Referencias
+Frontend: `http://localhost:4173`. Backend: `http://localhost:3001`. `npm run serve` sirve únicamente el frontend; la cuenta requiere el backend. El comando de pruebas es `node --test tests/*.test.js` mediante `npm test`.
 
-- `WATERMELON_IMPLEMENTATION_PLAN.md` - Estrategia de 4 fases
-- `frontend/WATERMELON_COMPONENTS_GUIDE.md` - API detallada
-- `frontend/watermelon-demo.html` - Componentes funcionando
-- Memory: `/memory/project_overview.md` - Contexto del proyecto
-
-## 👥 Roles
-
-- **Pedro (Backend):** APIs, integración de datos
-- **Ernesto (Frontend/UX):** Desarrollo Watermelon UI (completado)
-- **Dylan (QA/DB):** Testing, notificaciones
-
-## 📅 Timeline
-
-- **Semana 1-2:** Planning + UI ✅ COMPLETADO
-- **Semana 3-4:** Backend + APIs (EN PROGRESO)
-- **Semana 5-6:** Integraciones
-- **Semana 7-12:** Testing + Deploy
-
----
-
-**Última actualización:** 2026-09-22  
-**Próximo checkpoint:** Backend API ready
+Las tareas y la deuda útil se mantienen en [PENDIENTES.md](PENDIENTES.md). El alcance y los criterios de aceptación están en [docs/PLAN_IMPLEMENTACION.md](docs/PLAN_IMPLEMENTACION.md); la hipótesis de usuario, en [docs/PROTOPERSONA.md](docs/PROTOPERSONA.md).

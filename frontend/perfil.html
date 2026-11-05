@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("precionauta:theme");
+        if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mi perfil - Precionauta</title>
+  <meta
+    name="description"
+    content="Precionauta revisa precios cada 5 minutos, guarda su historial real y descarta los descuentos inflados. Las mejores ofertas verificadas de México, con una zona especial de 80% o más."
+  />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <!-- Watermelon UI Components -->
+  <link rel="stylesheet" href="css/components-watermelon.css" />
+  <link rel="stylesheet" href="css/neobrutalism.css" />
+  <link rel="stylesheet" href="css/profile.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#ffe638" />
+  <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
+  <script type="module" src="js/pwa.js"></script>
+</head>
+<body class="neo-site profile-neo">
+  <a class="skip-link" href="#catalogo">Saltar al catálogo de ofertas</a>
+
+  <header id="siteHeader" class="site-header">
+    <div class="container nav-bar">
+      <a href="#inicio" class="brand" aria-label="Precionauta, ir al inicio">
+        <span class="brand__mark" aria-hidden="true">P</span>
+        <span class="brand__name">Precionauta</span>
+      </a>
+
+      <!-- Watermelon: Morphing Discovery Bar -->
+      <div id="search-container" class="nav-bar__search"></div>
+
+      <nav class="nav-bar__links" aria-label="Principal">
+        <button type="button" class="nav-link" data-scroll-to-catalog>Ofertas</button>
+        <button type="button" class="nav-link nav-link--menu" data-category-menu-trigger>
+          Categorías
+          <svg class="icon nav-link__caret" width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </button>
+        <button type="button" class="nav-link nav-link--menu" data-store-menu-trigger>
+          Tiendas
+          <svg class="icon nav-link__caret" width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </button>
+        <button type="button" class="nav-link nav-link--alerts" data-alerts-trigger>
+          <svg class="icon" width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-23.19-18h46.38A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></svg>
+          Mis alertas
+          <span class="nav-count tabular-nums" data-alerts-count hidden></span>
+        </button>
+        <a href="planes.html" class="nav-link nav-link--plus" data-plan-link>Plus</a>
+        <span class="savings-pill tabular-nums" data-savings-summary hidden></span>
+        <button type="button" class="btn btn--pill-accent" data-auth-open>Entrar</button>
+      </nav>
+
+      <button type="button" class="icon-button nav-saved" data-saved-trigger aria-label="Mis guardados">
+        <svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z"/></svg>
+        <span class="icon-badge tabular-nums" data-saved-count hidden></span>
+      </button>
+
+      <button
+        type="button"
+        id="themeToggle"
+        class="icon-button theme-toggle"
+        data-theme-toggle
+        aria-label="Cambiar a modo oscuro"
+      >
+        <span class="theme-icon theme-icon--sun"><svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/></svg></span>
+        <span class="theme-icon theme-icon--moon"><svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M240,96a8,8,0,0,1-8,8H216v16a8,8,0,0,1-16,0V104H184a8,8,0,0,1,0-16h16V72a8,8,0,0,1,16,0V88h16A8,8,0,0,1,240,96ZM144,56h8v8a8,8,0,0,0,16,0V56h8a8,8,0,0,0,0-16h-8V32a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16Zm72.77,97a8,8,0,0,1,1.43,8A96,96,0,1,1,95.07,37.8a8,8,0,0,1,10.6,9.06A88.07,88.07,0,0,0,209.14,150.33,8,8,0,0,1,216.77,153Zm-19.39,14.88c-1.79.09-3.59.14-5.38.14A104.11,104.11,0,0,1,88,64c0-1.79,0-3.59.14-5.38A80,80,0,1,0,197.38,167.86Z"/></svg></span>
+      </button>
+
+      <button
+        type="button"
+        id="mobileMenuToggle"
+        class="icon-button nav-bar__mobile-trigger"
+        aria-label="Abrir menú"
+        aria-expanded="false"
+        aria-controls="mobileMenuPanel"
+      >
+        <svg class="icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"/></svg>
+      </button>
+    </div>
+    <!-- El panel de "Categorías" (js/components/headerMenus.js) se monta aquí, debajo de la barra. -->
+  </header>
+
+  <div id="scrollSentinel" aria-hidden="true"></div>
+
+  <div id="mobileMenuPanel" class="mobile-menu">
+    <div class="mobile-menu__panel" role="dialog" aria-modal="true" aria-label="Menú">
+      <div class="mobile-menu__head">
+        <span class="brand">
+          <span class="brand__mark" aria-hidden="true">P</span>
+          <span class="brand__name">Precionauta</span>
+        </span>
+        <button type="button" id="mobileMenuClose" class="icon-button" aria-label="Cerrar menú">
+          <svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+        </button>
+      </div>
+
+      <form class="search-field" role="search" onsubmit="return false;">
+        <span class="search-field__icon">
+          <svg class="icon" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>
+        </span>
+        <input type="search" placeholder="Buscar ofertas…" aria-label="Buscar ofertas" />
+        <button type="submit">Buscar</button>
+      </form>
+
+      <nav class="mobile-menu__links" aria-label="Principal móvil">
+        <button type="button" class="nav-link" data-scroll-to-catalog>Ofertas</button>
+        <button type="button" class="nav-link mobile-menu__disclosure" data-keep-open data-mobile-categories-toggle aria-expanded="false" aria-controls="mobileCategories">
+          Categorías
+          <svg class="icon nav-link__caret" width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </button>
+        <div id="mobileCategories" class="mobile-categories" data-mobile-categories hidden></div>
+        <button type="button" class="nav-link mobile-menu__disclosure" data-keep-open data-mobile-stores-toggle aria-expanded="false" aria-controls="mobileStores">
+          Tiendas
+          <svg class="icon nav-link__caret" width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </button>
+        <div id="mobileStores" class="mobile-categories" data-mobile-stores hidden></div>
+        <button type="button" class="nav-link nav-link--alerts" data-alerts-trigger>
+          <svg class="icon" width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-23.19-18h46.38A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></svg>
+          Mis alertas
+          <span class="nav-count tabular-nums" data-alerts-count hidden></span>
+        </button>
+        <button type="button" class="nav-link" data-saved-trigger><svg class="icon" width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z"/></svg> Mis guardados <span class="nav-count tabular-nums" data-saved-count hidden></span></button>
+        <a href="planes.html" class="nav-link nav-link--plus" data-plan-link>Precionauta Plus</a>
+      </nav>
+
+      <span class="savings-pill tabular-nums" data-savings-summary hidden></span>
+      <button type="button" class="btn btn--pill-accent" data-auth-open>Entrar</button>
+    </div>
+  </div>
+
+
+  <div id="authModal" class="modal" aria-hidden="true">
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+      <button type="button" id="authModalClose" class="icon-button modal__close" aria-label="Cerrar">
+        <svg class="icon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+      </button>
+
+      <h2 id="authModalTitle" class="sr-only">Entrar a Precionauta</h2>
+
+      <div class="modal__tabs" role="tablist" aria-label="Entrar o crear cuenta">
+        <button type="button" class="modal__tab is-active" data-auth-tab="login" role="tab" aria-selected="true">Iniciar sesión</button>
+        <button type="button" class="modal__tab" data-auth-tab="register" role="tab" aria-selected="false">Crear cuenta</button>
+      </div>
+
+      <div class="social-login">
+        <button type="button" class="btn-social" data-social-login="Google"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg> Continuar con Google</button>
+        <button type="button" class="btn-social" data-social-login="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877F2" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg> Continuar con Facebook</button>
+      </div>
+      <p class="auth-divider"><span>o con tu correo</span></p>
+
+      <form class="auth-form" data-auth-panel="login">
+        <label>
+          Correo electrónico
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label>
+          Contraseña
+          <input type="password" name="password" autocomplete="current-password" required minlength="8" />
+        </label>
+        <button type="submit" class="btn btn--primary">Iniciar sesión</button>
+      </form>
+
+      <form class="auth-form" data-auth-panel="register" hidden>
+        <label>
+          Nombre
+          <input type="text" name="name" autocomplete="name" required />
+        </label>
+        <label>
+          Correo electrónico
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label>
+          Contraseña
+          <input type="password" name="password" autocomplete="new-password" required minlength="8" />
+        </label>
+        <label>
+          Confirmar contraseña
+          <input type="password" name="password2" autocomplete="new-password" required minlength="8" />
+        </label>
+        <button type="submit" class="btn btn--primary">Crear cuenta</button>
+      </form>
+
+      <p class="auth-feedback" id="authFeedback" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+  <main id="contenido" class="profile">
+    <div class="container">
+      <div class="profile__heading">
+        <h1>Mi perfil</h1>
+        <p>Tu cuenta, tus ofertas y tus preferencias, en un solo lugar.</p>
+      </div>
+      <section id="profileGuest" class="profile__section profile__guest">
+        <h2>Haz espacio para tus próximas ofertas</h2>
+        <p id="profileGuestNote">Conectando con tu cuenta…</p>
+        <div class="profile__actions"><button class="btn btn--primary" type="button" data-auth-open>Entrar</button><a class="btn btn--outline" href="index.html#catalogo">Explorar ofertas</a></div>
+      </section>
+      <div id="profileMember" class="profile__layout" hidden>
+        <div>
+          <section class="profile__section" aria-labelledby="profileDataTitle">
+            <h2 id="profileDataTitle">Tus datos</h2>
+            <div id="profileMigration" hidden><p>Conservamos una copia de tus guardados y alertas anteriores. Falta confirmar su sincronización con tu cuenta.</p><button id="profileRetryMigration" class="btn btn--outline" type="button">Reintentar sincronización</button></div>
+            <form id="profileForm" class="profile__form">
+              <label>Nombre<input name="name" autocomplete="name" required maxlength="100" /></label>
+              <label>Correo electrónico<input name="email" type="email" autocomplete="email" readonly /><span class="profile__hint">Es el correo con el que entras a tu cuenta.</span></label>
+              <div class="profile__verification"><p id="profileEmailStatus" role="status"></p><button id="profileVerifyEmail" class="btn btn--outline" type="button">Verificar mi correo</button><p id="profileVerifyFeedback" class="profile__feedback" role="status" aria-live="polite"></p></div>
+              <label>Dirección de facturación (opcional)<textarea name="address" autocomplete="street-address" maxlength="500"></textarea><span class="profile__hint">Puedes dejarla vacía. Las tiendas externas gestionan sus propios envíos.</span></label>
+              <div class="profile__actions"><button class="btn btn--primary" type="submit">Guardar cambios</button><button id="profileLogout" class="btn btn--outline" type="button">Cerrar sesión</button></div>
+              <p id="profileFeedback" class="profile__feedback" role="status" aria-live="polite"></p>
+            </form>
+          </section>
+          <section class="profile__section" aria-labelledby="profilePaymentTitle">
+            <h2 id="profilePaymentTitle">Método de pago</h2>
+            <p class="profile__status">Sin cobros · demostración</p>
+            <p>No tienes una tarjeta vinculada. Por ahora puedes probar Plus con datos ficticios; no se solicita ni se guarda tu tarjeta.</p>
+            <a class="btn btn--outline" href="planes.html">Ver planes y demostración</a>
+          </section>
+        </div>
+        <aside>
+          <section class="profile__section profile__plan" aria-labelledby="profilePlanName">
+            <h2 id="profilePlanName">Tu plan</h2>
+            <p id="profilePlanPrice"></p>
+            <ul id="profilePlanBenefits" class="profile__benefits"></ul>
+            <a class="btn btn--primary" href="planes.html">Gestionar mi plan</a>
+          </section>
+          <section class="profile__section" aria-labelledby="profileLibraryTitle">
+            <h2 id="profileLibraryTitle">Tus ofertas</h2>
+            <dl class="profile__summary"><div><dt>Guardados</dt><dd id="profileSavedCount">0</dd></div><div><dt>Alertas activas</dt><dd id="profileAlertCount">0</dd></div></dl>
+            <p id="profilePaused" hidden></p>
+            <a class="btn btn--outline" href="index.html#catalogo">Seguir explorando</a>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__row">
+      <strong>Precionauta · Rastreador de descuentos en México · <span id="footerYear"></span></strong>
+      <p class="footer-links">
+        <a href="planes.html">Planes</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="temporada.html">Temporadas</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="como-funciona.html">Cómo funciona</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="aviso-privacidad.html">Aviso de privacidad</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="terminos.html">Términos</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="politica-cookies.html">Cookies</a>
+        <span class="footer-links__divider" aria-hidden="true"></span>
+        <a href="politica-reembolsos.html">Reembolsos</a>
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/profile.js"></script>
+</body>
+</html>

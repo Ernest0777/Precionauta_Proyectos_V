@@ -7,6 +7,8 @@
  * y al presionar Enter o el botón (submit:true).
  */
 
+import { renderProductImage } from "../utils/images.js";
+
 class MorphingDiscoveryBar {
   constructor(containerId, options = {}) {
     this.container = document.getElementById(containerId);
@@ -164,6 +166,7 @@ class MorphingDiscoveryBar {
       ${g.items
         .map((s) => {
           const i = index++;
+          const photo = renderProductImage(s, "discovery-suggestion__photo");
           return `
         <a
           class="discovery-suggestion"
@@ -174,7 +177,7 @@ class MorphingDiscoveryBar {
           ${s.tone ? `data-tone="${s.tone}"` : ""}
           data-index="${i}"
         >
-          ${s.iconHtml ? `<span class="discovery-suggestion__icon" aria-hidden="true">${s.iconHtml}</span>` : ""}
+          ${photo || s.iconHtml ? `<span class="discovery-suggestion__icon" aria-hidden="true">${photo || s.iconHtml}</span>` : ""}
           <span class="discovery-suggestion__text">
             <span class="discovery-suggestion__label">${highlight(s.label, query)}</span>
             ${s.meta ? `<span class="discovery-suggestion__meta">${escapeHtml(s.meta)}</span>` : ""}

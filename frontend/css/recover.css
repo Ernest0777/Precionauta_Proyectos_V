@@ -1,0 +1,19 @@
+.recover-page { min-height: 100vh; }
+.recover-header { border-bottom: var(--neo-line); padding: 22px clamp(20px, 5vw, 70px); }
+.recover-brand { display: inline-flex; align-items: center; gap: 11px; color: var(--color-ink-900); text-decoration: none; font-size: 1.35rem; font-weight: 850; letter-spacing: -.04em; }
+.recover-brand span { display: grid; place-items: center; width: 40px; height: 42px; color: var(--neo-ink); border: var(--neo-line); background: var(--neo-yellow); box-shadow: 3px 3px 0 var(--neo-ink); font-size: 1.6rem; }
+.recover-main { width: min(100% - 32px, 520px); margin: clamp(42px, 9vh, 100px) auto; }
+.recover-card { --color-ink-700: #37352f; color: #171717; background: var(--neo-paper); border: var(--neo-line); box-shadow: 7px 7px 0 var(--neo-ink); padding: clamp(25px, 6vw, 48px); }
+.recover-card h1 { font-size: clamp(2rem, 7vw, 3rem); line-height: 1.04; letter-spacing: -.05em; margin: 0 0 16px; }
+.recover-card > p:not(.recover-eyebrow) { line-height: 1.55; }
+.recover-card form { margin-top: 28px; }
+.recover-card label { display: block; font-weight: 750; margin: 18px 0 8px; }
+.recover-card input { display: block; width: 100%; min-height: 50px; padding: 10px 12px; border: var(--neo-line); background: white; color: #171717; font: inherit; }
+.recover-card button { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 52px; margin-top: 24px; padding: 12px 16px; background: var(--neo-yellow); border: var(--neo-line); box-shadow: 3px 3px 0 var(--neo-ink); color: var(--neo-ink); font: inherit; font-weight: 800; cursor: pointer; }
+.recover-card button:disabled { cursor: wait; opacity: .65; }
+.recover-card [hidden] { display: none; }
+.recover-hint { font-size: .9rem; margin: 0 0 8px; color: var(--color-ink-700); }
+.recover-message { background: #eee5ff; border: var(--neo-line); padding: 14px; margin-top: 24px; }
+.recover-message.is-error { background: #ffe6e6; }
+.recover-back { display: inline-block; color: var(--neo-ink); font-weight: 700; margin-top: 28px; text-decoration: underline; text-underline-offset: 4px; }
+.recover-footer { text-align: center; font-size: .85rem; font-weight: 650; color: var(--color-ink-700); margin-top: 30px; }

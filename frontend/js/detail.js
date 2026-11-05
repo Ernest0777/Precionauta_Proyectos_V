@@ -1,9 +1,11 @@
 import { PRODUCTS, LOCKED_PRODUCTS, API_BASE } from "./data/products.js";
-import { currentPlanId, formatAge, formatWait, HISTORY_DAYS } from "./utils/plan.js";
+import { formatAge, formatWait, HISTORY_DAYS } from "./utils/plan.js";
+import { accountReady, accountState } from "./utils/account.js";
+import { productImages } from "./utils/images.js";
 import { CATEGORIES } from "./data/categories.js";
 import { renderProductCard } from "./components/productCard.js";
 import { renderPriceChart } from "./components/priceChart.js";
-import { generatePriceHistory, seededRandom } from "./utils/priceHistory.js";
+import { seededRandom } from "./utils/priceHistory.js";
 import { icon, CATEGORY_ICON_BY_SLUG } from "./utils/icons.js";
 import {
   calculateDiscountPercent,
@@ -22,7 +24,6 @@ import {
   renderSavingsSummary,
   bindHeaderScrollShadow,
   bindMobileMenu,
-  bindSubscribeForm,
   bindThemeToggle,
   bindAuthModal,
   observeReveal,
@@ -31,7 +32,7 @@ import { bindHeaderMenus } from "./components/headerMenus.js";
 import { ALERTS_CHANGED_EVENT, SAVED_CHANGED_EVENT } from "./shared.js";
 import { track } from "./utils/recommender.js";
 
-const PLAN_ID = currentPlanId();
+await accountReady;
 
 /** Plazos típicos de meses sin intereses en tiendas mexicanas. */
 const MSI_TERMS = [3, 6, 9, 12, 18];
@@ -72,7 +73,7 @@ function renderPhotoGallery(images) {
     .map(
       (src, index) => `
         <div class="gallery__view gallery__view--photo ${index === 0 ? "is-active" : ""}" data-view="${index}">
-          <img src="${escapeHtml(src)}" alt="${index === 0 ? escapeHtml(product.name) : ""}" ${index === 0 ? "" : 'loading="lazy"'} />
+          <img data-product-image data-image-label="${escapeAttr(product.name)}" src="${escapeAttr(src)}" alt="${escapeAttr(product.name)} · foto ${index + 1}" width="480" height="480" decoding="async" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} />
         </div>
       `
     )
@@ -87,7 +88,7 @@ function renderPhotoGallery(images) {
           aria-label="Foto ${index + 1} de ${images.length}"
           aria-pressed="${index === 0}"
         >
-          <img src="${escapeHtml(src)}" alt="" loading="lazy" />
+          <img data-product-image src="${escapeAttr(src)}" alt="" width="80" height="80" loading="lazy" />
         </button>
       `
     )
@@ -101,7 +102,8 @@ function renderPhotoGallery(images) {
 }
 
 function renderGallery() {
-  if (product.images?.length) return renderPhotoGallery(product.images);
+  const images = productImages(product);
+  if (images.length) return renderPhotoGallery(images);
   const iconName = CATEGORY_ICON_BY_SLUG[product.categorySlug] ?? "tag";
   const views = GALLERY_VIEWS.map(
     (treatment, index) => `
@@ -189,6 +191,8 @@ function renderInfoColumn() {
         </button>
       </div>
 
+      ${renderDealReport()}
+
       ${renderMsiCalculator()}
 
       <div class="share-row">
@@ -230,6 +234,110 @@ function renderMsiCalculator() {
       <p class="msi__note">Estimación: depende de la tienda y de tu banco. Algunos plazos piden un monto mínimo de compra.</p>
     </section>
   `;
+}
+
+function renderDealReport() {
+  return `
+    <div class="deal-report">
+      <button type="button" class="deal-report__toggle" id="reportToggle" aria-expanded="false" aria-controls="dealReportForm">Reportar oferta</button>
+      <form id="dealReportForm" class="deal-report__form" hidden aria-labelledby="reportTitle">
+        <h2 id="reportTitle">Reportar un problema</h2>
+        <label for="reportReason">¿Qué ocurrió?</label>
+        <select id="reportReason" name="reason" required>
+          <option value="">Selecciona un motivo</option>
+          <option value="expired">La oferta venció o ya no está disponible</option>
+          <option value="incorrect_price">El precio es incorrecto</option>
+        </select>
+        <label for="reportNote">Nota opcional <span>(máximo 300 caracteres)</span></label>
+        <textarea id="reportNote" name="note" rows="3" maxlength="300" placeholder="Cuéntanos qué viste en la tienda"></textarea>
+        <p class="deal-report__hint">Revisaremos el reporte antes de cambiar la oferta.</p>
+        <div class="deal-report__actions">
+          <button type="submit" class="btn btn--outline">Enviar reporte</button>
+          <button type="button" class="deal-report__toggle" id="reportCancel">Cancelar</button>
+        </div>
+      </form>
+      <p id="reportFeedback" class="deal-report__feedback" role="status" aria-live="polite"></p>
+    </div>
+  `;
+}
+
+let viewedDealOwner = null;
+let viewedDealRequest = Promise.resolve();
+function rememberViewedDeal() {
+  const owner = accountState().user?.id;
+  if (!owner || lockedProduct) return Promise.resolve();
+  if (viewedDealOwner === owner) return viewedDealRequest;
+  viewedDealOwner = owner;
+  viewedDealRequest = fetch(`${API_BASE}/product/${encodeURIComponent(product.id)}`, {
+    credentials: "include", signal: AbortSignal.timeout(6000),
+  }).catch(() => null);
+  return viewedDealRequest;
+}
+
+function bindDealReport() {
+  const toggle = document.getElementById("reportToggle");
+  const form = document.getElementById("dealReportForm");
+  const feedback = document.getElementById("reportFeedback");
+  if (!toggle || !form || !feedback) return;
+  let sending = false;
+  const askForLogin = () => {
+    feedback.textContent = "Inicia sesión o crea una cuenta gratis para reportar una oferta.";
+    document.dispatchEvent(new CustomEvent("auth-requested"));
+  };
+  const close = () => {
+    form.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.focus();
+  };
+  toggle.addEventListener("click", () => {
+    if (!accountState().user) return askForLogin();
+    form.hidden = !form.hidden;
+    toggle.setAttribute("aria-expanded", String(!form.hidden));
+    if (!form.hidden) form.querySelector("select").focus();
+  });
+  document.getElementById("reportCancel").addEventListener("click", close);
+  form.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !sending) { event.preventDefault(); close(); }
+  });
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (sending || !form.reportValidity()) return;
+    if (!accountState().user) return askForLogin();
+    sending = true;
+    const controls = [...form.querySelectorAll("button, select, textarea")];
+    const submit = form.querySelector('[type="submit"]');
+    const reason = form.elements.reason.value;
+    const note = form.elements.note.value;
+    controls.forEach((control) => { control.disabled = true; });
+    toggle.disabled = true;
+    form.setAttribute("aria-busy", "true");
+    submit.textContent = "Enviando…";
+    feedback.textContent = "";
+    try {
+      await rememberViewedDeal();
+      const response = await fetch(`${API_BASE}/deals/${encodeURIComponent(product.id)}/reports`, {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason, note }), signal: AbortSignal.timeout(8000),
+      });
+      const result = await response.json().catch(() => null);
+      if (response.status === 401) { askForLogin(); return; }
+      if (!response.ok || !result?.success) throw new Error(result?.error || "No pudimos enviar el reporte. Inténtalo de nuevo.");
+      form.reset();
+      close();
+      feedback.textContent = result.data.duplicate ? "Ya recibimos tu reporte y está pendiente de revisión." : "Gracias. Recibimos tu reporte y lo revisaremos.";
+    } catch (error) {
+      feedback.textContent = error.name === "TimeoutError" || error instanceof TypeError
+        ? "No pudimos conectar. Revisa tu conexión e inténtalo de nuevo."
+        : error.message;
+    } finally {
+      sending = false;
+      controls.forEach((control) => { control.disabled = false; });
+      toggle.disabled = false;
+      form.removeAttribute("aria-busy");
+      submit.textContent = "Enviar reporte";
+      if (form.hidden) toggle.focus();
+    }
+  });
 }
 
 function bindMsiCalculator() {
@@ -298,54 +406,31 @@ function renderSpecs() {
     .join("");
 }
 
+let historyRequest = 0;
 function renderPriceHistoryPanel() {
+  const request = ++historyRequest;
   const rangeEl = document.getElementById("priceRange");
   const chartEl = document.getElementById("priceChart");
+  const heading = document.getElementById("historyHeading");
   if (!rangeEl || !chartEl) return;
-
-  const { historicMinPrice: min, historicMaxPrice: max, currentPrice } = product;
-
-  // Ofertas reales: la gráfica sale del historial que guarda el backend.
-  // Nunca inventamos puntos: sería justo el "descuento falso" que prometemos evitar.
-  if (product.live) {
-    renderLiveHistory(rangeEl, chartEl);
+  const level = accountState().access.level;
+  const days = HISTORY_DAYS[level] ?? 0;
+  rangeEl.innerHTML = "";
+  if (heading) heading.textContent = days ? `Historial de precio · hasta ${days} días` : "Historial de precio";
+  if (!days) {
+    chartEl.innerHTML = `<div class="history-access"><p>Crea una cuenta gratis para consultar hasta 30 días de precios registrados. Con Plus puedes consultar hasta 12 meses.</p><button type="button" class="btn btn--primary" data-history-register>Crear cuenta gratis</button></div>`;
+    chartEl.querySelector("[data-history-register]")?.addEventListener("click", () => {
+      document.querySelector("header [data-auth-open]")?.click();
+      document.querySelector('[data-auth-tab="register"]')?.click();
+    });
     return;
   }
-
-  if (min == null || max == null) {
-    const heading = document.getElementById("historyHeading");
-    if (heading) heading.textContent = "Historial de precio";
-    rangeEl.innerHTML = `
-      <div class="price-range__item price-range__item--max">
-        <div class="price-range__label">Precio anterior</div>
-        <div class="price-range__value tabular-nums">${formatPriceMXN(product.previousPrice)}</div>
-      </div>
-      <div class="price-range__item price-range__item--now">
-        <div class="price-range__label">Precio actual</div>
-        <div class="price-range__value tabular-nums">${formatPriceMXN(currentPrice)}</div>
-      </div>
-    `;
-    chartEl.innerHTML = `<p class="price-chart__empty">${icon("clock", { size: 16 })} Empezamos a registrar el precio de este producto. La gráfica de 90 días aparecerá conforme juntemos datos; el precio anterior es el que declara el vendedor en ${escapeHtml(product.store)}.</p>`;
+  if (!product.live) {
+    chartEl.innerHTML = `<p class="price-chart__empty">Producto de demostración: sus precios son ilustrativos y no representan un historial registrado. Las ofertas reales muestran los datos recogidos desde que comenzamos su seguimiento.</p>`;
     return;
   }
-
-  rangeEl.innerHTML = `
-    <div class="price-range__item price-range__item--max">
-      <div class="price-range__label">Precio máximo</div>
-      <div class="price-range__value tabular-nums">${formatPriceMXN(max)}</div>
-    </div>
-    <div class="price-range__item price-range__item--min">
-      <div class="price-range__label">Precio mínimo</div>
-      <div class="price-range__value tabular-nums">${formatPriceMXN(min)}</div>
-    </div>
-    <div class="price-range__item price-range__item--now">
-      <div class="price-range__label">Precio actual</div>
-      <div class="price-range__value tabular-nums">${formatPriceMXN(currentPrice)}</div>
-    </div>
-  `;
-
-  const points = generatePriceHistory(product);
-  chartEl.innerHTML = renderPriceChart(points, { min, max, currentPrice });
+  chartEl.innerHTML = '<p class="price-chart__empty" role="status">Cargando precios registrados…</p>';
+  renderLiveHistory(rangeEl, chartEl, { days, level, request });
 }
 
 const DAY_MS = 86_400_000;
@@ -359,16 +444,28 @@ function relativeStart(ms) {
   return `hace ${minutes} min`;
 }
 
-async function renderLiveHistory(rangeEl, chartEl) {
+async function renderLiveHistory(rangeEl, chartEl, { days, level, request }) {
   const { currentPrice } = product;
   let rows = [];
+  let unavailable = false;
   try {
-    const res = await fetch(`${API_BASE}/deals/${encodeURIComponent(product.id)}/history?days=${HISTORY_DAYS[PLAN_ID]}`);
-    rows = (await res.json()).data ?? [];
+    const res = await fetch(`${API_BASE}/deals/${encodeURIComponent(product.id)}/history?days=${days}`, { credentials: "include", signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error("history-unavailable");
+    const payload = await res.json();
+    rows = Array.isArray(payload.data) ? payload.data : [];
   } catch {
-    // Sin backend: se queda el mensaje de abajo.
+    unavailable = true;
   }
 
+  if (request !== historyRequest) return;
+  if (unavailable) {
+    rangeEl.innerHTML = "";
+    chartEl.innerHTML = '<p class="price-chart__empty" role="status">No pudimos consultar el historial. Intenta de nuevo más tarde; no mostramos precios sin verificar.</p>';
+    return;
+  }
+  const cutoff = Date.now() - days * DAY_MS;
+  rows = rows.filter((row) => Number.isFinite(row.price) && row.price > 0 && Number.isFinite(Date.parse(row.at)) && Date.parse(row.at) >= cutoff && Date.parse(row.at) <= Date.now())
+    .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
   const prices = rows.map((r) => r.price);
   const min = Math.min(currentPrice, ...prices);
   const max = Math.max(currentPrice, ...prices);
@@ -415,8 +512,9 @@ async function renderLiveHistory(rangeEl, chartEl) {
   if (heading) heading.textContent = `Historial de precio real (${relativeStart(span).replace("hace ", "últimos ")})`;
   chartEl.innerHTML =
     renderPriceChart(points, { min, max, currentPrice, startLabel: relativeStart(span) }) +
-    (PLAN_ID === "free"
-      ? `<p class="price-chart__note">Gratis muestra los últimos ${HISTORY_DAYS.free} días. <a href="planes.html">Con Plus ves 12 meses.</a></p>`
+    `<p class="price-chart__note">El mínimo y máximo corresponden al período registrado disponible. Compara las subidas previas: un precio de referencia inflado puede exagerar el descuento. No garantizamos que sea el menor precio de todo el mercado.</p>` +
+    (level === "free"
+      ? `<p class="price-chart__note">Gratis muestra los últimos ${HISTORY_DAYS.free} días. <a href="planes.html">Con Plus puedes consultar hasta 12 meses registrados.</a></p>`
       : "");
 }
 
@@ -520,6 +618,10 @@ function shuffleDeterministic(list, seed) {
   return copy;
 }
 
+function escapeAttr(value) {
+  return escapeHtml(value).replaceAll('"', "&quot;");
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -538,7 +640,7 @@ function renderLockedDetail() {
   container.innerHTML = `
     <div class="gallery">
       <div class="gallery__main gallery__main--photo locked-detail__media">
-        ${product.image ? `<img class="product-card__photo--blurred" src="${escapeHtml(product.image)}" alt="" />` : ""}
+        ${product.image ? `<img class="product-card__photo--blurred" data-product-image src="${escapeAttr(product.image)}" alt="" width="480" height="480" />` : ""}
         <span class="locked-card__lock" aria-hidden="true">${icon("lock", { size: 26 })}</span>
       </div>
     </div>
@@ -576,12 +678,12 @@ function init() {
     bindMobileMenu();
     bindThemeToggle();
     bindAuthModal();
-    bindSubscribeForm();
     return;
   }
 
   renderBreadcrumb();
   renderProductDetail();
+  rememberViewedDeal();
   renderSpecs();
   renderPriceHistoryPanel();
   renderRelated();
@@ -591,6 +693,7 @@ function init() {
 
   bindGallery();
   bindMsiCalculator();
+  bindDealReport();
   bindShare();
   bindSaveToggle();
   bindAlertToggle();
@@ -600,7 +703,8 @@ function init() {
   bindMobileMenu();
   bindThemeToggle();
   bindAuthModal();
-  bindSubscribeForm();
 }
 
+document.addEventListener("account-changed", renderPriceHistoryPanel);
+document.addEventListener("account-changed", rememberViewedDeal);
 init();

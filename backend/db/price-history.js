@@ -73,7 +73,7 @@ function summaryOf(dealId) {
  */
 function firstSeen(dealId) {
   const s = summaryOf(dealId);
-  if (!s) return Date.now(); // todavía no se guarda: es de esta misma consulta
+  if (!s) return TRACKING_STARTED_AT == null ? null : Date.now();
   return TRACKING_STARTED_AT != null && s.since - TRACKING_STARTED_AT > BASELINE_MARGIN_MS ? s.since : null;
 }
 

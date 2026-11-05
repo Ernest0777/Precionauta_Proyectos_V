@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <script>try { var theme = localStorage.getItem('precionauta:theme'); if (theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme); } catch {}</script>
+  <title>Recuperar contraseña | Precionauta</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/neobrutalism.css">
+  <link rel="stylesheet" href="css/recover.css">
+  <script type="module" src="js/recover.js"></script>
+</head>
+<body class="neo-site recover-page">
+  <header class="recover-header"><a class="recover-brand" href="index.html"><span aria-hidden="true">P</span> Precionauta</a></header>
+  <main class="recover-main">
+    <section class="recover-card" aria-labelledby="recover-title">
+      <h1 id="recover-title">Recupera tu contraseña</h1>
+      <p id="recover-intro">Escribe el correo de tu cuenta y te enviaremos instrucciones para recuperar el acceso.</p>
+      <form id="request-form">
+        <label for="email">Correo electrónico</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <button type="submit">Enviar instrucciones <span aria-hidden="true">→</span></button>
+      </form>
+      <form id="reset-form" hidden>
+        <label for="password">Nueva contraseña</label>
+        <p class="recover-hint" id="password-hint">Usa entre 12 y 128 caracteres.</p>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required aria-describedby="password-hint">
+        <label for="confirm-password">Confirma tu contraseña</label>
+        <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+        <button type="submit">Guardar contraseña <span aria-hidden="true">→</span></button>
+      </form>
+      <p id="recover-message" class="recover-message" role="status" aria-live="polite" tabindex="-1" hidden></p>
+      <a class="recover-back" href="index.html">← Volver para iniciar sesión</a>
+    </section>
+    <p class="recover-footer">Precios claros. Mejores decisiones.</p>
+  </main>
+</body>
+</html>

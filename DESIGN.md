@@ -1,6 +1,6 @@
 # Precionauta — Diseño visual
 
-Actualizado el 28 de octubre de 2026.
+Actualizado el 5 de noviembre de 2026.
 
 La justificación de colores, tipografía y contrastes para la evaluación está en
 [JUSTIFICACION_DISENO.md](JUSTIFICACION_DISENO.md).
@@ -23,6 +23,8 @@ Neobrutalismo aplicado al sitio público: tipografía Inter con títulos fuertes
 
 Los botones principales tienen fondo amarillo, borde negro y sombra desplazada. Los secundarios conservan un contorno visible. Las selecciones cambian también de borde o sombra; el foco de teclado permanece visible. Las tarjetas usan fotos completas, precios alineados y botones de guardar/alertar independientes.
 
+La tarjeta bancaria de demostración mantiene el amarillo por decisión del usuario: datos oscuros, chip metálico, bordes definidos, números tabulares legibles en celular y giro al enfocar el CVC. El menú de categorías y las sugerencias de búsqueda usan las imágenes del producto cuando existen, con un respaldo explícito si falla su carga.
+
 ## Organización del CSS
 
 - `frontend/css/neobrutalism.css`: tokens del sitio público, encabezado, botones, tarjetas, formularios, menús, alertas, guardados, acceso, bienvenida, pie y modo oscuro.
@@ -30,6 +32,7 @@ Los botones principales tienen fondo amarillo, borde negro y sombra desplazada. 
 - `frontend/css/detail-neobrutalism.css`: galería, precio, historial, especificaciones, calculadora y relacionados.
 - `frontend/css/plans-neobrutalism.css`: planes, selector de periodo y checkout de demostración.
 - `frontend/css/content-neobrutalism.css`: temporada, documentos informativos e índices de lectura.
+- `frontend/css/profile.css`: perfil, formularios de cuenta, plan y estados de sincronización; conserva los mismos tokens y componentes Neo.
 
 Las hojas originales siguen proporcionando estructura y estados. Cada página carga primero su CSS original, después el sistema compartido y al final su composición específica. `neo-site` identifica el sitio público; el panel de administración mantiene su diseño propio.
 
@@ -37,7 +40,7 @@ Las hojas originales siguen proporcionando estructura y estados. Cada página ca
 
 En celular, el buscador se muestra bajo la marca y los controles principales. Las columnas se apilan y los paneles permiten desplazamiento vertical. El diseño admite tema claro, oscuro y preferencia de movimiento reducido.
 
-El retoque visual conserva las funciones y las restricciones de planes: la primera carga real es visible en Gratis; las ofertas posteriores esperan dos horas. El acceso social y el cobro siguen siendo demostraciones y se identifican como tales.
+La primera carga real es visible en el acceso gratuito; las ofertas posteriores esperan dos horas. La cuenta por correo y el perfil se guardan en el servidor. Plus concentra el plan anterior Cazador, cuesta $79 al mes o $790 al año con IVA incluido y conserva hasta 12 meses de historial registrado. El checkout sigue siendo una demostración explícita sin cobros. Los accesos sociales no se ofrecen mientras no exista OAuth.
 
 ## Comprobaciones realizadas
 

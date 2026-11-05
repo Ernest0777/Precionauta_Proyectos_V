@@ -72,6 +72,20 @@ body.neo-site {
 .neo-site .discovery-bar-container:focus-within { border-color: #171717; box-shadow: 4px 4px 0 #171717, 0 0 0 3px var(--neo-yellow); }
 .neo-site .discovery-bar-action { border-radius: 2px; background: var(--neo-yellow); color: #171717; border: 1px solid #171717; }
 .neo-site .discovery-bar-suggestions { border: var(--neo-line); box-shadow: 5px 5px 0 #171717; }
+.neo-site .discovery-bar-input:focus-visible { outline: none; box-shadow: none; }
+.neo-site .auth-recovery-link { display: inline-block; margin-top: 14px; text-decoration: underline; text-underline-offset: 4px; font-weight: 650; }
+.neo-site .alert-target { display: grid; gap: 8px; padding: 0 12px 14px; }
+.neo-site .alert-item:has(> .alert-target) { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.neo-site .alert-item:has(> .alert-target) > .alert-item__link { grid-column: 1; grid-row: 1; }
+.neo-site .alert-item:has(> .alert-target) > .alert-item__remove { grid-column: 2; grid-row: 1; }
+.neo-site .alert-item > .alert-target { grid-column: 1 / -1; }
+.neo-site .alert-target summary { min-height: 40px; padding-block: 10px; cursor: pointer; font-weight: 650; }
+.neo-site .alert-target form { display: grid; gap: 10px; }
+.neo-site .alert-target input { width: 100%; min-width: 0; min-height: 42px; padding: 8px; border: var(--neo-line); border-radius: 3px; background: var(--color-surface); color: var(--color-ink-900); font: inherit; }
+.neo-site .alert-target button { min-height: 40px; padding: 6px 10px; border: 1px solid currentColor; border-radius: 3px; font-weight: 700; }
+.neo-site .alert-target [type="submit"] { background: var(--neo-yellow); color: #171717; }
+.neo-site .alert-target__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.neo-site .alert-target [hidden] { display: none !important; }
 .neo-site .icon-button { border: var(--neo-line); width: 42px; height: 42px; background: var(--color-surface); color: var(--color-ink-900); }
 .neo-site .icon-button:hover { background: var(--neo-yellow); color: #171717; }
 .neo-site .btn { min-height: 46px; border: var(--neo-line); font-weight: 800; border-radius: 3px; transition: transform 130ms ease, box-shadow 130ms ease; }

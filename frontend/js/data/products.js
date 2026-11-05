@@ -15,6 +15,7 @@
 
 import { GENERATED_PRODUCTS } from "./generatedProducts.js";
 import { currentPlanId, FREE_DELAY_MS } from "../utils/plan.js";
+import { accountReady, API_BASE as ACCOUNT_API_BASE } from "../utils/account.js";
 
 const BASE_PRODUCTS = [
   {
@@ -253,7 +254,7 @@ export const SAMPLE_PRODUCTS = [...BASE_PRODUCTS, ...GENERATED_PRODUCTS];
  * usa los productos de ejemplo de arriba para no quedarse vacía.
  * Se puede apuntar a otro servidor con `window.PRECIONAUTA_API`.
  */
-export const API_BASE = window.PRECIONAUTA_API ?? "http://localhost:3001/api";
+export const API_BASE = ACCOUNT_API_BASE;
 /** Raíz del backend (sin /api): ahí vive /go/:id, que cuenta el clic y lleva a la tienda. */
 export const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "");
 const API_TIMEOUT_MS = 6000;
@@ -263,8 +264,9 @@ export let IS_LIVE = false;
 export let CATALOG_SOURCE = "local";
 
 async function loadLiveProducts() {
+  await accountReady;
   try {
-    const response = await fetch(`${API_BASE}/deals`, { signal: AbortSignal.timeout(API_TIMEOUT_MS) });
+    const response = await fetch(`${API_BASE}/deals`, { credentials: "include", signal: AbortSignal.timeout(API_TIMEOUT_MS) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const body = await response.json();
     if (!body.success || !Array.isArray(body.data)) throw new Error("respuesta de catálogo inválida");
@@ -272,7 +274,7 @@ async function loadLiveProducts() {
     IS_LIVE = CATALOG_SOURCE !== "demo";
     // Las que el equipo destacó en el panel llegan primero y con `featured`.
     const anyPinned = body.data.some((deal) => deal.featured);
-    return body.data.map((deal, index) => fromDeal(deal, index, anyPinned));
+    return body.data.map((deal, index) => normalizeDeal(deal, index, anyPinned));
   } catch (error) {
     console.info(`[Precionauta] Backend no disponible (${error.message}); usando productos de ejemplo.`);
     return SAMPLE_PRODUCTS;
@@ -280,7 +282,17 @@ async function loadLiveProducts() {
 }
 
 /** Deal del backend -> la misma forma que los productos de ejemplo. */
-function fromDeal(deal, index, anyPinned) {
+export function normalizeDeal(deal, index = 0, anyPinned = false) {
+  if (deal.locked) {
+    return {
+      id: deal.id, name: "Nueva oferta de Plus", categorySlug: deal.category,
+      store: "", storeCode: "", previousPrice: 0, currentPrice: 0,
+      live: true, locked: true, isNew: true,
+      firstSeenAt: new Date(deal.firstSeenAt).getTime(),
+      unlocksAt: new Date(deal.availableAt).getTime(),
+    };
+  }
+  const live = deal.source ? deal.source !== "demo" : IS_LIVE;
   const checkedMs = Date.now() - new Date(deal.validatedAt).getTime();
   // Historial real (backend/db/price-history.js). Con un solo registro todavía no hay rango.
   const history = deal.history?.points >= 2 ? deal.history : null;
@@ -299,7 +311,7 @@ function fromDeal(deal, index, anyPinned) {
     historyDays: history ? history.days : 0,
     lowestSeen: Boolean(history?.lowest && history.days >= 1),
     checkedHoursAgo: Number.isFinite(checkedMs) ? Math.max(0, Math.floor(checkedMs / 3_600_000)) : 0,
-    verified: IS_LIVE,
+    verified: live,
     // `pinned` = destacada a mano en el panel. Si nadie destacó nada, la de mayor descuento.
     pinned: Boolean(deal.featured),
     featured: anyPinned ? Boolean(deal.featured) : index === 0,
@@ -309,7 +321,7 @@ function fromDeal(deal, index, anyPinned) {
     images: deal.pictures ?? [],
     offersCount: deal.offersCount,
     freeShipping: deal.freeShipping,
-    live: IS_LIVE,
+    live,
     // Cuándo apareció (null = ya estaba cuando empezamos a guardar historial).
     firstSeenAt: deal.firstSeenAt ? new Date(deal.firstSeenAt).getTime() : null,
   };
@@ -320,7 +332,7 @@ const PLAN_ID = currentPlanId();
 const NOW = Date.now();
 
 /** La primera carga es visible; las ofertas posteriores esperan en Gratis. */
-const isFresh = (p) => p.live && p.firstSeenAt != null && NOW - p.firstSeenAt < FREE_DELAY_MS;
+const isFresh = (p) => p.locked || (p.live && p.firstSeenAt != null && NOW - p.firstSeenAt < FREE_DELAY_MS);
 
 for (const p of ALL_PRODUCTS) {
   if (isFresh(p)) {

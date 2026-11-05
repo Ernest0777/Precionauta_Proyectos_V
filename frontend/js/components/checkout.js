@@ -1,24 +1,14 @@
-/**
- * Checkout animado (idea: "Payment Checkout V2"), en blanco y negro.
- *
- * Tres momentos: formulario -> "procesando" (la tarjeta va al centro) ->
- * recibo que sale de la tarjeta. Métodos: tarjeta, OXXO y SPEI, los que
- * Stripe acepta en México.
- *
- * MODO DEMOSTRACIÓN: los campos traen datos de prueba de Stripe ya escritos
- * y son de solo lectura. Nadie debe escribir aquí su tarjeta real, y nada se
- * envía. Para conectar Stripe:
- *   1. El backend crea un PaymentIntent (o una suscripción) y devuelve su client_secret.
- *   2. Cada [data-stripe-slot] se reemplaza por su Stripe Element
- *      (cardNumber, cardExpiry, cardCvc): los datos de la tarjeta se escriben
- *      dentro de Stripe y nunca pasan por nuestro código.
- *   3. El evento `focus` del Element de CVC gira la tarjeta (igual que aquí), y
- *      `change` da la marca (Visa, Mastercard) para pintarla en la tarjeta.
- *   4. `pay()` llama a stripe.confirmCardPayment / confirmOxxoPayment y, al
- *      resolver, sigue con showReceipt() tal como está.
- */
+/** Demostración visual sin cobros. La cuenta cambia solo al confirmar el servidor. */
 import { icon } from "../utils/icons.js";
 import { formatPriceMXN } from "../utils/format.js";
+import { PLUS_PRICES, HISTORY_DAYS } from "../utils/plan.js";
+
+export function checkoutTotals(period) {
+  if (period !== "mensual" && period !== "anual") throw new RangeError("Periodo no válido");
+  const totalCents = Math.round(PLUS_PRICES[period] * 100);
+  const subtotalCents = Math.round(totalCents / 1.16);
+  return { amount: totalCents / 100, subtotal: subtotalCents / 100, iva: (totalCents - subtotalCents) / 100 };
+}
 
 const METHODS = [
   { id: "tarjeta", label: "Tarjeta" },
@@ -34,13 +24,14 @@ const wait = (ms) => new Promise((r) => setTimeout(r, reduceMotion() ? Math.min(
 
 let dialog;
 let body;
-let current; // { plan, period, amount, onSuccess }
+let current; // { plan, period, amount, iva, onSuccess }, onSuccess confirma el backend.
 let method = "tarjeta";
 
 export function openCheckout(options) {
   dialog = document.getElementById("checkoutDialog");
   body = document.getElementById("checkoutBody");
-  current = options;
+  if (typeof options.onSuccess !== "function") throw new TypeError("Falta confirmar el plan con el servidor");
+  current = { ...options, ...checkoutTotals(options.period) };
   method = "tarjeta";
   dialog.classList.remove("is-processing", "is-done");
   renderForm();
@@ -76,9 +67,8 @@ function cardVisual() {
 }
 
 function field(id, label, value, zone, extra = "") {
-  // data-stripe-slot: aquí se monta el Stripe Element correspondiente.
   return `
-    <label class="pay-field" data-stripe-slot="${zone}">
+    <label class="pay-field">
       <span>${label}</span>
       <input id="${id}" value="${value}" readonly data-focus-zone="${zone}" ${extra} />
     </label>`;
@@ -95,51 +85,48 @@ function cardPanel() {
         ${field("payCvc", "CVC", TEST_CARD.cvc, "cvc", 'type="password"')}
       </div>
     </div>
-    <p class="pay-test-note">${icon("shieldCheck", { size: 14 })} Datos de prueba ya escritos. En la versión real los pide Stripe en un campo seguro; no escribas aquí tu tarjeta.</p>`;
+    <p class="pay-test-note">${icon("shieldCheck", { size: 14 })} Datos ficticios de solo lectura. No ingreses tu tarjeta: esta demostración no recibe ni guarda datos bancarios.</p>`;
 }
 
 function voucher(kind) {
   if (kind === "oxxo") {
     return `
       <div class="pay-voucher" data-pay-card>
-        <div class="pay-voucher__head"><strong>OXXO</strong><span>Pago en efectivo</span></div>
-        <p class="pay-voucher__label">Referencia</p>
-        <p class="pay-voucher__ref tabular-nums">9300 0128 4471 5520</p>
+        <div class="pay-voucher__head"><strong>OXXO</strong><span>Ejemplo visual</span></div>
+        <p class="pay-voucher__label">Sin referencia de pago</p>
+        <p class="pay-voucher__ref">DEMOSTRACIÓN</p>
         <div class="pay-voucher__barcode" aria-hidden="true"></div>
-        <p class="pay-voucher__fine">Válida 48 h · paga en caja con la referencia</p>
+        <p class="pay-voucher__fine">No es un comprobante válido. No pagues en caja.</p>
       </div>`;
   }
   return `
     <div class="pay-voucher" data-pay-card>
-      <div class="pay-voucher__head"><strong>SPEI</strong><span>Transferencia</span></div>
-      <p class="pay-voucher__label">CLABE</p>
-      <p class="pay-voucher__ref tabular-nums">646 180 1234 5678 9012</p>
+      <div class="pay-voucher__head"><strong>SPEI</strong><span>Ejemplo visual</span></div>
+      <p class="pay-voucher__label">Sin cuenta de destino</p>
+      <p class="pay-voucher__ref">DEMOSTRACIÓN</p>
       <dl class="pay-voucher__list">
         <div><dt>Beneficiario</dt><dd>Precionauta (demo)</dd></div>
         <div><dt>Concepto</dt><dd>PLUS-${current.period.toUpperCase()}</dd></div>
       </dl>
-      <p class="pay-voucher__fine">El pago se acredita en minutos</p>
+      <p class="pay-voucher__fine">No realices ninguna transferencia. No se procesa ningún pago.</p>
     </div>`;
 }
 
 function payLabel() {
-  if (method === "oxxo") return "Generar referencia";
-  if (method === "spei") return "Ya transferí";
-  return `Pagar ${formatPriceMXN(current.amount)}`;
+  return "Activar Plus de demostración";
 }
 
 function renderForm() {
-  const { plan, period, amount } = current;
-  const iva = Math.round((amount - amount / 1.16) * 100) / 100;
+  const { plan, period, amount, iva } = current;
   body.innerHTML = `
     <div class="pay">
       <section class="pay__main" aria-labelledby="checkoutTitle">
         <div class="checkout__head">
-          <h2 id="checkoutTitle">Método de pago</h2>
+          <h2 id="checkoutTitle">Prueba Plus sin cobros</h2>
           <button type="button" class="icon-button pay__close" data-checkout-close aria-label="Cerrar">${icon("close", { size: 14 })}</button>
         </div>
 
-        <div class="pay-tabs" role="tablist" aria-label="Método de pago">
+        <div class="pay-tabs" role="tablist" aria-label="Ejemplos visuales de pago; no disponibles para cobrar">
           <span class="pay-tabs__pill" aria-hidden="true"></span>
           ${METHODS.map(
             (m) => `<button type="button" class="pay-tabs__tab" role="tab" data-method="${m.id}" aria-selected="${m.id === method}">${m.label}</button>`
@@ -147,6 +134,7 @@ function renderForm() {
         </div>
 
         <div class="pay__panel" data-pay-panel>${method === "tarjeta" ? cardPanel() : voucher(method)}</div>
+        <p class="pay-test-note" data-checkout-error role="alert" hidden></p>
 
         <div class="pay__actions">
           <button type="button" class="checkout__link" data-checkout-close>Atrás</button>
@@ -159,15 +147,16 @@ function renderForm() {
         <ul class="pay-summary__list">
           <li><span>Plan ${plan.name} · ${period}</span><span class="tabular-nums">${formatPriceMXN(amount)}</span></li>
           <li class="is-muted"><span>IVA incluido</span><span class="tabular-nums">${formatPriceMXN(iva)}</span></li>
-          <li class="is-total"><span>Total hoy</span><span class="tabular-nums">${formatPriceMXN(amount)}</span></li>
+          <li class="is-total"><span>Precio final · IVA incluido</span><span class="tabular-nums">${formatPriceMXN(amount)}</span></li>
+          <li><span>Cobro hoy · demostración</span><span class="tabular-nums">${formatPriceMXN(0)}</span></li>
         </ul>
         <ul class="pay-summary__perks">
           <li>${icon("lightning", { size: 15 })} Ofertas nuevas en tiempo real</li>
-          <li>${icon("bell", { size: 15 })} Avisos al instante por Telegram</li>
-          <li>${icon("flame", { size: 15 })} Zona 80%+ al momento</li>
+          <li>${icon("bell", { size: 15 })} Alertas de precio ilimitadas</li>
+          <li>${icon("flame", { size: 15 })} Historial de ${HISTORY_DAYS.plus} días</li>
         </ul>
         <p class="pay-summary__secure">${icon("shieldCheck", { size: 16 })}
-          <span><strong>Pago de demostración.</strong> Aún no hay pasarela conectada: no se cobra nada y Plus se activa solo en este navegador.</span></p>
+          <span><strong>Activación de demostración.</strong> No hay pasarela conectada ni cobros. El servidor debe confirmar Plus en tu cuenta; la prueba puede estar deshabilitada.</span></p>
       </aside>
     </div>`;
   movePill(false);
@@ -204,18 +193,19 @@ function receipt() {
   const date = new Date().toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   return `
     <div class="pay-receipt" data-receipt>
-      <p class="pay-receipt__title">Recibo de pago</p>
+      <p class="pay-receipt__title">Confirmación de demostración</p>
       <dl>
         <div><dt>Plan</dt><dd>${current.plan.name} ${current.period}</dd></div>
-        <div><dt>Método</dt><dd>${methodText}</dd></div>
+        <div><dt>Ejemplo visual</dt><dd>${methodText}</dd></div>
         <div><dt>Fecha</dt><dd>${date}</dd></div>
         <div><dt>Folio</dt><dd class="tabular-nums">${folio}</dd></div>
-        <div class="is-total"><dt>Total</dt><dd class="tabular-nums">${formatPriceMXN(current.amount)}</dd></div>
+        <div class="is-total"><dt>Cobrado</dt><dd class="tabular-nums">${formatPriceMXN(0)}</dd></div>
       </dl>
     </div>`;
 }
 
 async function pay() {
+  if (dialog.classList.contains("is-processing")) return;
   const card = body.querySelector("[data-pay-card]");
   const from = card.getBoundingClientRect();
   card.classList.remove("is-flipped");
@@ -227,7 +217,7 @@ async function pay() {
       <div class="pay-stage__card">${receipt()}${card.outerHTML}</div>
       <div class="pay-stage__status" data-status>
         <span class="pay-spinner" aria-hidden="true"></span>
-        <p><strong>Procesando pago seguro…</strong></p>
+        <p><strong>Confirmando Plus en tu cuenta…</strong></p>
         <p class="pay-stage__hint">No cierres esta ventana</p>
       </div>
     </div>`;
@@ -243,21 +233,29 @@ async function pay() {
     );
   }
 
-  // Aquí iría: await stripe.confirmCardPayment(clientSecret, ...)
-  await wait(2200);
-  showReceipt();
+  try {
+    await current.onSuccess(method);
+    await wait(650);
+    showReceipt();
+  } catch (error) {
+    dialog.classList.remove("is-processing", "is-done");
+    renderForm();
+    const feedback = body.querySelector("[data-checkout-error]");
+    feedback.textContent = error.message || "No pudimos activar Plus. Tu plan no cambió. Intenta de nuevo.";
+    feedback.hidden = false;
+    body.querySelector("[data-pay]")?.focus();
+  }
 }
 
 function showReceipt() {
-  current.onSuccess(method);
   dialog.classList.add("is-done");
   body.querySelector("[data-status]").innerHTML = `
     <svg class="pay-check" viewBox="0 0 52 52" aria-hidden="true">
       <circle cx="26" cy="26" r="24" />
       <path d="M15 27 l7 7 l15 -16" />
     </svg>
-    <p class="pay-stage__done" id="checkoutTitle"><strong>¡Pago exitoso!</strong> Plus activado (demo)</p>
-    <p class="pay-stage__hint">Las ofertas nuevas ya se ven en tiempo real en este navegador.</p>
+    <p class="pay-stage__done" id="checkoutTitle"><strong>Plus activado en tu cuenta.</strong></p>
+    <p class="pay-stage__hint">Demostración confirmada por el servidor. No se realizó ningún cobro.</p>
     <div class="pay-stage__actions">
       <a class="btn btn--primary" href="index.html#recien-llegadas">Ver ofertas en tiempo real</a>
       <button type="button" class="checkout__link" data-checkout-close>Cerrar</button>

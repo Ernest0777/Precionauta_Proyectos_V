@@ -12,6 +12,32 @@
   src: url("../shared/fonts/inter-variable.woff2") format("woff2");
 }
 
+/* Actividad del moderador: comparte las superficies y contrastes del panel. */
+.automation-summary { margin-bottom: var(--space-6); }
+.automation-summary__head, .automation-controls { flex-wrap: wrap; gap: var(--space-3); }
+.automation-summary__head .eyebrow { margin-bottom: var(--space-2); }
+.automation-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-5) 0; }
+.automation-stats > div { border-left: 2px solid var(--color-border); padding-left: var(--space-3); }
+.automation-stats dt { font-size: var(--fs-xs); }
+.automation-stats dd { font-size: var(--fs-h2); font-weight: 700; margin: 0; }
+.automation-proposals { font-size: var(--fs-sm); margin-bottom: var(--space-4); }
+.automation-controls { display: flex; align-items: center; }
+.automation-history, .automation-report-queue { border-top: 1px solid var(--color-border); padding-top: var(--space-4); margin-top: var(--space-5); }
+.automation-history summary { cursor: pointer; font-weight: 600; }
+.automation-events { list-style: none; padding: 0; margin: var(--space-3) 0 0; }
+.automation-events > li { display: flex; gap: var(--space-4); justify-content: space-between; align-items: flex-start; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+.automation-events > li > div:first-child { min-width: 0; overflow-wrap: anywhere; }
+.automation-events p { font-size: var(--fs-xs); margin-top: var(--space-1); }
+.automation-events .btn { flex-shrink: 0; }
+.automation-report-title { border: 0; padding: 0; background: none; text-align: left; font: inherit; cursor: pointer; }
+.automation-report-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .automation-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .automation-controls { align-items: stretch; }
+  .automation-controls .btn { white-space: normal; height: auto; min-height: 40px; }
+  .automation-events > li { flex-wrap: wrap; }
+}
+
 *,
 *::before,
 *::after {

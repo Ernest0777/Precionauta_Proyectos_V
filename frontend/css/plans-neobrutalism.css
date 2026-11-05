@@ -100,7 +100,7 @@
 }
 .neo-plans .plans-section-heading h2 { font-size: clamp(1.65rem, 3vw, 2.3rem); letter-spacing: -.04em; line-height: 1.15; }
 .neo-plans .plans-section-heading > p { max-width: 29ch; font-size: .875rem; color: var(--color-ink-700); }
-.neo-plans .plans-grid { max-width: 72rem; gap: 24px; align-items: stretch; }
+.neo-plans .plans-grid { max-width: 60rem; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: stretch; }
 .neo-plans .plan-card {
   padding: 32px 26px 28px;
   border: var(--neo-line);
@@ -195,12 +195,14 @@
 .neo-plans .pay-tabs__pill { display: none; }
 .neo-plans .pay-tabs__tab { height: 38px; border: 2px solid transparent; border-radius: 1px; font-weight: 800; color: var(--color-ink-700); }
 .neo-plans .pay-tabs__tab[aria-selected="true"] { border-color: var(--neo-ink); background: var(--neo-yellow); color: var(--neo-ink); }
-.neo-plans .pay-card__face { border: var(--neo-line); border-radius: 6px; background: var(--neo-yellow); box-shadow: 5px 5px 0 var(--neo-ink); color: var(--neo-ink); }
-.neo-plans .pay-card__chip { border: 1px solid var(--neo-ink); border-radius: 3px; background: var(--neo-lilac); }
-.neo-plans .pay-card__label { font-weight: 900; opacity: 1; }
-.neo-plans .pay-card__bottom div span,
-.neo-plans .pay-card__fine { opacity: .8; }
-.neo-plans .pay-card [data-zone].is-focus { outline-color: var(--neo-ink); }
+/* Tarjeta amarilla: datos oscuros, chip plateado y contraste independiente del tema. */
+.neo-plans .pay-card__face { color: #171717; background: linear-gradient(120deg, #fff09a, #ffe638 50%, #f4d622); border: 2px solid #171717; border-radius: 12px; box-shadow: 5px 6px 0 #171717, inset 0 1px 0 rgb(255 255 255 / .6); }
+.neo-plans .pay-card__chip { border: 1px solid #6c6759; background: linear-gradient(135deg, #eee8d8, #b6ac88); }
+.neo-plans .pay-card__sign { color: #171717; }
+.neo-plans .pay-card [data-zone].is-focus { outline-color: #171717; }
+.neo-plans .pay-card__label { opacity: .95; }
+.neo-plans .pay-card__bottom div span { opacity: .85; }
+.neo-plans .pay-card__number { font-variant-numeric: tabular-nums; }
 .neo-plans .pay-field input { min-height: 44px; border: var(--neo-line); border-radius: 3px; background: var(--color-surface); }
 .neo-plans .pay-field input:focus { outline: 3px solid var(--neo-lilac); outline-offset: 2px; }
 .neo-plans .pay-test-note { line-height: 1.6; }
@@ -224,7 +226,7 @@
 }
 
 @media (max-width: 900px) {
-  .neo-plans .plans-grid { max-width: 36rem; gap: 30px; }
+  .neo-plans .plans-grid { max-width: 36rem; grid-template-columns: 1fr; gap: 30px; }
   .neo-plans .plan-card--featured { order: 0; padding-top: 38px; }
   .neo-plans .plan-card__tagline { min-height: 0; }
   .neo-plans .plans-section-heading { max-width: 36rem; align-items: start; flex-direction: column; gap: 12px; }
@@ -257,8 +259,8 @@
   .neo-plans .pay-fields__row .pay-field:first-child { grid-column: 1 / -1; }
   .neo-plans .pay__actions { gap: 12px; }
   .neo-plans .pay__submit { padding-inline: 12px; }
-  .neo-plans .pay-card__number { font-size: .97rem; }
-  .neo-plans .pay-card__bottom { gap: 14px; font-size: .67rem; }
+  .neo-plans .pay-card__number { font-size: clamp(1rem, 4.4vw, 1.14rem); letter-spacing: .06em; }
+  .neo-plans .pay-card__bottom { gap: 12px; font-size: .72rem; }
   .neo-plans .pay-stage { padding-inline: 20px; }
 }
 

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const dealFetcher = require('./deal-fetcher');
 const moderation = require('../admin/moderation');
+const automation = require('../admin/automation');
 const { STATUSES } = require('../admin/moderation');
 const { login, requireAdmin } = require('../admin/auth');
 const config = require('../config/config');
@@ -24,6 +25,33 @@ router.post('/login', login);
 
 router.use(requireAdmin);
 
+// El resumen incluye propuestas, acciones aplicadas y casos pendientes.
+router.get('/automation', (req, res, next) => {
+  try {
+    const data = automation.getSummary(req.query.since);
+    data.reports = require('../db/deal-reports').pendingReports();
+    res.json({ success: true, data });
+  } catch (error) { next(error); }
+});
+router.post('/automation/mode', (req, res) => {
+  try { res.json({ success: true, data: { mode: automation.setMode(req.body?.mode) } }); }
+  catch (error) { res.status(400).json({ success: false, error: error.message }); }
+});
+router.post('/automation/run', async (req, res, next) => {
+  try {
+    const previousUpdate = dealFetcher.cache.lastUpdated;
+    await dealFetcher.refresh();
+    const refreshed = dealFetcher.cache.source === 'mercadolibre' && dealFetcher.cache.lastUpdated !== previousUpdate;
+    if (!refreshed) return res.status(503).json({ success: false, error: 'No se pudo validar con Mercado Libre; se conservan los datos anteriores', data: { ...automation.getSummary(), refreshed: false, source: 'stale' } });
+    automation.evaluate(dealFetcher.cache.validatedDeals, { source: 'mercadolibre', at: new Date() });
+    res.json({ success: true, data: { ...automation.getSummary(), refreshed: true, source: 'mercadolibre' } });
+  } catch (error) { next(error); }
+});
+router.post('/automation/undo/:eventId', (req, res) => {
+  try { res.json({ success: true, data: automation.undo(req.params.eventId) }); }
+  catch (error) { res.status(409).json({ success: false, error: error.message }); }
+});
+
 // GET /api/admin/session - comprobar que el token sigue vivo
 router.get('/session', (req, res) => res.json({ success: true }));
 
@@ -31,7 +59,7 @@ router.get('/session', (req, res) => res.json({ success: true }));
 router.get('/overview', async (req, res, next) => {
   try {
     const deals = moderation.annotate(await dealFetcher.fetchAllDeals());
-    const visible = deals.filter((d) => d.status !== 'rejected');
+    const visible = moderation.applyPublic(deals);
     const stats = dealFetcher.getStats(visible);
 
     const statusCounts = Object.fromEntries(STATUSES.map((s) => [s, 0]));
@@ -50,7 +78,7 @@ router.get('/overview', async (req, res, next) => {
       data: {
         stats,
         statusCounts,
-        decided: deals.filter((d) => d.decidedAt).length,
+        decided: deals.filter((d) => moderation.decisions[d.id] && moderation.decisions[d.id].actor !== 'automatic').length,
         bands: BANDS.map((b) => ({ ...b, count: visible.filter((d) => d.discount >= b.min && d.discount < b.max).length })),
         categories: Object.entries(categories)
           .map(([slug, c]) => ({ slug, count: c.count, avgDiscount: Math.round((c.discountSum / c.count) * 10) / 10, savings: c.savings }))

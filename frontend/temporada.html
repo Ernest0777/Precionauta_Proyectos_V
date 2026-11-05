@@ -11,8 +11,8 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Buen Fin 2026 - Precionauta</title>
-  <meta name="description" content="Prepárate para el Buen Fin 2026: cuenta regresiva, ofertas en mínimo histórico y cómo detectar descuentos falsos." />
+  <title>Temporadas de ofertas - Precionauta</title>
+  <meta name="description" content="Explora Buen Fin, Hot Sale y otras temporadas. Compara precios registrados y aprende a detectar descuentos inflados." />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 
   <link rel="stylesheet" href="css/tokens.css" />
@@ -202,8 +202,9 @@
       <div class="container season-hero__inner">
         <div class="season-hero__copy">
           <span class="content-eyebrow">Tu próxima gran compra empieza aquí</span>
-          <h1 class="season-hero__title">Buen Fin <em>2026</em></h1>
-          <p class="season-hero__lead" id="seasonLead">El fin de semana de descuentos más grande de México. Llega con tus alertas listas y sabiendo qué precio sí es una ganga.</p>
+          <h1 class="season-hero__title" id="seasonTitle">Temporadas</h1>
+          <div class="season-selector"><label for="seasonSelect">Explorar temporada</label><select id="seasonSelect" name="temporada"><option value="buen-fin-2026">Buen Fin 2026</option></select></div>
+          <p class="season-hero__lead" id="seasonLead">Explora los eventos del año y compara sus ofertas con los precios registrados antes de comprar.</p>
           <div class="season-hero__actions">
             <a class="btn btn--primary" href="#minimos">Ver ofertas en mínimo histórico</a>
             <a class="hero__link" href="#guia">Cómo detectar descuentos falsos</a>
@@ -223,9 +224,10 @@
 
     <section id="minimos" class="season-section" aria-labelledby="minimosTitle">
       <div class="container">
+        <div class="season-access"><p id="seasonAccess" role="status">Cargando ofertas de la temporada…</p><a href="planes.html" id="seasonUpgrade">Ver acceso Plus</a></div>
         <div class="section-head">
           <h2 id="minimosTitle">Ya están en su <em>mínimo histórico</em></h2>
-          <p>Precio actual igual o por debajo del más bajo que hemos registrado. No hace falta esperar al Buen Fin para estas.</p>
+          <p>Precio actual igual o por debajo del más bajo registrado. El mínimo corresponde a los datos disponibles y no garantiza que sea el menor precio de todo el mercado.</p>
         </div>
         <div class="catalog-grid" id="minGrid"></div>
       </div>
@@ -234,8 +236,8 @@
     <section class="season-section season-section--alt" aria-labelledby="fuertesTitle">
       <div class="container">
         <div class="section-head">
-          <h2 id="fuertesTitle">Calentamiento: <em>más de 50%</em> hoy</h2>
-          <p>Las caídas más fuertes de la semana, verificadas contra su historial.</p>
+          <h2 id="fuertesTitle">Más precios <em>para comparar</em></h2>
+          <p>Compara con el historial: el porcentaje anunciado por una tienda puede usar un precio de referencia inflado.</p>
         </div>
         <div class="catalog-grid" id="strongGrid"></div>
       </div>
@@ -268,7 +270,7 @@
       <p class="footer-links">
         <a href="planes.html">Planes</a>
         <span class="footer-links__divider" aria-hidden="true"></span>
-        <a href="temporada.html">Buen Fin</a>
+        <a href="temporada.html">Temporadas</a>
         <span class="footer-links__divider" aria-hidden="true"></span>
         <a href="como-funciona.html">Cómo funciona</a>
         <span class="footer-links__divider" aria-hidden="true"></span>

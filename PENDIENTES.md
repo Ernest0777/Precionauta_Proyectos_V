@@ -1,152 +1,66 @@
-# Pendientes - Precionauta
+# Pendientes — Precionauta
 
-## Phase 1: Navigation ✅ (COMPLETADO)
-- [x] Continuous Tabs integrados (ahora como filtro de categoría dentro del catálogo)
-- [x] Morphing Discovery Bar integrado (busca en vivo sobre los productos reales)
-- [x] CSS Scandinavian aplicado
+Actualizado: 2026-11-05. Trabajo actual en `Neo_Brutalism`.
 
-## Rediseño "más vida" ✅ (COMPLETADO - 2026-09-22, merge a main en PR #1)
-- [x] Menú "Categorías" desplegable (hover/clic/teclado) con conteos reales y mejor oferta por categoría — `js/components/headerMenus.js`
-- [x] Fila fija de categorías bajo el buscador eliminada (decisión del equipo: pasarla al menú)
-- [x] "Mis alertas" funcional: panel con lista, contador en el header, quitar alerta y estado vacío "Aún no tienes alertas" (localStorage, sin backend)
-- [x] Panel de alertas sincronizado con el botón "Avisarme si baja más" de Detalle
-- [x] Menús del header en todas las páginas (index, producto y las 5 legales)
-- [x] `?categoria=slug` y `?q=texto` en index.html para llegar filtrado desde otras páginas
-- [x] Tonos por categoría (salvia, ocre, azul tenue, etc.) en `css/tokens.css`; el terracota sigue siendo el único color de acción
-- [x] Hero: animación de caída de precio, mazo de ofertas detrás, chips de tiendas que filtran
-- [x] Cinta de ofertas color azafrán (referencia: The Mainstays en lapa.ninja)
-- [x] Banda "Mantente conectado" en terracota
-- [x] Bugs: pastilla blanca vacía (savings-pill ignoraba `hidden`), hamburguesa visible en escritorio, mancha gris del hero en modo oscuro, desborde horizontal del footer en celular
-- [x] CSS original de Watermelon pisaba la paleta (acento naranja); movido a `css/watermelon-demo.css` solo para la demo
+## Alcance decidido para esta entrega
 
-## Minimal B/N + Plus ✅ (COMPLETADO - 2026-10-05, sin commit todavía)
-- [x] Paleta blanco y negro (tokens.css), estructura inspirada en Amazon; único color: rojo en descuentos (`--color-deal`)
-- [x] Tipografía: todo Inter (Cormorant ya no se usa)
-- [x] "Tiendas" del header como desplegable (Amazon / Mercado Libre / Liverpool) + `?tienda=` en index
-- [x] Campana en las tarjetas para crear alertas sin entrar a Detalle (también en "relacionados")
-- [x] Corazón de las tarjetas relacionadas en Detalle ya funciona (antes no hacía nada)
-- [x] Plan gratis con límite de 3 alertas; aviso (toast) con enlace a Plus al llegar al límite
-- [x] `planes.html`: Gratis $0 / Plus $49 mes - $490 año / Cazador $99 (próximamente) + FAQ
-- [x] Checkout de DEMOSTRACIÓN: resumen, IVA, métodos (tarjeta, OXXO, Mercado Pago, SPEI). No pide datos de tarjeta; activa Plus solo en localStorage
-- [x] Login con Google / Facebook (botones de vista previa, mensaje honesto: falta OAuth/backend)
-- [x] Enlace "Plus" en header, menú móvil y footer de todas las páginas
-- [x] Código muerto borrado (categoryTile.js, categoryTabs.js, estilos bento) y `.playwright-cli/` fuera de git
+- [x] Mantener el diseño neobrutalista actual y sus temas claro/oscuro.
+- [x] Fusionar Cazador con Plus; mostrar Cuenta gratuita y Plus como los dos planes comerciales.
+- [x] Fijar Plus en $79 MXN/mes o $790 MXN/año con IVA incluido; ahorro anual de $158.
+- [x] Definir visitante como acceso sin cuenta, con guardados locales, sin historial ni alertas.
+- [x] Definir Cuenta gratuita: 3 alertas activas, hasta 30 días de historial y 2 horas de espera para ofertas posteriores a la primera carga.
+- [x] Definir Plus: alertas ilimitadas, hasta 365 días de historial y acceso inmediato a ofertas nuevas.
+- [x] Definir temporadas gratuitas como 3 ofertas en total por evento; Plus accede a todas las disponibles.
+- [x] Posponer afiliados y tiendas nuevas; conservar Mercado Libre como conector actual.
 
-## Recomendaciones + catálogo grande ✅ (COMPLETADO - 2026-10-05, sin commit todavía)
-- [x] 110 productos (10 base + 100 generados con marcas ficticias) — `js/data/generatedProducts.js`, se regeneran con `python scripts/gen_products.py`
-- [x] Catálogo paginado: 12 por vez con "Mostrar más" y barra de progreso
-- [x] Recomendador local (`js/utils/recommender.js`): aprende de búsquedas, categorías/tiendas filtradas, productos vistos, guardados y alertas; decaimiento de 7 días; cada recomendación dice su "porqué"
-- [x] Sección "Recomendado para ti" en Inicio + chips de intereses + "Editar intereses" / "Borrar historial"
-- [x] Buscador vacío sugiere búsquedas recientes y recomendaciones
-- [x] Bienvenida de primera visita "¿Qué te interesa?" (categorías y tiendas) — `js/components/onboarding.js`
-- [x] Panel "Mis guardados" (corazón del header) con ahorro total; guardar sincronizado en todas las páginas
-- [x] Compartir por WhatsApp y copiar enlace en Detalle
-- [x] Calculadora de meses sin intereses (3/6/9/12/18) en Detalle
-- [x] `temporada.html` (Buen Fin 2026): cuenta regresiva, mínimos históricos, +50%, guía con checklist, calendario de temporadas
-- [x] Barra superior del Buen Fin en todas las páginas (se puede cerrar) — fechas en `js/data/season.js` (marcadas como estimadas)
+## Cierre de integración y verificación
 
-## Fase 5: Frontend conectado a Mercado Libre ✅ (COMPLETADO - 2026-10-06)
-- [x] El frontend pide las ofertas a `http://localhost:3001/api/deals`; si el backend no corre, usa los 110 productos de ejemplo (`js/data/products.js`)
-- [x] Fotos, precio actual, precio anterior, specs y enlace reales de Mercado Libre (tarjetas, hero y Detalle con galería)
-- [x] ML cerró `/sites/MLM/search` e `/items` (403): el catálogo se arma con "más vendidos" por categoría + `/products/:id/items` (mejor oferta entre vendedores)
-- [x] Categorías del backend mapeadas a las del frontend (los IDs viejos estaban mal)
-- [x] `backend/.env` se carga aunque se arranque desde la raíz (antes el token nunca se leía)
-- [x] Caché en disco (`backend/cache/deals.json`) y precarga al arrancar
-- [x] Detalle: sin gráfica inventada para ofertas reales (todavía no hay historial)
-- [x] Solo se publican ofertas con descuento de 20% a 99% (`discountRange` en `backend/config/config.js`); antifraude sube de 95% a 99%
-- [x] Token de ML se renueva solo cada 6 h con "Client Credentials" (App ID + `MERCADO_LIBRE_CLIENT_SECRET` en `backend/.env`); probado con token vencido
-- [x] `scripts/meli-token.js`: autorización con cuenta de usuario (solo si algún día se necesitan datos de un usuario; hoy no hace falta)
-- [ ] Guardar precios en una base de datos para tener historial real y validar descuentos falsos
-- [ ] La clave secreta va solo en `backend/.env` (no se sube); compartirla con el equipo por privado
+- [x] Completar la revisión de registro, login, persistencia de sesión, perfil y cierre de sesión con correo/contraseña y SQLite.
+- [x] Verificar que cambiar localStorage no activa Plus ni permite consultar datos fuera del permiso de la cuenta.
+- [x] Probar migración de guardados locales a cuenta, recuperación al volver a entrar y separación entre usuarios.
+- [x] Probar activación Plus demo con backend, rechazo o fallo del servidor y reintento sin éxito falso ni cobro.
+- [x] Probar downgrade: conservar guardados y alertas, mantener hasta 3 activas y pausar las excedentes.
+- [x] Probar temporadas: 3 en total por evento gratuito, no por sección; verificar fechas no anunciadas sin cuenta regresiva inventada.
+- [x] Ejecutar `npm test` con Node.js 22.21+ y registrar el resultado final.
+- [x] Completar verificación en navegador de Inicio, Detalle, Planes, Perfil y Temporada en escritorio y móvil, con teclado, tema claro y oscuro.
+- [ ] Revisar textos legales y de privacidad frente a los datos de cuenta que se almacenan, incluida la dirección opcional.
 
-## Panel de administración ✅ (COMPLETADO - 2026-10-11, sin commit todavía)
-Inspirado en el CRM "Halden" (codeandchill), en blanco y negro. Detalles en el README.
-- [x] `admin/` servido por el backend en `http://localhost:3001/admin`; la tienda no lo enlaza y tiene `noindex`
-- [x] Acceso con `ADMIN_PASSWORD` (backend/.env), sesión firmada de 8 h, 5 intentos fallidos cada 15 min por IP
-- [x] Resumen, Moderación (tablero arrastrable + `Alt`+flechas + menú "⋯" + anuncios para lector de pantalla) y Reportes (rango que redibuja todo)
-- [x] Panel lateral con detalle, riesgo con motivos escritos y cambio de estado
-- [x] Rechazar oculta la oferta en `/api/deals`; destacar la pone primero (`featured: true`)
-- [x] `nodemon.json`: nodemon ya no se reinicia al escribir `backend/cache/` (antes entraba en bucle consultando ML cada 3 s)
-- [x] Sello negro "Destacada" en la tienda; la destacada va al hero y primero en el catálogo
-- [x] Clics de afiliado: cada "Ver oferta" pasa por `/go/:id` y se ve en Reportes y Resumen
-- [ ] Para producción: mover usuarios del panel a la base de datos (hoy es una sola contraseña compartida)
+Las casillas anteriores corresponden al cierre de la entrega y no significan que falte toda la implementación. El resultado de navegador se registra al comprobarlo, no por anticipado.
 
-## Mejoras 2026-10-11 ✅ (sin commit al momento de escribir)
-- [x] Precios exactos con centavos (backend ya no redondea) y centavos chiquitos elevados en precios grandes
-- [x] Mensaje nuevo: "Las mejores ofertas, verificadas" + sección **Zona 80%+** (si no hay, muestra lo más cercano)
-- [x] Textos honestos: 5 min entre revisiones (no 4 h), "1 tienda rastreada", sin prometer Amazon/Liverpool
-- [x] Base de datos SQLite (`backend/db/`): historial de precios, clics y alertas de Telegram
-- [x] Detalle con gráfica de historial real; tarjeta dice "el precio más bajo que hemos visto"
-- [x] Anti-fraude con historial: "precio anterior inflado" manda la oferta a revisión con el motivo
-- [x] Enlace de afiliado de ML configurable (`MELI_AFFILIATE_PARAMS`) + aviso de afiliados en "Cómo funciona"
-- [x] Alertas por Telegram (`TELEGRAM_BOT_TOKEN`): bajas de precio y ofertas nuevas de 80%+
-- [x] Cifras del inicio con contador animado (idea de Norda) + ahorro total disponible
-- [x] PWA instalable (manifest, service worker, íconos); favicon pasado a negro
-- [x] El backend consulta ML cada 5 min solo (antes solo cuando alguien entraba)
-- [x] Planes: Gratis ve las ofertas nuevas 2 h después (adelanto bloqueado con cuenta regresiva, sección "Recién llegadas", candado en Detalle); Plus en tiempo real con sello "Nueva", Telegram al instante y 12 meses de historial (`js/utils/plan.js`)
-- [x] Checkout animado (tarjeta que gira en el CVC, OXXO, SPEI, "procesando", recibo) en `js/components/checkout.js`; demo con tarjeta de prueba de Stripe, listo para Stripe Elements
-- [ ] Stripe real + inicio de sesión: hasta entonces el plan vive en el navegador y el retraso de 2 h se puede saltar
-- [ ] **Pedro**: solicitar Mercado Libre Afiliados y pegar los parámetros en `backend/.env`
-- [ ] **Pedro**: crear el bot con @BotFather y pegar `TELEGRAM_BOT_TOKEN` en `backend/.env`
-- [ ] Publicar en internet (Render/Railway para backend con disco persistente para SQLite; Netlify/Vercel para la tienda) y poner `PUBLIC_URL` + `window.PRECIONAUTA_API`
-- [ ] Stock visible en la tarjeta (otra idea de Norda): ML no lo da en el endpoint que usamos; revisar `available_quantity` por oferta
-- [ ] Segunda tienda: AliExpress Portals (tiene API de productos con precios) o Admitad (Coppel, Shein)
+## Deuda técnica útil
 
-## Git (pendiente - lo hace Pedro) 🧹
-- [x] Commit de todo lo de la Fase 5 ("Update")
-- [x] Sacar `node_modules/` de git sin borrarlo del disco: `git rm -r --cached node_modules` (pesa 48 MB / ~10,300 archivos; el `.gitignore` no saca lo que ya se había subido)
-- [x] Quitar `package-lock.json` del `.gitignore` (sí conviene subirlo: fija versiones para todo el equipo)
-- [ ] Después de eso, el equipo corre `npm install` tras hacer pull
+- [ ] Validar calidad del historial real y casos con pocas observaciones; no fabricar historial para cubrir 30 o 365 días.
+- [ ] Revisar disponibilidad de stock por oferta en los datos de Mercado Libre antes de mostrar cantidades o filtros de stock.
+- [ ] Comprobar configuración y entrega del bot de Telegram antes de anunciar avisos operativos en el entorno publicado.
+- [ ] Para producción, sustituir la contraseña administrativa compartida por acceso individual acorde al uso previsto.
+- [ ] Definir despliegue con HTTPS, persistencia y respaldo de SQLite; configurar URL pública, origen del frontend y política de cookies.
+- [ ] Revisar caché y actualización de la PWA en despliegue; instalarla no equivale a tener notificaciones push.
+- [ ] Verificar rendimiento y accesibilidad con datos reales y registrar los problemas encontrados.
 
-## Más tiendas / afiliados 🛒 (SIGUIENTE)
-No se agregan solas: cada tienda necesita su conector en el backend. Lo visual (menú Tiendas, filtros, conteos) sí se arma solo con lo que llega.
-Por cada tienda:
-1. Acceso a datos: API o feed de productos para afiliados (sin scraping, por el tema legal)
-2. Registrarse en su programa de afiliados (credenciales + formato de enlace con nuestro ID)
-3. Conector en `backend/api/` (como `meli-client.js`) que convierta sus productos al formato de oferta
-4. Enlace "Ver oferta" con el ID de afiliado
-- [ ] Cambio previo: hoy `fromDeal` en `frontend/js/data/products.js` pone "Mercado Libre" fijo; el backend debe mandar `store`/`storeCode` por oferta
-- [ ] Mercado Libre: programa de afiliados de ML y meter el enlace de afiliado en "Ver oferta"
-- [ ] G2A: revisar si su programa de afiliados da feed de productos con precios o solo enlaces; probablemente categoría nueva "Videojuegos" / "Digital"
-- [ ] Amazon México (Product Advertising API) y Liverpool: mismo proceso
+## Después: afiliados y tiendas nuevas — pospuesto
 
-## Ideas para lo siguiente 💡
-- [ ] Termómetro de ofertas estilo Promodescuentos (votar 🔥/❄️)
-- [ ] PWA instalable + notificaciones del navegador para las alertas
-- [ ] Comparador lado a lado de 2-3 productos
-- [ ] Elegir tipografía propia (el detector marca Inter como muy usada)
-- [ ] Generar `DESIGN.md` con `/impeccable document` cuando la paleta B/N quede aprobada
-- [ ] Actualizar `PRODUCT.md` con `/impeccable init`
-- [ ] Confirmar fechas oficiales del Buen Fin 2026 y quitar `estimated` en `js/data/season.js`
+Estas tareas no bloquean la entrega actual. No hay cuentas autorizadas o aprobaciones comprobadas por el hecho de que existan variables de configuración.
 
-## Backend (cuando exista) 🔌
-- [ ] Pagos reales: Stripe Checkout o Mercado Pago (el punto de conexión es `confirmCheckout` en `js/plans.js`)
-- [ ] Login real con Google/Facebook: Firebase Auth o Supabase Auth (botones en el modal de todas las páginas)
-- [ ] Alertas por correo/WhatsApp
+- [ ] Verificar el estado del programa de Mercado Libre Afiliados y los permisos de la cuenta antes de utilizar parámetros comerciales.
+- [ ] Investigar acceso permitido a datos, términos, aprobación y formato de enlace de cada tienda candidata.
+- [ ] Evaluar G2A, Amazon México, Liverpool u otras opciones solo después de confirmar las condiciones de cada proveedor.
+- [ ] Diseñar un conector por tienda y normalización de datos cuando se retome ese alcance.
+- [ ] Revisar atribución, avisos y medición de clics sin confundir redirecciones con comisiones confirmadas.
 
-## Phase 2: Deal Grid & Alerts 🔄 (EN PROGRESO)
-- [ ] Integración con API de ofertas
-- [ ] Sistema de paginación
-- [ ] Alertas en tiempo real (hoy solo se guardan en el navegador)
-- [ ] Cards con datos reales
+## Investigación y funciones futuras
 
-## Phase 3: Filtros 📋 (PRÓXIMO)
-- [x] Filtros de descuento mínimo y tienda (chips)
-- [ ] Switch para stock
-- [ ] Disclosure para filtros avanzados
+- [x] Reportar oferta vencida o precio incorrecto desde Detalle, con cola administrativa y límites por cuenta.
+- [x] Moderador por reglas e historial, modo observación inicial, modo automático opcional, decisiones reversibles y resumen al entrar al panel.
+- [ ] Evaluar las propuestas de observación con datos reales antes de usar el modo automático de forma habitual; ajustar falsos positivos con evidencia.
 
-## Phase 4: Details & Polish ✨ (FUTURO)
-- [x] Página de detalles
-- [ ] Accordion con historial
-- [ ] Popovers explicativos
-- [x] Dark mode completo
+- [ ] Validar las hipótesis de la [protopersona](docs/PROTOPERSONA.md) con entrevistas y observación de tareas.
+- [ ] Medir comprensión del precio final, de los límites gratuitos y de los estados sin datos o sin cuenta.
+- [ ] Evaluar una pasarela real y confirmación de pago en servidor antes de convertir la demo en una suscripción comercial.
+- [x] Implementar recuperación por Resend, alertas con objetivo y buscador compacto con miniaturas.
+- [x] Implementar verificación de correo y retirar el formulario de suscripción simulado.
+- [ ] Configurar RESEND_API_KEY y RECOVERY_FROM y verificar el remitente para activar correos reales.
+- [ ] Evaluar OAuth; Google/Facebook no están operativos.
+- [ ] Evaluar notificaciones del navegador, correo o WhatsApp, comparador y votaciones sin anunciarlos como disponibles.
+- [ ] Incorporar fechas oficiales de temporadas cuando estén anunciadas y verificadas.
 
-## Deployment 🚀 (DESPUÉS)
-- [ ] Build optimizado
-- [ ] Deploy en hosting
-- [ ] SSL/HTTPS
-- [ ] Monitoreo
-
----
-
-**Última actualización:** 2026-10-11
+Plan de trabajo y aceptación: [docs/PLAN_IMPLEMENTACION.md](docs/PLAN_IMPLEMENTACION.md).

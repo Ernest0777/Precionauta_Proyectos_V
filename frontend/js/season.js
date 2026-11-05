@@ -1,7 +1,8 @@
-/** temporada.html - Buen Fin: cuenta regresiva, mínimos históricos, +50%, guía y calendario. */
-import { PRODUCTS } from "./data/products.js";
+/** Temporadas: calendario editorial, acceso por cuenta y ofertas por evento. */
+import { PRODUCTS, API_BASE, normalizeDeal } from "./data/products.js";
+import { accountReady, accountState } from "./utils/account.js";
 import { CATEGORIES } from "./data/categories.js";
-import { SEASON, getSeasonStatus, splitDuration } from "./data/season.js";
+import { SEASONS, getSeason, getSeasonStatus, splitDuration, selectSeasonProducts, partitionSeasonProducts } from "./data/season.js";
 import { renderProductCard } from "./components/productCard.js";
 import { bindHeaderMenus } from "./components/headerMenus.js";
 import { discountOf } from "./utils/catalogStats.js";
@@ -19,44 +20,36 @@ import {
 } from "./shared.js";
 
 const CATEGORY_LABEL = Object.fromEntries(CATEGORIES.map((c) => [c.slug, c.label]));
+const SEASON = getSeason(new URLSearchParams(location.search).get("temporada"));
 const CHECKLIST_KEY = `precionauta:checklist:${SEASON.slug}`;
 
 const CHECKLIST = [
   { id: "historial", title: "Revisa el historial de precio", body: "Si el precio subió las semanas previas, el «descuento» puede ser inflado. En cada oferta verás su mínimo y máximo." },
-  { id: "alertas", title: "Activa alertas desde ahora", body: "Con la campana te avisamos de cada producto; así comparas el precio del Buen Fin contra el de hoy." },
+  { id: "alertas", title: "Activa alertas desde ahora", body: "Guarda tus productos y activa la campana para seguir sus cambios de precio durante la temporada." },
   { id: "comparar", title: "Compara entre tiendas", body: "El mismo producto puede estar más barato en Amazon, Mercado Libre o Liverpool." },
   { id: "msi", title: "Meses sin intereses con calma", body: "Suma lo que ya pagas al mes antes de agregar otro plazo. La calculadora de cada oferta te da el monto mensual." },
   { id: "envio", title: "Cuenta el envío y la devolución", body: "Un precio bajo con envío caro o sin devolución puede salir más caro." },
   { id: "vendedor", title: "Revisa al vendedor", body: "En marketplaces, verifica calificación y que sea vendedor oficial o con buen historial." },
 ];
 
-const CALENDAR = [
-  { month: "Enero", name: "Cuesta de enero y liquidaciones", note: "Ropa de temporada y electrónica que no se vendió en diciembre." },
-  { month: "Mayo – junio", name: "Hot Sale", note: "Venta en línea organizada por la AMVO, sobre todo tecnología y moda." },
-  { month: "Julio", name: "Prime Day", note: "Ofertas de Amazon para miembros Prime; otras tiendas suelen responder." },
-  { month: "Noviembre", name: "Buen Fin", note: "El fin de semana largo de descuentos en tiendas físicas y en línea." },
-  { month: "Noviembre", name: "Black Friday y Cyber Monday", note: "Cada vez más tiendas mexicanas se suman tras el Buen Fin." },
-  { month: "Diciembre", name: "Navidad", note: "Juguetes y regalos; conviene comprar antes de la segunda quincena." },
-];
-
 function renderGrid(el, products) {
   if (!el) return;
   const saved = loadSavedIds();
   const alerts = loadAlertIds();
-  el.innerHTML = products
+  el.innerHTML = products.length ? products
     .map((p) =>
       renderProductCard(p, CATEGORY_LABEL[p.categorySlug], { saved: saved.has(p.id), alerted: alerts.has(p.id) })
     )
-    .join("");
+    .join("") : '<p class="season-empty">Sin ofertas en esta sección por ahora.</p>';
   observeReveal(el, ".product-card");
-  bindCardActions(el);
 }
 
 function renderCountdown() {
-  const status = getSeasonStatus();
+  const status = getSeasonStatus(Date.now(), SEASON);
   const label = document.getElementById("countdownLabel");
   const note = document.getElementById("countdownNote");
-  const lead = document.getElementById("seasonLead");
+  const grid = document.querySelector(".countdown__grid");
+  grid.hidden = status.phase === "unannounced" || status.phase === "after";
   const { days, hours, minutes } = splitDuration(status.ms);
 
   const values = { days, hours, minutes };
@@ -67,16 +60,18 @@ function renderCountdown() {
   const start = new Date(SEASON.start);
   const end = new Date(SEASON.end);
   const fmt = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long" });
-  if (status.phase === "before") {
-    label.textContent = "Faltan";
+  if (status.phase === "unannounced") {
+    label.textContent = "Fechas no anunciadas";
+    note.textContent = `${SEASON.period} · ${SEASON.note}`;
+  } else if (status.phase === "before") {
+    label.textContent = SEASON.estimated ? "Cuenta regresiva estimada" : "Faltan";
     note.textContent = `Del ${fmt.format(start)} al ${fmt.format(end)}${SEASON.estimated ? " · fecha estimada, se confirma cada año" : ""}`;
   } else if (status.phase === "live") {
-    label.textContent = "¡Ya empezó! Termina en";
-    note.textContent = `Hasta el ${fmt.format(end)}`;
+    label.textContent = SEASON.estimated ? "Período estimado · termina en" : "¡Ya empezó! Termina en";
+    note.textContent = `Hasta el ${fmt.format(end)}${SEASON.estimated ? " · fecha estimada, no confirmada" : ""}`;
   } else {
     label.textContent = "Terminó";
-    note.textContent = "Las ofertas de abajo siguen vigentes; vuelve el próximo año.";
-    lead.textContent = "El Buen Fin terminó, pero seguimos verificando ofertas cada 5 minutos.";
+    note.textContent = SEASON.estimated ? "El período estimado terminó; consulta las fechas oficiales del evento." : "El evento terminó. Revisa la vigencia de cada oferta en la tienda.";
   }
 }
 
@@ -116,26 +111,70 @@ function renderChecklist() {
 function renderCalendar() {
   const el = document.getElementById("seasonCalendar");
   if (!el) return;
-  el.innerHTML = CALENDAR.map(
+  el.innerHTML = SEASONS.map(
     (c) => `
-      <li class="season-calendar__item ${c.name === "Buen Fin" ? "is-current" : ""}">
-        <span class="season-calendar__month">${icon("calendar", { size: 15 })} ${c.month}</span>
-        <strong>${c.name}</strong>
+      <li class="season-calendar__item ${c.slug === SEASON.slug ? "is-current" : ""}">
+        <span class="season-calendar__month">${icon("calendar", { size: 15 })} ${c.period}</span>
+        <strong><a href="temporada.html?temporada=${encodeURIComponent(c.slug)}" ${c.slug === SEASON.slug ? 'aria-current="page"' : ""}>${c.name}</a></strong>
         <span>${c.note}</span>
       </li>`
   ).join("");
 }
 
-const atMin = PRODUCTS.filter((p) => p.currentPrice <= p.historicMinPrice).sort((a, b) => discountOf(b) - discountOf(a));
-const strong = PRODUCTS.filter((p) => discountOf(p) >= 50 && !atMin.slice(0, 8).includes(p)).sort((a, b) => discountOf(b) - discountOf(a));
+let seasonRequest = 0;
+async function loadSeasonOffers() {
+  const request = ++seasonRequest;
+  await accountReady;
+  const plus = accountState().access.level === "plus";
+  const status = document.getElementById("seasonAccess");
+  status.textContent = "Cargando ofertas de la temporada…";
+  document.getElementById("minGrid").innerHTML = "";
+  document.getElementById("strongGrid").innerHTML = "";
+  let products = [];
+  let demo = false;
+  try {
+    const res = await fetch(`${API_BASE}/deals?season=${encodeURIComponent(SEASON.slug)}`, { credentials: "include", signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error("season-unavailable");
+    const payload = await res.json();
+    if (!Array.isArray(payload.data)) throw new Error("season-invalid");
+    products = payload.data.filter((row) => !row.locked).map((row, index) => normalizeDeal(row, index));
+  } catch {
+    // La muestra local nunca concede acceso Plus ni representa ofertas del evento.
+    demo = true;
+    products = PRODUCTS.filter((product) => !product.live);
+  }
+  if (request !== seasonRequest) return;
+  products.sort((a, b) => discountOf(b) - discountOf(a));
+  const selected = selectSeasonProducts(products, { plus, demo });
+  const sections = partitionSeasonProducts(selected);
+  renderGrid(document.getElementById("minGrid"), sections.atMin);
+  renderGrid(document.getElementById("strongGrid"), sections.other);
+  status.textContent = demo
+    ? "Sin conexión al servicio de temporadas. Muestra de hasta 3 productos de demostración; no son ofertas confirmadas de este evento."
+    : plus ? `${selected.length} ofertas del catálogo actual para comparar · Acceso Plus. No representan promociones oficiales de este evento.`
+      : `Vista de hasta 3 ofertas por temporada (${selected.length} disponibles) del catálogo actual. No representan promociones oficiales del evento. Plus permite ver el catálogo completo.`;
+  const upgrade = document.getElementById("seasonUpgrade");
+  if (upgrade) upgrade.hidden = plus && !demo;
+}
+
+document.title = `${SEASON.name} · Temporadas - Precionauta`;
+document.getElementById("seasonTitle").textContent = SEASON.name;
+document.getElementById("seasonLead").textContent = SEASON.lead;
+const selector = document.getElementById("seasonSelect");
+selector.innerHTML = SEASONS.map((season) => `<option value="${season.slug}" ${season.slug === SEASON.slug ? "selected" : ""}>${season.name}</option>`).join("");
+selector.addEventListener("change", () => {
+  const url = new URL(location.href);
+  url.searchParams.set("temporada", selector.value);
+  location.assign(url);
+});
 
 const yearEl = document.getElementById("footerYear");
 if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
 renderCountdown();
 setInterval(renderCountdown, 30_000);
-renderGrid(document.getElementById("minGrid"), atMin.slice(0, 8));
-renderGrid(document.getElementById("strongGrid"), strong.slice(0, 8));
+loadSeasonOffers();
+document.addEventListener("account-changed", loadSeasonOffers);
 renderChecklist();
 renderCalendar();
 renderSavingsSummary(loadSavedIds());
@@ -144,3 +183,5 @@ bindHeaderScrollShadow();
 bindMobileMenu();
 bindThemeToggle();
 bindAuthModal();
+bindCardActions(document.getElementById("minGrid"));
+bindCardActions(document.getElementById("strongGrid"));

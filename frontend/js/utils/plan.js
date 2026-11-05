@@ -4,25 +4,22 @@
  * La carga inicial está disponible en todos los planes. Las ofertas que llegan
  * después esperan 2 horas en Gratis; Plus las ve al instante.
  *
- * Ojo: hoy el plan se guarda solo en este navegador (checkout de demostración).
- * La restricción real llega con Stripe + inicio de sesión: el backend tendrá
- * que decidir qué ofertas manda según la cuenta.
+ * La cuenta y el backend deciden el acceso. El checkout sigue siendo una
+ * demostración sin cobro; modificar localStorage no activa Plus.
  */
-export const PLAN_STORAGE_KEY = "precionauta:plan";
+import { accountState } from "./account.js";
+
+export const PLAN_STORAGE_KEY = "precionauta:plan"; // clave antigua, conservada para limpiar la demo local
+export const PLUS_PRICES = Object.freeze({ mensual: 79, anual: 790 });
 
 /** Espera para ofertas posteriores a la carga inicial. */
 export const FREE_DELAY_MS = 2 * 60 * 60 * 1000;
 
 /** Días de historial de precio que muestra Detalle. */
-export const HISTORY_DAYS = { free: 30, plus: 365 };
+export const HISTORY_DAYS = { visitor: 0, free: 30, plus: 365 };
 
 export function currentPlanId() {
-  try {
-    const plan = JSON.parse(localStorage.getItem(PLAN_STORAGE_KEY));
-    return plan?.id === "plus" ? "plus" : "free";
-  } catch {
-    return "free";
-  }
+  return accountState().plan.id === "plus" ? "plus" : "free";
 }
 
 /** "1 h 48 min" / "12 min" hasta que una oferta se libera para Gratis. */

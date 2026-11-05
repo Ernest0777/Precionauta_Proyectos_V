@@ -23,6 +23,8 @@ function toSuggestion(p) {
     badge: `−${discountOf(p)}%`,
     href: `producto.html?id=${encodeURIComponent(p.id)}`,
     tone: p.categorySlug,
+    image: p.image,
+    images: p.images,
     iconHtml: icon(CATEGORY_ICON_BY_SLUG[p.categorySlug] ?? "tag", { size: 18 }),
   };
 }

@@ -1,6 +1,6 @@
 /**
  * Comportamiento compartido entre index.html y producto.html: menú móvil,
- * sombra del header al hacer scroll, formulario de "Mantente conectado" y
+ * sombra del header al hacer scroll y
  * el resumen de ahorro guardado. Cada página trae sus propios refs de DOM
  * (los ids son los mismos en ambas plantillas) y llama a estas funciones
  * en su propio init().
@@ -10,6 +10,10 @@ import { PRODUCTS } from "./data/products.js";
 import { calculateSavings, formatPriceMXN } from "./utils/format.js";
 import { track } from "./utils/recommender.js";
 import { PLAN_STORAGE_KEY } from "./utils/plan.js";
+import {
+  accountState, ACCOUNT_CHANGED_EVENT, LIBRARY_OWNER_KEY,
+  loginAccount, registerAccount, patchLibrary, refreshAccount, changePlan,
+} from "./utils/account.js";
 
 export const SAVED_STORAGE_KEY = "precionauta:saved-offers";
 export const ALERTS_STORAGE_KEY = "precionauta:price-alerts";
@@ -37,18 +41,69 @@ export function loadSavedIds() {
 }
 
 export function persistSavedIds(set) {
+  const previous = loadIdSet(SAVED_STORAGE_KEY);
   persistIdSet(SAVED_STORAGE_KEY, set);
+  syncLibrary({ savedAdd: [...set].filter(id => !previous.has(id)), savedRemove: [...previous].filter(id => !set.has(id)) });
 }
 
 export function loadAlertIds() {
+  if (!accountState().user) return new Set();
   return loadIdSet(ALERTS_STORAGE_KEY);
 }
 
 export function persistAlertIds(set) {
+  const previous = loadIdSet(ALERTS_STORAGE_KEY);
   persistIdSet(ALERTS_STORAGE_KEY, set);
+  syncLibrary({ alertAdd: [...set].filter(id => !previous.has(id)), alertRemove: [...previous].filter(id => !set.has(id)) });
 }
 
-/* ================= PLAN (Gratis / Plus de demostración) ================= */
+let libraryQueue = Promise.resolve();
+let libraryPending = 0;
+
+function hydrateLibrary() {
+  if (libraryPending) return;
+  const session = accountState();
+  try {
+    const owner = localStorage.getItem(LIBRARY_OWNER_KEY);
+    if (session.user) {
+      persistIdSet(SAVED_STORAGE_KEY, new Set(session.savedIds));
+      persistIdSet(ALERTS_STORAGE_KEY, new Set(session.alertIds));
+      localStorage.setItem(LIBRARY_OWNER_KEY, String(session.user.id));
+    } else if (owner && owner !== "visitor") {
+      localStorage.removeItem(SAVED_STORAGE_KEY);
+      localStorage.removeItem(ALERTS_STORAGE_KEY);
+      localStorage.setItem(LIBRARY_OWNER_KEY, "visitor");
+    }
+    localStorage.removeItem(PLAN_STORAGE_KEY);
+  } catch { /* La cuenta sigue disponible sin almacenamiento local. */ }
+}
+
+function syncLibrary(details) {
+  const owner = accountState().user?.id;
+  if (!owner) return;
+  libraryPending++;
+  libraryQueue = libraryQueue.then(async () => {
+    if (accountState().user?.id !== owner) return;
+    try {
+      await patchLibrary(details);
+    } catch (error) {
+      showToast(error.message);
+      await refreshAccount();
+    }
+  }).finally(() => {
+    libraryPending--;
+    if (!libraryPending) {
+      hydrateLibrary();
+      document.dispatchEvent(new CustomEvent(ALERTS_CHANGED_EVENT));
+      document.dispatchEvent(new CustomEvent(SAVED_CHANGED_EVENT));
+    }
+  });
+}
+
+hydrateLibrary();
+document.addEventListener(ACCOUNT_CHANGED_EVENT, hydrateLibrary);
+
+/* ================= PLAN DE LA CUENTA ================= */
 
 // La clave y las reglas de cada plan viven en utils/plan.js (products.js también las usa).
 export { PLAN_STORAGE_KEY };
@@ -59,28 +114,17 @@ export const PLAN_CHANGED_EVENT = "plan-changed";
 export const FREE_ALERT_LIMIT = 3;
 
 /**
- * Plan actual. No hay backend ni cobro real: "plus" solo se activa desde el
- * checkout de demostración de planes.html y vive en este navegador.
+ * Plan de la sesión verificada. La activación de Plus sigue siendo demo.
  * @returns {{ id: "free" | "plus", period?: "mensual" | "anual", since?: string }}
  */
 export function loadPlan() {
-  try {
-    const raw = localStorage.getItem(PLAN_STORAGE_KEY);
-    const plan = raw ? JSON.parse(raw) : null;
-    return plan?.id === "plus" ? plan : { id: "free" };
-  } catch {
-    return { id: "free" };
-  }
+  return accountState().plan;
 }
 
-export function persistPlan(plan) {
-  try {
-    if (plan.id === "free") localStorage.removeItem(PLAN_STORAGE_KEY);
-    else localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plan));
-  } catch {
-    /* sin localStorage el plan dura solo esta visita */
-  }
-  document.dispatchEvent(new CustomEvent(PLAN_CHANGED_EVENT, { detail: plan }));
+export async function persistPlan(plan) {
+  const session = await changePlan(plan.id, plan.period);
+  document.dispatchEvent(new CustomEvent(PLAN_CHANGED_EVENT, { detail: session.plan }));
+  return session.plan;
 }
 
 export function isPlus() {
@@ -92,6 +136,10 @@ export function isPlus() {
  * @returns {"added" | "removed" | "limit"}
  */
 export function toggleAlert(id, { source = "page" } = {}) {
+  if (!accountState().user) {
+    showToast("Crea tu cuenta gratuita para guardar hasta 3 alertas.", { actionLabel: "Crear cuenta", actionHref: "perfil.html#crear-cuenta" });
+    return "auth";
+  }
   const ids = loadAlertIds();
   let result;
   if (ids.has(id)) {
@@ -371,10 +419,7 @@ export function bindMobileMenu() {
 }
 
 /**
- * Modal de "Entrar" (login/crear cuenta). A propósito NO guarda ni envía
- * nada a ningún lado - no hay backend ni base de datos todavía (ver
- * PRODUCT.md/PENDIENTES.md). Es la interfaz real, con su propia validación,
- * pero termina siempre en un mensaje honesto en vez de una sesión falsa.
+ * Entrada por correo y contraseña con sesión verificada por el backend.
  */
 export function bindAuthModal() {
   const modal = document.getElementById("authModal");
@@ -386,8 +431,38 @@ export function bindAuthModal() {
   const tabs = modal.querySelectorAll("[data-auth-tab]");
   const panels = modal.querySelectorAll("[data-auth-panel]");
   let lastFocused = null;
+  const loginForm = modal.querySelector('[data-auth-panel="login"]');
+  if (loginForm && !loginForm.querySelector('.auth-recovery-link')) {
+    const recovery = document.createElement("a");
+    recovery.href = "recuperar.html";
+    recovery.className = "auth-recovery-link";
+    recovery.textContent = "Olvidé mi contraseña";
+    loginForm.appendChild(recovery);
+  }
+
+  const paintAccount = () => {
+    openTriggers.forEach((trigger) => { trigger.textContent = accountState().user ? "Mi perfil" : "Entrar"; });
+  };
+  paintAccount();
+  document.addEventListener(ACCOUNT_CHANGED_EVENT, paintAccount);
+  modal.querySelector(".social-login")?.remove();
+  modal.querySelector(".auth-divider")?.remove();
+  modal.querySelectorAll('input[type="password"]').forEach((input) => {
+    input.minLength = 12;
+    input.maxLength = 128;
+  });
+  const passwordLabel = modal.querySelector('[data-auth-panel="register"] input[name="password"]')?.parentElement;
+  if (passwordLabel) {
+    const hint = document.createElement("small");
+    hint.textContent = "Usa al menos 12 caracteres.";
+    passwordLabel.appendChild(hint);
+  }
 
   const open = () => {
+    if (accountState().user) {
+      window.location.href = "perfil.html";
+      return;
+    }
     lastFocused = document.activeElement;
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
@@ -403,6 +478,7 @@ export function bindAuthModal() {
   };
 
   openTriggers.forEach((trigger) => trigger.addEventListener("click", open));
+  document.addEventListener("auth-requested", open);
   closeBtn?.addEventListener("click", close);
   modal.addEventListener("click", (event) => {
     if (event.target === modal) close();
@@ -427,50 +503,43 @@ export function bindAuthModal() {
     });
   });
 
-  const showPreviewNotice = (event) => {
+  const submitAccount = async (event) => {
     event.preventDefault();
-    if (!feedback) return;
-    feedback.textContent =
-      "Vista previa de la interfaz: todavía no hay cuentas reales, así que nada de esto se guarda ni se envía. Cuando conectemos el backend, este formulario funcionará de verdad.";
+    const form = event.currentTarget;
+    if (form.getAttribute("aria-busy") === "true" || !form.reportValidity()) return;
+    const details = Object.fromEntries(new FormData(form));
+    const registering = form.dataset.authPanel === "register";
+    if (registering && details.password !== details.password2) {
+      feedback.textContent = "Las contraseñas no coinciden. Revísalas e inténtalo de nuevo.";
+      form.elements.password2.focus();
+      return;
+    }
+    const button = form.querySelector('[type="submit"]');
+    button.disabled = true;
+    form.setAttribute("aria-busy", "true");
+    feedback.textContent = registering ? "Creando tu cuenta…" : "Entrando a tu cuenta…";
+    try {
+      const session = await (registering ? registerAccount(details) : loginAccount(details));
+      if (session.migrationError) {
+        feedback.textContent = `Ya entraste. Tus guardados locales no pudieron sincronizarse: ${session.migrationError}`;
+        button.textContent = "Ir a mi perfil";
+        button.type = "button";
+        button.addEventListener("click", () => { window.location.href = "perfil.html"; }, { once: true });
+      } else {
+        window.location.reload();
+      }
+    } catch (error) {
+      feedback.textContent = error.message;
+    } finally {
+      button.disabled = false;
+      form.removeAttribute("aria-busy");
+    }
   };
 
   modal.querySelectorAll(".auth-form").forEach((form) => {
-    form.addEventListener("submit", showPreviewNotice);
+    form.addEventListener("submit", submitAccount);
   });
 
-  // Google / Facebook: el flujo real necesita OAuth del lado del servidor
-  // (o Firebase Auth / Supabase). Hasta entonces, mensaje honesto, sin popup.
-  modal.querySelectorAll("[data-social-login]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (!feedback) return;
-      feedback.textContent = `Entrar con ${button.dataset.socialLogin} estará disponible cuando conectemos el backend (OAuth). Por ahora es una vista previa: no se abre ninguna ventana ni se comparte ningún dato.`;
-    });
-  });
-}
-
-export function bindSubscribeForm() {
-  const form = document.getElementById("subscribeForm");
-  const email = document.getElementById("subscribeEmail");
-  const feedback = document.getElementById("subscribeFeedback");
-  if (!form || !email || !feedback) return;
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const value = email.value.trim();
-    const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-
-    if (!isValid) {
-      feedback.textContent = "Escribe un correo válido para continuar.";
-      feedback.classList.add("is-error");
-      email.setAttribute("aria-invalid", "true");
-      return;
-    }
-
-    feedback.classList.remove("is-error");
-    email.removeAttribute("aria-invalid");
-    feedback.textContent = "Listo, te avisaremos de las mejores ofertas.";
-    form.reset();
-  });
 }
 
 const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");

@@ -1,59 +1,67 @@
-# Precionauta - Documento de Producto
+# Precionauta — Documento de producto
 
-## Visión
+Actualizado: 2026-11-04. Rama de trabajo: `Neo_Brutalism`.
 
-Crear la herramienta definitiva para detectar y capitalizar ofertas extremas (80%-99%) en e-commerce mexicano, con detección en tiempo real y validación contra historial de precios.
+## Propósito
 
-## Problema
+Ayudar a encontrar y comparar ofertas en México con precios claros, historial disponible y seguimiento de productos. El precio publicado por una tienda y el historial observado permiten evaluar una oferta; no garantizan disponibilidad, un descuento auténtico ni el precio futuro.
 
-- 7/10 usuarios buscan cupones antes de comprar
-- Ofertas extremas duran minutos y están dispersas en múltiples sitios
-- 82% de compradores prioriza promociones
-- Usuarios pierden oportunidades por falta de información centralizada
+El conector actual es Mercado Libre. El catálogo de ejemplo permite explorar la interfaz cuando no hay datos del backend y debe distinguirse del catálogo real. Amazon, Liverpool y otras tiendas no forman parte de esta entrega.
 
-## Solución
+## Problema e hipótesis
 
-**Plataforma centralizada de ofertas verificadas** que:
-1. Rastrea Amazon, Mercado Libre, Liverpool en tiempo real
-2. Verifica descuentos contra historial de precio (anti-fraude)
-3. Alerta a usuarios en < 1 minuto
-4. Genera ingresos por enlaces afiliados
+La propuesta parte de hipótesis: comparar ofertas toma tiempo, el precio de referencia puede confundir y las oportunidades pueden agotarse antes de revisarlas. No se presentan porcentajes de mercado ni resultados de investigación sin fuentes. La [protopersona](docs/PROTOPERSONA.md) describe supuestos para validar con usuarios.
 
-## Mercado
+## Acceso y planes
 
-- **Global e-commerce:** $25.93B (2023) → $83.26B (2030)
-- **Affiliate marketing:** $18.54B (2024) → $52.16B (2034)
-- **México:** 9/10 usuarios completaron compra en Hot Sale 2026
+Visitante es un estado de acceso, no un tercer plan comercial. Cazador se fusiona con Plus.
 
-## Modelo de Negocio
+| Capacidad | Visitante | Cuenta gratuita | Plus |
+|---|---|---|---|
+| Explorar catálogo liberado | Sí, sin registrarse | Sí | Sí |
+| Guardados | Locales al navegador | Asociados a la cuenta | Asociados a la cuenta |
+| Alertas activas | Ninguna | Hasta 3 | Ilimitadas |
+| Historial disponible | Sin acceso | Hasta 30 días | Hasta 365 días |
+| Ofertas posteriores a la primera carga | Espera de 2 horas | Espera de 2 horas | Acceso inmediato |
+| Ofertas de temporada | 3 en total por evento | 3 en total por evento | Todas las disponibles |
+| Precio | Sin cuenta | $0 MXN | $79 MXN/mes o $790 MXN/año |
 
-**Ingresos:** Comisiones de affiliate marketing por cada purchase redirect
+Los precios incluyen IVA y son el total final. El anual cuesta 10 mensualidades: ahorro de $158 MXN frente a 12 meses. La ventana de historial es un permiso máximo; solo se muestran observaciones existentes, sin inventar una serie de precios.
 
-**Validado por:** CamelCamelCamel, Keepa, Honey (PayPal)
+Al volver de Plus a Cuenta gratuita se conservan los guardados y las alertas. Solo hasta 3 alertas permanecen activas; las excedentes quedan pausadas, sin borrarse.
 
-## Stack Técnico
+## Cuenta y perfil
 
-- **Frontend:** HTML5 + Vanilla JS + Watermelon UI (Scandinavian Design)
-- **Backend:** REST APIs + OAuth
-- **Data:** Amazon API + Mercado Libre API + Web Scraping
-- **Real-time:** Webhooks + Polling
+La entrega incorpora registro e inicio de sesión con correo y contraseña, sesión mediante cookie y persistencia SQLite. El perfil presenta nombre, correo, dirección opcional y plan. El backend decide los permisos; editar el almacenamiento del navegador no concede Plus.
 
-## Métricas de Éxito
+Google y Facebook no tienen OAuth funcional y no se anuncian como métodos activos. La recuperación por correo está implementada con Resend y requiere credenciales y un remitente autorizado antes de enviar correos reales.
 
-- Detectar discounts >70%, >80%, >90% con 100+ productos test
-- Alert time < 1 minuto
-- Zero false positives (validación histórica)
-- Medir affiliate clicks & user savings
+## Demostración de Plus
 
-## Roadmap (12 semanas)
+El checkout es una demostración explícita sin cobros. Requiere una cuenta y una confirmación del backend antes de mostrar Plus activo. Los ejemplos visuales de tarjeta, OXXO y SPEI no procesan pagos ni admiten datos bancarios reales. La prueba puede estar deshabilitada; un fallo conserva el plan previo y muestra un error.
 
-1. **Semanas 1-2:** Research & Planning ✅
-2. **Semanas 3-4:** System Design
-3. **Semanas 5-6:** API Integration
-4. **Semanas 7-8:** Anti-Fraud Algorithm
-5. **Semanas 9-10:** Alerts & Affiliate
-6. **Semanas 11-12:** Testing & Delivery
+Esta entrega no es una suscripción comercial con una pasarela conectada. El historial, los guardados y las alertas del usuario dependen de los datos y permisos confirmados por el servidor.
 
----
+## Temporadas
 
-**Proyecto académico:** Universidad Modelo - Proyectos V
+Cada evento tiene su propia identidad y fechas. Visitante y Cuenta gratuita acceden a 3 ofertas en total por evento, no a 3 por sección. Plus accede a todas las disponibles. Si no hay fechas oficiales anunciadas, la interfaz lo indica y no inventa una cuenta regresiva ni presenta fechas estimadas como confirmadas.
+
+## Alcance técnico y visual
+
+Frontend estático en HTML, CSS y módulos JavaScript; backend Express y SQLite. La identidad vigente es neobrutalista y mantiene temas claro y oscuro. [DESIGN.md](DESIGN.md) documenta el sistema visual. Los cambios de esta entrega refinan la interfaz existente sin sustituir su dirección.
+
+## Después de esta entrega
+
+La moderación incluye reportes de oferta vencida/precio incorrecto, análisis por reglas e historial, y resumen de actividad al entrar al panel. Inicia en observación; el administrador puede activar decisiones automáticas conservadoras y revertirlas. Los posibles precios inflados y los datos inciertos se presentan con motivos para supervisión. Una ausencia del catálogo, la edad de validación o un reporte no confirman agotamiento por sí solos.
+
+Afiliados y tiendas nuevas están pospuestos. El código de redirección o los parámetros de ejemplo no prueban una cuenta de afiliados autorizada, una comisión ni una integración comercial activa. Antes de retomarlos habrá que comprobar acceso a datos, aprobación del programa y términos aplicables.
+
+También quedan para evaluación posterior pagos reales, OAuth, notificaciones adicionales y despliegue público. No se prometen como funciones actuales.
+
+## Criterios de evaluación
+
+Validar que el usuario entiende el precio final, la diferencia entre los estados de acceso y el carácter de demostración del checkout. Comprobar que una sesión nueva recupera guardados, alertas y plan; que un error de activación no concede Plus; y que las restricciones se aplican también desde la API.
+
+La verificación de integración y navegador se cierra en el [plan de implementación](docs/PLAN_IMPLEMENTACION.md). Las pruebas todavía pendientes no se consideran aprobadas.
+
+Proyecto académico: Universidad Modelo — Proyectos V.

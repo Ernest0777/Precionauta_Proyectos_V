@@ -13,6 +13,34 @@ const db = new DatabaseSync(FILE);
 
 db.exec(`
   PRAGMA journal_mode = WAL;
+  PRAGMA foreign_keys = ON;
+
+  CREATE TABLE IF NOT EXISTS account_users (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL DEFAULT '',
+    password_hash TEXT NOT NULL,
+    password_salt TEXT NOT NULL,
+    plan_id TEXT NOT NULL DEFAULT 'free' CHECK (plan_id IN ('free', 'plus')),
+    plan_period TEXT,
+    plan_since INTEGER,
+    saved_ids TEXT NOT NULL DEFAULT '[]',
+    alert_ids TEXT NOT NULL DEFAULT '[]',
+    created_at INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS account_alert_targets (
+    user_id TEXT NOT NULL REFERENCES account_users(id) ON DELETE CASCADE,
+    deal_id TEXT NOT NULL,
+    target_cents INTEGER NOT NULL CHECK (target_cents > 0),
+    PRIMARY KEY (user_id, deal_id)
+  );
+  CREATE TABLE IF NOT EXISTS account_sessions (
+    token_hash TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES account_users(id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS account_sessions_expiry ON account_sessions(expires_at);
 
   -- Un renglón cada vez que vemos un precio nuevo (o cada 6 h si no cambia).
   CREATE TABLE IF NOT EXISTS prices (
@@ -63,6 +91,20 @@ db.exec(`
     at      INTEGER NOT NULL
   );
 `);
+
+// Migración aditiva: las cuentas existentes quedan pendientes de verificación.
+if (!db.prepare('PRAGMA table_info(account_users)').all().some((column) => column.name === 'email_verified_at')) {
+  db.exec('ALTER TABLE account_users ADD COLUMN email_verified_at INTEGER');
+}
+db.exec(`CREATE TABLE IF NOT EXISTS email_verification_tokens (
+  token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES account_users(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL
+); CREATE INDEX IF NOT EXISTS email_verification_user ON email_verification_tokens(user_id);`);
+
+// Migración aditiva: los vínculos antiguos permanecen sin propietario y no envían avisos.
+if (!db.prepare('PRAGMA table_info(telegram_links)').all().some((column) => column.name === 'user_id')) {
+  db.exec('ALTER TABLE telegram_links ADD COLUMN user_id TEXT REFERENCES account_users(id)');
+}
 
 // Varias escrituras en una sola transacción (mucho más rápido en SQLite).
 db.transaction = (fn) => {

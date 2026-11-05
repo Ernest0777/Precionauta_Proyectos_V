@@ -1,4 +1,19 @@
 /* Product detail: the same bold, practical visual language as the catalog. */
+.deal-report__toggle { min-height: 44px; padding: 8px 0; color: var(--color-ink-900); font: inherit; font-size: .8125rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; background: transparent; border: 0; cursor: pointer; }
+.deal-report__form { display: grid; gap: 10px; margin-top: 8px; padding: 20px; border: var(--neo-line); background: var(--color-surface-soft); box-shadow: 3px 3px 0 var(--neo-ink); }
+.deal-report__form[hidden] { display: none; }
+.deal-report__form h2 { margin: 0 0 4px; font-size: 1rem; }
+.deal-report__form label { font-size: .8125rem; font-weight: 700; }
+.deal-report__form label span, .deal-report__hint { font-weight: 400; color: var(--color-ink-500); }
+.deal-report__form :is(select, textarea) { width: 100%; min-width: 0; padding: 10px; font: inherit; font-size: .875rem; border: var(--neo-line); border-radius: 2px; background: var(--color-surface); color: var(--color-ink-900); }
+.deal-report__form textarea { resize: vertical; }
+.deal-report__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.deal-report__hint, .deal-report__feedback { margin: 0; font-size: .8125rem; line-height: 1.5; }
+.deal-report__feedback:not(:empty) { margin-top: 10px; }
+.deal-report :is(button, select, textarea):focus-visible { outline: 3px solid var(--color-ink-900); outline-offset: 3px; }
+.deal-report :disabled { opacity: .6; cursor: wait; }
+.history-access { display: grid; justify-items: start; gap: 20px; padding: 24px; border: var(--neo-line); background: var(--color-surface-soft); }
+.neo-detail [data-image-failed] { object-fit: contain; }
 .neo-detail #detalle {
   padding-block: 32px 60px;
   scroll-margin-top: 120px;

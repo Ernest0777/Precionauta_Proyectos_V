@@ -1,4 +1,13 @@
-/* temporada.html - Buen Fin. Mismo sistema monocromo; el rojo solo en descuentos. */
+/* Calendario y ofertas por temporada. */
+.season-selector { display: grid; gap: 8px; margin-top: 24px; max-width: 400px; }
+.season-selector label { font-weight: 800; font-size: var(--fs-sm); }
+.season-selector select { width: 100%; min-height: 48px; padding: 10px 12px; border: 2px solid var(--color-ink-900); border-radius: 3px; background: var(--color-surface); color: var(--color-ink-900); font: inherit; }
+.season-access { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-bottom: 32px; padding: 20px; border: 2px solid var(--color-ink-900); background: var(--color-surface-soft); }
+.season-access p { flex: 1 1 300px; }
+.season-access a { font-weight: 800; text-decoration: underline; }
+.season-calendar__item a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.season-empty { padding: 16px 0; color: var(--color-ink-500); }
+.countdown__grid[hidden] { display: none; }
 
 .season-hero {
   padding-block: var(--space-16) var(--space-12);

@@ -8,6 +8,7 @@ import { bindResumen, renderResumen } from "./pages/resumen.js";
 import { renderModeracion } from "./pages/moderacion.js";
 import { renderReportes } from "./pages/reportes.js";
 import { toast } from "./ui.js";
+import { beginSummaryVisit } from "./pages/automation.js";
 
 const PAGES = {
   resumen: { title: "Resumen", render: renderResumen },
@@ -137,6 +138,8 @@ bindResumen(document.getElementById("page-resumen"), () => {
 });
 
 async function start() {
+  beginSummaryVisit();
+  history.replaceState(null, "", "#resumen");
   loginEl.hidden = true;
   appEl.hidden = false;
   current = null;

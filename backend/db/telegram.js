@@ -17,7 +17,7 @@ const EXTREME_MIN = 80;
 
 const state = { enabled: false, botUsername: null, offset: 0, stopped: false };
 
-const linkByCode = db.prepare('SELECT code, chat_id, name, extreme FROM telegram_links WHERE code = ?');
+const linkByCode = db.prepare('SELECT code, chat_id, name, extreme, user_id FROM telegram_links WHERE code = ?');
 const upsertLink = db.prepare(`
   INSERT INTO telegram_links (code, chat_id, name, linked_at) VALUES (?, ?, ?, ?)
   ON CONFLICT(code) DO UPDATE SET chat_id = excluded.chat_id, name = excluded.name, linked_at = excluded.linked_at
@@ -25,15 +25,18 @@ const upsertLink = db.prepare(`
 const unlinkChat = db.prepare('DELETE FROM telegram_links WHERE chat_id = ?');
 const unlinkCode = db.prepare('DELETE FROM telegram_links WHERE code = ?');
 const setExtreme = db.prepare('UPDATE telegram_links SET extreme = ? WHERE chat_id = ?');
-const extremeChats = db.prepare('SELECT DISTINCT chat_id FROM telegram_links WHERE chat_id IS NOT NULL AND extreme = 1');
+const eligible = db.prepare(`SELECT l.* FROM telegram_links l JOIN account_users u ON u.id = l.user_id WHERE u.plan_id = 'plus'`);
+const extremeChats = db.prepare(`SELECT DISTINCT l.chat_id FROM telegram_links l JOIN account_users u ON u.id = l.user_id WHERE l.chat_id IS NOT NULL AND l.extreme = 1 AND u.plan_id = 'plus'`);
 const subsOf = db.prepare('SELECT deal_id FROM alert_subs WHERE code = ?');
 const addSub = db.prepare('INSERT OR IGNORE INTO alert_subs (code, deal_id, last_price, created_at) VALUES (?, ?, ?, ?)');
 const removeSub = db.prepare('DELETE FROM alert_subs WHERE code = ? AND deal_id = ?');
 const removeSubsOf = db.prepare('DELETE FROM alert_subs WHERE code = ?');
 const activeSubs = db.prepare(`
-  SELECT s.code, s.deal_id, s.last_price, l.chat_id
-  FROM alert_subs s JOIN telegram_links l ON l.code = s.code
-  WHERE l.chat_id IS NOT NULL
+  SELECT s.code, s.deal_id, s.last_price, l.chat_id, t.target_cents
+  FROM alert_subs s JOIN telegram_links l ON l.code = s.code JOIN account_users u ON u.id = l.user_id
+  LEFT JOIN account_alert_targets t ON t.user_id = u.id AND t.deal_id = s.deal_id
+  WHERE l.chat_id IS NOT NULL AND u.plan_id = 'plus'
+    AND EXISTS (SELECT 1 FROM json_each(u.alert_ids) WHERE value = s.deal_id)
 `);
 const updateSubPrice = db.prepare('UPDATE alert_subs SET last_price = ? WHERE code = ? AND deal_id = ?');
 const wasNotified = db.prepare('SELECT 1 FROM extreme_notified WHERE deal_id = ?');
@@ -51,10 +54,13 @@ async function call(method, body) {
   return json.result;
 }
 
-const send = (chatId, text) =>
-  call('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: false }).catch((error) =>
+const send = (chatId, text) => {
+  // Se comprueba de nuevo al enviar, incluso si el plan cambió durante el procesamiento.
+  if (!db.prepare(`SELECT 1 FROM telegram_links l JOIN account_users u ON u.id = l.user_id WHERE l.chat_id = ? AND u.plan_id = 'plus'`).get(String(chatId))) return Promise.resolve();
+  return call('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: false }).catch((error) =>
     console.warn(`⚠️ Telegram a ${chatId}: ${error.message}`)
   );
+};
 
 const esc = (text) => String(text ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 const money = (n) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
@@ -73,6 +79,8 @@ async function handleMessage(message) {
   if (text.startsWith('/start')) {
     const code = text.split(/\s+/)[1];
     if (code && CODE_RE.test(code)) {
+      const link = linkByCode.get(code);
+      if (!link?.user_id || !db.prepare("SELECT 1 FROM account_users WHERE id = ? AND plan_id = 'plus'").get(link.user_id)) return;
       upsertLink.run(code, chatId, name, Date.now());
       return send(
         chatId,
@@ -125,24 +133,36 @@ function status() {
   return { enabled: state.enabled, botUsername: state.botUsername };
 }
 
-function linkStatus(code) {
+function claimLink(code, userId) {
+  if (!CODE_RE.test(code || '')) throw new Error('Código inválido');
+  if (!db.prepare("SELECT 1 FROM account_users WHERE id = ? AND plan_id = 'plus'").get(userId)) throw new Error('Telegram requiere Plus');
+  const existing = linkByCode.get(code);
+  if (existing && existing.user_id !== userId) throw new Error('Código no disponible. Genera uno nuevo');
+  if (!existing) db.prepare('INSERT INTO telegram_links (code, user_id) VALUES (?, ?)').run(code, userId);
+}
+
+function linkStatus(code, userId) {
   if (!CODE_RE.test(code || '')) return { linked: false };
   const link = linkByCode.get(code);
+  if (!userId || link?.user_id !== userId) return { linked: false, name: null };
   return { linked: Boolean(link?.chat_id), name: link?.name || null };
 }
 
-function unlink(code) {
+function unlink(code, userId) {
   if (!CODE_RE.test(code || '')) return;
   const link = linkByCode.get(code);
-  if (link?.chat_id) send(link.chat_id, 'Desconectaste Telegram desde Precionauta. Ya no te enviaremos avisos.');
+  if (!userId || link?.user_id !== userId) return;
   unlinkCode.run(code);
   removeSubsOf.run(code);
 }
 
 // El navegador manda la lista completa de ofertas que sigue.
-function syncAlerts(code, ids, dealsById) {
-  if (!CODE_RE.test(code || '')) throw new Error('Código inválido');
-  const wanted = new Set(ids.filter((id) => typeof id === 'string').slice(0, 200));
+function syncAlerts(code, ids, dealsById, userId) {
+  claimLink(code, userId);
+  const user = db.prepare('SELECT alert_ids FROM account_users WHERE id = ?').get(userId);
+  const allowed = new Set(JSON.parse(user.alert_ids));
+  if (ids.some(id => !allowed.has(id))) throw new Error('Alerta fuera de la biblioteca de la cuenta');
+  const wanted = new Set(ids);
   const current = new Set(subsOf.all(code).map((r) => r.deal_id));
   db.transaction(() => {
     current.forEach((id) => !wanted.has(id) && removeSub.run(code, id));
@@ -153,6 +173,10 @@ function syncAlerts(code, ids, dealsById) {
   return wanted.size;
 }
 
+function shouldNotifyPriceDrop(lastPrice, currentPrice, targetPrice = null) {
+  return Number.isFinite(lastPrice) && Number.isFinite(currentPrice) && currentPrice < lastPrice - 0.009 && (targetPrice == null || currentPrice <= targetPrice);
+}
+
 // Después de cada consulta a ML: bajas de precio y ofertas extremas nuevas.
 function onDealsUpdated(deals) {
   if (!state.enabled) return;
@@ -161,15 +185,13 @@ function onDealsUpdated(deals) {
   for (const sub of activeSubs.all()) {
     const deal = byId.get(sub.deal_id);
     if (!deal) continue;
-    if (sub.last_price == null) {
-      updateSubPrice.run(deal.currentPrice, sub.code, sub.deal_id);
-    } else if (deal.currentPrice < sub.last_price - 0.009) {
+    if (shouldNotifyPriceDrop(sub.last_price, deal.currentPrice, sub.target_cents == null ? null : sub.target_cents / 100)) {
       send(
         sub.chat_id,
         `📉 <b>¡Bajó de precio!</b>\n${esc(deal.title)}\n\nAntes ${money(sub.last_price)} → <b>ahora ${money(deal.currentPrice)}</b> (−${Math.round(deal.discount)}% sobre el precio de lista)\n\n<a href="${esc(dealLink(deal))}">Ver oferta</a>`
       );
-      updateSubPrice.run(deal.currentPrice, sub.code, sub.deal_id);
     }
+    if (Number.isFinite(deal.currentPrice)) updateSubPrice.run(deal.currentPrice, sub.code, sub.deal_id);
   }
 
   const fresh = deals.filter((d) => d.discount >= EXTREME_MIN && !wasNotified.get(d.id));
@@ -186,4 +208,4 @@ function onDealsUpdated(deals) {
   });
 }
 
-module.exports = { start, status, linkStatus, unlink, syncAlerts, onDealsUpdated };
+module.exports = { shouldNotifyPriceDrop, start, status, claimLink, linkStatus, unlink, syncAlerts, onDealsUpdated, eligibleLinks: () => eligible.all() };

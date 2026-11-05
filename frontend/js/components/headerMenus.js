@@ -17,6 +17,8 @@ import { icon, CATEGORY_ICON_BY_SLUG } from "../utils/icons.js";
 import { formatPriceMXN } from "../utils/format.js";
 import { getAllStats, getCategoryStats, discountOf } from "../utils/catalogStats.js";
 import { SEASON, getSeasonStatus, splitDuration } from "../data/season.js";
+import { accountState, setAlertTarget, ACCOUNT_CHANGED_EVENT } from "../utils/account.js";
+import { renderProductImage } from "../utils/images.js";
 import {
   initTelegram,
   connectTelegram,
@@ -201,11 +203,11 @@ function renderMegaPreview(stat) {
   if (!product) return "";
   const iconName = CATEGORY_ICON_BY_SLUG[product.categorySlug] ?? "tag";
   const heading = stat.slug === ALL_CATEGORIES_SLUG ? "La caída más fuerte de hoy" : `Lo mejor en ${stat.label}`;
+  const photo = renderProductImage(product, "mega-preview__photo");
   return `
     <a class="mega-preview" href="${productHref(product)}" data-tone="${product.categorySlug}">
       <span class="mega-preview__media">
-        <span class="mega-preview__watermark" aria-hidden="true">${icon(iconName, { size: 160 })}</span>
-        <span class="mega-preview__glyph" aria-hidden="true">${icon(iconName, { size: 34 })}</span>
+        ${photo || `<span class="mega-preview__watermark" aria-hidden="true">${icon(iconName, { size: 160 })}</span><span class="mega-preview__glyph" aria-hidden="true">${icon(iconName, { size: 34 })}</span>`}
         <span class="mega-preview__badge tabular-nums">−${discountOf(product)}%</span>
       </span>
       <span class="mega-preview__body">
@@ -424,17 +426,28 @@ function bindStoreMenu({ onStore } = {}) {
 function renderAlertItem(product) {
   const iconName = CATEGORY_ICON_BY_SLUG[product.categorySlug] ?? "tag";
   const name = escapeHtml(product.name);
+  const paused = accountState().pausedAlertIds?.includes(product.id);
+  const target = accountState().alertTargets?.[product.id];
   return `
     <li class="alert-item" data-tone="${product.categorySlug}">
       <a class="alert-item__link" href="${productHref(product)}">
         <span class="alert-item__icon" aria-hidden="true">${icon(iconName, { size: 20 })}</span>
         <span class="alert-item__text">
           <span class="alert-item__name">${name}</span>
+          ${paused ? '<span class="alert-item__meta">En pausa · disponible al volver a Plus</span>' : ""}
           <span class="alert-item__meta tabular-nums">
             <strong>${formatPriceMXN(product.currentPrice)}</strong> · −${discountOf(product)}% · ${escapeHtml(product.store)}
           </span>
         </span>
       </a>
+      <details class="alert-target">
+        <summary>${target == null ? "Definir precio objetivo" : `Editar objetivo · ${formatPriceMXN(target)}`}</summary>
+        <form data-target-form="${escapeHtml(product.id)}">
+          <label>Precio objetivo en MXN <input name="targetPrice" type="number" step="0.01" min="0.01" max="100000000" required value="${target ?? ""}"></label>
+          <div class="alert-target__actions"><button type="submit">Confirmar</button>${target == null ? "" : '<button type="button" data-target-clear>Quitar objetivo</button>'}</div>
+          <p role="status" aria-live="polite"></p>
+        </form>
+      </details>
       <button type="button" class="alert-item__remove" data-remove-alert="${product.id}" aria-label="Quitar la alerta de ${name}">
         ${icon("close", { size: 14 })}
       </button>
@@ -443,6 +456,9 @@ function renderAlertItem(product) {
 }
 
 function renderAlertsBody(products) {
+  if (!accountState().user) {
+    return `<div class="alerts-empty"><span class="alerts-empty__icon" aria-hidden="true">${icon("bell", { size: 28 })}</span><p class="alerts-empty__title">Sigue el precio de tus favoritos</p><p class="alerts-empty__body">Con tu cuenta gratuita puedes guardar hasta 3 alertas y encontrarlas cuando vuelvas.</p><a class="btn btn--primary" href="perfil.html#crear-cuenta">Crear mi cuenta</a></div>`;
+  }
   if (products.length === 0) {
     return `
       <div class="alerts-empty">
@@ -524,9 +540,11 @@ function bindAlertsMenu() {
   const render = () => {
     const products = getAlertProducts();
     const plus = isPlus();
+    const paused = products.filter(product => accountState().pausedAlertIds?.includes(product.id)).length;
+    const active = products.length - paused;
     const countLabel = plus
       ? `${products.length} ${products.length === 1 ? "activa" : "activas"}`
-      : `${products.length} de ${FREE_ALERT_LIMIT}`;
+      : `${active} de ${FREE_ALERT_LIMIT} activas${paused ? ` · ${paused} en pausa` : ""}`;
     panel.innerHTML = `
       <div class="alerts-panel__head">
         <h2 class="alerts-panel__title" id="alertsPanelTitle">Mis alertas</h2>
@@ -536,17 +554,20 @@ function bindAlertsMenu() {
         </button>
       </div>
       <div class="alerts-panel__body">${renderAlertsBody(products)}</div>
+      <p data-target-status role="status" aria-live="polite"></p>
       ${renderTelegramBlock()}
       <p class="alerts-panel__foot">
         ${icon("shieldCheck", { size: 14 })}
         ${
           plus
-            ? "Plus (demo): alertas ilimitadas en este navegador."
-            : `Plan gratis: hasta ${FREE_ALERT_LIMIT} alertas. <a href="planes.html">Ilimitadas con Plus</a>`
+            ? "Plus: alertas ilimitadas guardadas en tu cuenta."
+            : accountState().user
+              ? `Cuenta gratuita: ${FREE_ALERT_LIMIT} alertas activas. <a href="planes.html">Ilimitadas con Plus</a>`
+              : "Crea tu cuenta para conservar tus alertas."
         }
       </p>
     `;
-    updateCounts(products.length);
+    updateCounts(active);
   };
 
   const updateCounts = (count) => {
@@ -595,6 +616,15 @@ function bindAlertsMenu() {
   });
 
   panel.addEventListener("click", (event) => {
+    const clear = event.target.closest("[data-target-clear]");
+    if (clear) {
+      const form = clear.closest("form");
+      clear.disabled = true;
+      setAlertTarget(form.dataset.targetForm, null).then(() => {
+        panel.querySelector("[data-target-status]").textContent = "Objetivo eliminado. Te avisaremos de cualquier baja.";
+      }).catch(error => { clear.disabled = false; form.querySelector('[role="status"]').textContent = error.message || "No se pudo quitar el objetivo."; });
+      return;
+    }
     const removeBtn = event.target.closest("[data-remove-alert]");
     if (removeBtn) {
       const ids = loadAlertIds();
@@ -616,6 +646,22 @@ function bindAlertsMenu() {
     if (event.target.closest("[data-alerts-close]")) close({ restoreFocus: true });
     if (event.target.closest("a")) close();
   });
+  panel.addEventListener("submit", async (event) => {
+    const form = event.target.closest("[data-target-form]");
+    if (!form) return;
+    event.preventDefault();
+    const input = form.elements.targetPrice;
+    if (!input.reportValidity()) return;
+    const button = form.querySelector('[type="submit"]');
+    button.disabled = true;
+    try {
+      await setAlertTarget(form.dataset.targetForm, input.valueAsNumber);
+      panel.querySelector("[data-target-status]").textContent = "Precio objetivo guardado.";
+    } catch (error) {
+      button.disabled = false;
+      form.querySelector('[role="status"]').textContent = error.message || "No se pudo guardar el objetivo.";
+    }
+  });
   document.addEventListener(TELEGRAM_CHANGED_EVENT, () => isOpen() && render());
 
   panel.addEventListener("keydown", (event) => {
@@ -636,6 +682,7 @@ function bindAlertsMenu() {
   });
   window.addEventListener("storage", refresh);
   document.addEventListener(PLAN_CHANGED_EVENT, refresh);
+  document.addEventListener(ACCOUNT_CHANGED_EVENT, refresh);
 
   updateCounts(getAlertProducts().length);
 }
@@ -856,17 +903,18 @@ function bindSearchForms({ onSearch } = {}) {
 /**
  * @param {{ onCategory?: (slug: string) => void, onStore?: (store: string) => void, onSearch?: (query: string) => void }} [opts]
  */
-/** El enlace "Plus" del header cambia de texto si el plan de demostración está activo. */
+/** El enlace refleja el plan de la sesión. */
 function bindPlanLinks() {
   const paint = () => {
     const plus = isPlus();
     document.querySelectorAll("[data-plan-link]").forEach((link) => {
       link.classList.toggle("is-active", plus);
-      if (plus) link.textContent = "Plus activo";
+      link.textContent = plus ? "Plus activo" : "Plus";
     });
   };
   paint();
   document.addEventListener(PLAN_CHANGED_EVENT, paint);
+  document.addEventListener(ACCOUNT_CHANGED_EVENT, paint);
 }
 
 export function bindHeaderMenus(opts = {}) {

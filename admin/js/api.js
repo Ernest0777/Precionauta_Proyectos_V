@@ -60,6 +60,12 @@ export const api = {
   overview: () => request("/overview").then((b) => b.data),
   deals: () => request("/deals").then((b) => b.data),
   reports: () => request("/reports").then((b) => b.data),
+  automation: (since) => request(`/automation?since=${encodeURIComponent(since)}`).then((b) => b.data),
+  automationMode: (mode) => request("/automation/mode", { method: "POST", body: JSON.stringify({ mode }) }).then((b) => b.data),
+  automationRun: () => request("/automation/run", { method: "POST" }).then((b) => b.data),
+  automationUndo: (id) => request(`/automation/undo/${encodeURIComponent(id)}`, { method: "POST" }).then((b) => b.data),
+  userReports: () => request("/user-reports").then((b) => b.data),
+  resolveReport: (id, status) => request(`/user-reports/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }).then((b) => b.data),
   setStatus: (id, status) =>
     request(`/deals/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }).then((b) => b.data),
   refresh: () => request("/refresh", { method: "POST" }).then((b) => b.data),

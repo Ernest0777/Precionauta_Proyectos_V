@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <script>try { var theme = localStorage.getItem('precionauta:theme'); if (theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme); } catch {}</script>
+  <title>Verificar correo | Precionauta</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/neobrutalism.css">
+  <link rel="stylesheet" href="css/recover.css">
+  <script type="module" src="js/verify-email.js"></script>
+</head>
+<body class="neo-site recover-page">
+  <header class="recover-header"><a class="recover-brand" href="index.html"><span aria-hidden="true">P</span> Precionauta</a></header>
+  <main class="recover-main">
+    <section class="recover-card" aria-labelledby="verify-title">
+      <h1 id="verify-title">Verifica tu correo</h1>
+      <p id="verify-intro">Confirma el correo asociado a tu cuenta de Precionauta.</p>
+      <form id="verify-form" hidden>
+        <button type="submit">Confirmar correo <span aria-hidden="true">→</span></button>
+      </form>
+      <p id="verify-message" class="recover-message" role="status" aria-live="polite" tabindex="-1" hidden></p>
+      <a class="recover-back" href="perfil.html">← Volver a mi perfil</a>
+    </section>
+    <p class="recover-footer">Precios claros. Mejores decisiones.</p>
+  </main>
+</body>
+</html>

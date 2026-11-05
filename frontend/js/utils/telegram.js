@@ -7,6 +7,7 @@
  */
 import { API_BASE } from "../data/products.js";
 import { loadAlertIds, ALERTS_CHANGED_EVENT, showToast } from "../shared.js";
+import { accountState } from "./account.js";
 
 const CODE_KEY = "precionauta:tg-code";
 const LINKED_KEY = "precionauta:tg-linked";
@@ -24,17 +25,19 @@ function storage(fn, fallback = null) {
 }
 
 function getCode() {
-  let code = storage((s) => s.getItem(CODE_KEY));
+  const key = `${CODE_KEY}:${accountState().user?.id ?? "visitor"}`;
+  let code = storage((s) => s.getItem(key));
   if (!code) {
     const bytes = crypto.getRandomValues(new Uint8Array(12));
     code = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-    storage((s) => s.setItem(CODE_KEY, code));
+    storage((s) => s.setItem(key, code));
   }
   return code;
 }
 
 async function api(path, options) {
   const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     signal: AbortSignal.timeout(6000),
     ...options,
@@ -49,7 +52,7 @@ function changed() {
 }
 
 async function syncAlerts() {
-  if (!state.linked) return;
+  if (!state.linked || accountState().plan.id !== "plus") return;
   try {
     await api("/alerts/sync", { method: "POST", body: JSON.stringify({ code: getCode(), ids: [...loadAlertIds()] }) });
   } catch {
@@ -68,11 +71,14 @@ async function checkLink() {
 export function initTelegram() {
   if (started) return;
   started = true;
-  state.linked = storage((s) => s.getItem(LINKED_KEY) === "1", false);
+  state.linked = false;
   api("/telegram/status")
     .then(async (status) => {
       Object.assign(state, status);
-      if (status.enabled) await checkLink();
+      if (status.enabled && accountState().user && accountState().plan.id === "plus") {
+        await api(`/telegram/link/${getCode()}`, { method: "POST" });
+        await checkLink();
+      }
       if (state.linked) syncAlerts();
       changed();
     })
@@ -85,7 +91,7 @@ export function initTelegram() {
 
 /** Abre el bot y espera (hasta 3 min) a que la persona toque "Iniciar". */
 export function connectTelegram() {
-  if (!state.enabled || state.waiting) return;
+  if (!state.enabled || state.waiting || accountState().plan.id !== "plus") return;
   state.waiting = true;
   changed();
   const started = Date.now();

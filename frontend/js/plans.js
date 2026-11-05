@@ -1,10 +1,4 @@
-/**
- * planes.html - planes Gratis / Plus / Cazador y un checkout de DEMOSTRACIÓN.
- *
- * No hay pasarela todavía: el checkout (components/checkout.js) usa datos de
- * prueba y "pagar" solo guarda el plan en localStorage (persistPlan en
- * shared.js). Ahí mismo está explicado cómo conectar Stripe.
- */
+/** Planes y activación de Plus de demostración confirmada por el servidor. */
 import {
   loadSavedIds,
   renderSavingsSummary,
@@ -13,7 +7,6 @@ import {
   bindThemeToggle,
   bindAuthModal,
   loadPlan,
-  persistPlan,
   showToast,
   FREE_ALERT_LIMIT,
   PLAN_CHANGED_EVENT,
@@ -21,19 +14,20 @@ import {
 import { bindHeaderMenus } from "./components/headerMenus.js";
 import { formatPriceHTML, formatPriceMXN } from "./utils/format.js";
 import { icon } from "./utils/icons.js";
-import { HISTORY_DAYS } from "./utils/plan.js";
+import { HISTORY_DAYS, PLUS_PRICES } from "./utils/plan.js";
+import { accountReady, accountState, changePlan, ACCOUNT_CHANGED_EVENT } from "./utils/account.js";
 import { openCheckout } from "./components/checkout.js";
 
 const PLANS = [
   {
     id: "free",
-    name: "Gratis",
-    tagline: "Para revisar ofertas cuando quieras.",
+    name: "Cuenta gratuita",
+    tagline: "Guarda tus hallazgos y sigue sus precios.",
     price: { mensual: 0, anual: 0 },
     features: [
-      { text: "Todas las ofertas verificadas" },
-      { text: "Catálogo inicial disponible; ofertas nuevas 2 h después" },
-      { text: `Hasta ${FREE_ALERT_LIMIT} alertas de precio` },
+      { text: "Explora el catálogo y guarda tus ofertas" },
+      { text: "Ofertas nuevas disponibles 2 horas después" },
+      { text: `Hasta ${FREE_ALERT_LIMIT} alertas de precio activas` },
       { text: `Historial de precio de ${HISTORY_DAYS.free} días` },
       { text: "Filtros por categoría, tienda y descuento" },
     ],
@@ -41,29 +35,15 @@ const PLANS = [
   {
     id: "plus",
     name: "Plus",
-    tagline: "Para no perderte un error de precio.",
+    tagline: "Más historial y cada oportunidad al instante.",
     featured: true,
-    price: { mensual: 49, anual: 490 },
+    price: PLUS_PRICES,
     features: [
-      { text: "Ofertas nuevas en tiempo real" },
-      { text: "Zona 80%+ al instante" },
-      { text: "Avisos al instante por Telegram" },
-      { text: "Alertas ilimitadas" },
-      { text: "Historial de precio de 12 meses" },
-      { text: "Aviso por correo cuando baje el precio", soon: true },
-    ],
-  },
-  {
-    id: "cazador",
-    name: "Cazador",
-    tagline: "Para quien compra en cuanto aparece.",
-    price: { mensual: 99, anual: 990 },
-    available: false,
-    features: [
-      { text: "Todo lo de Plus" },
-      { text: "Alertas por WhatsApp en menos de 1 minuto", soon: true },
-      { text: "Prioridad en errores de precio de +80%", soon: true },
-      { text: "Exportar historial a CSV", soon: true },
+      { text: "Ofertas nuevas disponibles al instante" },
+      { text: "Zona 80%+ sin espera" },
+      { text: "Alertas de precio ilimitadas" },
+      { text: `Historial de precio de ${HISTORY_DAYS.plus} días` },
+      { text: "Tus guardados y alertas vinculados a tu cuenta" },
     ],
   },
 ];
@@ -81,7 +61,7 @@ function priceBlock(plan) {
     return `<p class="plan-card__price"><span class="plan-card__amount tabular-nums">${formatPriceHTML(0)}</span><span class="plan-card__per">para siempre</span></p>`;
   }
   const per = state.period === "mensual" ? "/mes" : "/año";
-  const monthly = state.period === "anual" ? `<span class="plan-card__equiv tabular-nums">Equivale a ${formatPriceMXN(Math.round(amount / 12))} al mes</span>` : "";
+  const monthly = state.period === "anual" ? `<span class="plan-card__equiv tabular-nums">Ahorras ${formatPriceMXN(PLUS_PRICES.mensual * 12 - amount)} al año · 2 meses gratis</span>` : "";
   return `
     <p class="plan-card__price">
       <span class="plan-card__amount tabular-nums">${formatPriceHTML(amount)}</span><span class="plan-card__per">${per}</span>
@@ -91,14 +71,14 @@ function priceBlock(plan) {
 }
 
 function ctaFor(plan, current) {
-  if (plan.id === current.id) {
+  if (plan.id === "free" && !accountState().user) {
+    return `<button type="button" class="btn btn--outline plan-card__cta" data-create-account>Crear cuenta gratuita</button>`;
+  }
+  if (plan.id === current.id && accountState().user) {
     return `<button type="button" class="btn plan-card__cta plan-card__cta--current" disabled>Tu plan actual</button>`;
   }
   if (plan.id === "free") {
-    return `<button type="button" class="btn btn--outline plan-card__cta" data-downgrade>Volver al plan gratis</button>`;
-  }
-  if (plan.available === false) {
-    return `<button type="button" class="btn btn--outline plan-card__cta" data-notify="${plan.id}">Avisarme cuando salga</button>`;
+    return `<button type="button" class="btn btn--outline plan-card__cta" data-downgrade>Volver a Cuenta gratuita</button>`;
   }
   return `<button type="button" class="btn btn--primary plan-card__cta" data-checkout="${plan.id}">Elegir ${plan.name}</button>`;
 }
@@ -131,14 +111,20 @@ function renderPlans() {
 
 /* ================= CHECKOUT (demo, components/checkout.js) ================= */
 
-function startCheckout(planId) {
+async function startCheckout(planId) {
+  await accountReady;
+  if (!accountState().user) {
+    showToast("Entra o crea una cuenta para activar Plus de demostración.");
+    document.querySelector("[data-auth-open]")?.click();
+    return;
+  }
   const plan = PLANS.find((p) => p.id === planId);
+  if (!plan || plan.id !== "plus") return;
+  const period = state.period;
   openCheckout({
     plan,
-    period: state.period,
-    amount: plan.price[state.period],
-    // Aquí irá la confirmación del backend (webhook de Stripe) antes de activar.
-    onSuccess: (method) => persistPlan({ id: "plus", period: state.period, method, since: new Date().toISOString() }),
+    period,
+    onSuccess: () => changePlan("plus", period),
   });
 }
 
@@ -155,26 +141,40 @@ function bindPlans() {
     renderPlans();
   });
 
-  els.grid.addEventListener("click", (event) => {
+  els.grid.addEventListener("click", async (event) => {
     const checkout = event.target.closest("[data-checkout]");
-    if (checkout) startCheckout(checkout.dataset.checkout);
-
-    if (event.target.closest("[data-downgrade]")) {
-      persistPlan({ id: "free" });
-      showToast("Volviste al plan gratis. Tus alertas se conservan.");
+    if (checkout) {
+      try {
+        await startCheckout(checkout.dataset.checkout);
+      } catch (error) {
+        showToast(error.message || "No pudimos abrir la demostración. Intenta de nuevo.");
+      }
     }
-
-    if (event.target.closest("[data-notify]")) {
-      showToast("Te avisaremos cuando el plan Cazador esté disponible.");
+    if (event.target.closest("[data-create-account]")) {
+      document.querySelector("[data-auth-open]")?.click();
+    }
+    const downgrade = event.target.closest("[data-downgrade]");
+    if (downgrade) {
+      downgrade.disabled = true;
+      try {
+        await changePlan("free");
+        showToast("Volviste a Cuenta gratuita. Tus guardados se conservan y las alertas excedentes quedan pausadas.");
+      } catch (error) {
+        showToast(error.message || "No pudimos cambiar tu plan. Intenta de nuevo.");
+      } finally {
+        renderPlans();
+      }
     }
   });
 
   document.addEventListener(PLAN_CHANGED_EVENT, renderPlans);
+  document.addEventListener(ACCOUNT_CHANGED_EVENT, renderPlans);
 }
 
 const yearEl = document.getElementById("footerYear");
 if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
+await accountReady;
 renderPlans();
 bindPlans();
 renderSavingsSummary(loadSavedIds());
