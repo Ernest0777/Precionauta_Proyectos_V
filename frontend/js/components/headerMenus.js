@@ -11,7 +11,7 @@
  * y `onSearch` para filtrar sin recargar; el resto navega a index.html.
  */
 
-import { PRODUCTS } from "../data/products.js";
+import { PRODUCTS, CATALOG_LOADED, CATALOG_CHANGED_EVENT } from "../data/products.js";
 import { ALL_CATEGORIES_SLUG } from "../data/categories.js";
 import { icon, CATEGORY_ICON_BY_SLUG } from "../utils/icons.js";
 import { formatPriceMXN } from "../utils/format.js";
@@ -180,7 +180,7 @@ function createDropdownMenu({ trigger, panel, header, itemSelector, columns = 1,
 
 function renderMegaItem(stat) {
   const iconName = CATEGORY_ICON_BY_SLUG[stat.slug] ?? "tag";
-  const meta =
+  const meta = !CATALOG_LOADED ? "Cargando ofertas…" :
     stat.count === 0
       ? "Sin ofertas por ahora"
       : `${offersLabel(stat.count)} · hasta −${stat.bestDiscount}%`;
@@ -249,9 +249,9 @@ function bindCategoryMenu({ onCategory } = {}) {
   const header = document.getElementById("siteHeader");
   if (!trigger || !header) return;
 
-  const allStat = getAllStats();
-  const stats = getCategoryStats();
-  const statBySlug = Object.fromEntries([...stats, allStat].map((s) => [s.slug, s]));
+  let allStat = getAllStats();
+  let stats = getCategoryStats();
+  let statBySlug = Object.fromEntries([...stats, allStat].map((s) => [s.slug, s]));
 
   const panel = document.createElement("div");
   panel.id = "categoryMenu";
@@ -261,7 +261,7 @@ function bindCategoryMenu({ onCategory } = {}) {
   panel.innerHTML = renderMegaMenu(allStat, stats);
   header.appendChild(panel);
 
-  const preview = panel.querySelector("[data-mega-preview]");
+  let preview = panel.querySelector("[data-mega-preview]");
   let currentPreview = ALL_CATEGORIES_SLUG;
   const menu = createDropdownMenu({ trigger, panel, header, itemSelector: ".mega-item", columns: 2 });
 
@@ -287,6 +287,14 @@ function bindCategoryMenu({ onCategory } = {}) {
     if (event.target.closest("a")) menu.close();
   });
 
+  document.addEventListener(CATALOG_CHANGED_EVENT, () => {
+    allStat = getAllStats();
+    stats = getCategoryStats();
+    statBySlug = Object.fromEntries([...stats, allStat].map((stat) => [stat.slug, stat]));
+    panel.innerHTML = renderMegaMenu(allStat, stats);
+    preview = panel.querySelector("[data-mega-preview]");
+    currentPreview = ALL_CATEGORIES_SLUG;
+  });
   bindMobileCategories({ stats, allStat, onCategory });
 }
 
@@ -296,17 +304,25 @@ function bindMobileCategories({ stats, allStat, onCategory }) {
   const list = document.querySelector("[data-mobile-categories]");
   if (!toggle || !list) return;
 
-  list.innerHTML = [allStat, ...stats]
+  const render = () => {
+    list.innerHTML = [allStat, ...stats]
     .map(
       (stat) => `
         <a class="mobile-category" href="${categoryHref(stat.slug)}" data-tone="${stat.slug}" data-category-slug="${stat.slug}">
           <span class="mobile-category__icon">${icon(CATEGORY_ICON_BY_SLUG[stat.slug] ?? "tag", { size: 18 })}</span>
           <span class="mobile-category__label">${escapeHtml(stat.label)}</span>
-          <span class="mobile-category__count tabular-nums">${stat.count}</span>
+          <span class="mobile-category__count tabular-nums">${CATALOG_LOADED ? stat.count : "…"}</span>
         </a>
       `
     )
     .join("");
+  };
+  render();
+  document.addEventListener(CATALOG_CHANGED_EVENT, () => {
+    allStat = getAllStats();
+    stats = getCategoryStats();
+    render();
+  });
 
   toggle.addEventListener("click", () => {
     const expanded = toggle.getAttribute("aria-expanded") === "true";
@@ -346,15 +362,17 @@ function bindStoreMenu({ onStore } = {}) {
   const header = document.getElementById("siteHeader");
   if (!trigger || !header) return;
 
-  const stats = getStoreMenuStats();
+  let stats = getStoreMenuStats();
   const panel = document.createElement("div");
   panel.id = "storeMenu";
   panel.className = "store-menu";
   panel.setAttribute("role", "region");
   panel.setAttribute("aria-label", "Tiendas rastreadas");
-  panel.innerHTML = `
+  const render = () => {
+    stats = getStoreMenuStats();
+    panel.innerHTML = `
     <ul class="store-menu__list">
-      ${stats
+      ${!CATALOG_LOADED ? '<li role="status">Cargando tiendas…</li>' : stats
         .map(
           (s) => `
         <li>
@@ -372,6 +390,9 @@ function bindStoreMenu({ onStore } = {}) {
     </ul>
     <p class="store-menu__note">${icon("clock", { size: 14 })} Revisamos los precios de cada tienda cada 5 minutos.</p>
   `;
+  };
+  render();
+  document.addEventListener(CATALOG_CHANGED_EVENT, render);
   header.appendChild(panel);
 
   // Centrado bajo el botón "Tiendas" (el header es de ancho completo).
@@ -397,7 +418,8 @@ function bindStoreMenu({ onStore } = {}) {
   const toggle = document.querySelector("[data-mobile-stores-toggle]");
   const list = document.querySelector("[data-mobile-stores]");
   if (!toggle || !list) return;
-  list.innerHTML = stats
+  const renderMobile = () => {
+    list.innerHTML = !CATALOG_LOADED ? '<p role="status">Cargando tiendas…</p>' : getStoreMenuStats()
     .map(
       (s) => `
         <a class="mobile-category" href="${storeHref(s.store)}" data-store-target="${escapeHtml(s.store)}">
@@ -407,6 +429,9 @@ function bindStoreMenu({ onStore } = {}) {
         </a>`
     )
     .join("");
+  };
+  renderMobile();
+  document.addEventListener(CATALOG_CHANGED_EVENT, renderMobile);
   toggle.addEventListener("click", () => {
     const expanded = toggle.getAttribute("aria-expanded") === "true";
     toggle.setAttribute("aria-expanded", String(!expanded));
@@ -456,10 +481,12 @@ function renderAlertItem(product) {
 }
 
 function renderAlertsBody(products) {
+  if (!CATALOG_LOADED && accountState().user) return '<p role="status">Cargando tus ofertas…</p>';
   if (!accountState().user) {
-    return `<div class="alerts-empty"><span class="alerts-empty__icon" aria-hidden="true">${icon("bell", { size: 28 })}</span><p class="alerts-empty__title">Sigue el precio de tus favoritos</p><p class="alerts-empty__body">Con tu cuenta gratuita puedes guardar hasta 3 alertas y encontrarlas cuando vuelvas.</p><a class="btn btn--primary" href="perfil.html#crear-cuenta">Crear mi cuenta</a></div>`;
+    return `<div class="alerts-empty"><span class="alerts-empty__icon" aria-hidden="true">${icon("bell", { size: 28 })}</span><p class="alerts-empty__title">Sigue el precio de tus favoritos</p><p class="alerts-empty__body">Con tu cuenta gratuita puedes activar hasta 3 alertas y encontrarlas cuando vuelvas.</p><button type="button" class="btn btn--primary" data-register>Crear cuenta gratis</button></div>`;
   }
   if (products.length === 0) {
+    if (accountState().alertIds.length || accountState().restockIds?.length) return `<div class="alerts-empty"><p class="alerts-empty__title">Tus avisos siguen activos</p><p class="alerts-empty__body">Seguimos los productos guardados y con avisos aunque dejen de aparecer entre las ofertas. Algunos avisos pueden estar en pausa por el límite de tu cuenta.</p><a class="btn btn--primary" href="perfil.html#reposiciones">Ver seguimiento y reposiciones</a></div>`;
     return `
       <div class="alerts-empty">
         <span class="alerts-empty__icon" aria-hidden="true">${icon("bell", { size: 28 })}</span>
@@ -480,6 +507,7 @@ function renderAlertsBody(products) {
 
 /** Bloque "Recibir en Telegram" del panel (utils/telegram.js). */
 function renderTelegramBlock() {
+  if (!accountState().user) return "";
   const tg = telegramState();
   if (!tg.enabled) return "";
   // Avisos al instante = ventaja de Plus. (Quien ya estaba conectado puede desconectarse.)
@@ -540,10 +568,12 @@ function bindAlertsMenu() {
   const render = () => {
     const products = getAlertProducts();
     const plus = isPlus();
-    const paused = products.filter(product => accountState().pausedAlertIds?.includes(product.id)).length;
-    const active = products.length - paused;
+    const session = accountState();
+    const paused = (session.pausedAlertIds?.length || 0) + (session.pausedRestockIds?.length || 0);
+    const activePrice = session.alertIds.length - (session.pausedAlertIds?.length || 0);
+    const active = activePrice + (session.restockIds?.length || 0) - (session.pausedRestockIds?.length || 0);
     const countLabel = plus
-      ? `${products.length} ${products.length === 1 ? "activa" : "activas"}`
+      ? `${active} ${active === 1 ? "activa" : "activas"}`
       : `${active} de ${FREE_ALERT_LIMIT} activas${paused ? ` · ${paused} en pausa` : ""}`;
     panel.innerHTML = `
       <div class="alerts-panel__head">
@@ -553,7 +583,7 @@ function bindAlertsMenu() {
           ${icon("close", { size: 14 })}
         </button>
       </div>
-      <div class="alerts-panel__body">${renderAlertsBody(products)}</div>
+      <div class="alerts-panel__body">${renderAlertsBody(products)}${accountState().user ? `<p class="alerts-empty__body"><a href="perfil.html#reposiciones">Ver reposiciones y productos en seguimiento</a> · ${accountState().restockUnreadCount || 0} avisos sin leer</p>` : ""}</div>
       <p data-target-status role="status" aria-live="polite"></p>
       ${renderTelegramBlock()}
       <p class="alerts-panel__foot">
@@ -567,10 +597,11 @@ function bindAlertsMenu() {
         }
       </p>
     `;
-    updateCounts(active);
+    updateCounts(activePrice);
   };
 
   const updateCounts = (count) => {
+    count += (accountState().restockIds?.length || 0) - (accountState().pausedRestockIds?.length || 0);
     document.querySelectorAll("[data-alerts-count]").forEach((el) => {
       el.hidden = count === 0;
       el.textContent = String(count);
@@ -676,20 +707,25 @@ function bindAlertsMenu() {
 
   onWidthChange(() => close());
 
-  const refresh = () => (isOpen() ? render() : updateCounts(getAlertProducts().length));
+  const refresh = () => (isOpen() ? render() : updateCounts(Math.max(0, accountState().alertIds.length - (accountState().pausedAlertIds?.length || 0))));
   document.addEventListener(ALERTS_CHANGED_EVENT, (event) => {
     if (event.detail?.source !== "panel") refresh();
   });
   window.addEventListener("storage", refresh);
   document.addEventListener(PLAN_CHANGED_EVENT, refresh);
   document.addEventListener(ACCOUNT_CHANGED_EVENT, refresh);
+  document.addEventListener(CATALOG_CHANGED_EVENT, refresh);
 
-  updateCounts(getAlertProducts().length);
+  updateCounts(Math.max(0, accountState().alertIds.length - (accountState().pausedAlertIds?.length || 0)));
 }
 
 /* ============================ MIS GUARDADOS ============================ */
 
 function renderSavedBody(products) {
+  if (!CATALOG_LOADED && accountState().user) return '<p role="status">Cargando tus ofertas…</p>';
+  if (!accountState().user) {
+    return `<div class="alerts-empty"><span class="alerts-empty__icon" aria-hidden="true">${icon("heart", { size: 28 })}</span><p class="alerts-empty__title">Tus favoritos, en tu cuenta</p><p class="alerts-empty__body">Crea tu cuenta gratis para guardar ofertas y encontrarlas cuando vuelvas.</p><button type="button" class="btn btn--primary" data-register>Crear cuenta gratis</button></div>`;
+  }
   if (products.length === 0) {
     return `
       <div class="alerts-empty">
@@ -774,7 +810,7 @@ function bindSavedMenu() {
           : ""
       }
     `;
-    updateCounts(products.length);
+    updateCounts(loadSavedIds().size);
   };
 
   const position = (trigger) => {
@@ -827,10 +863,12 @@ function bindSavedMenu() {
   });
   onWidthChange(() => close());
 
-  const refresh = () => (isOpen() ? render() : updateCounts(getProducts().length));
+  const refresh = () => (isOpen() ? render() : updateCounts(loadSavedIds().size));
   document.addEventListener(SAVED_CHANGED_EVENT, refresh);
+  document.addEventListener(ACCOUNT_CHANGED_EVENT, refresh);
+  document.addEventListener(CATALOG_CHANGED_EVENT, refresh);
   window.addEventListener("storage", refresh);
-  updateCounts(getProducts().length);
+  updateCounts(loadSavedIds().size);
 }
 
 /* ============================ BARRA DE TEMPORADA ============================ */

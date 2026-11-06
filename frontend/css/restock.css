@@ -1,0 +1,12 @@
+.restock-panel { padding: 18px; border: var(--neo-line, 2px solid #171717); background: var(--color-surface-soft); }
+.restock-panel h2 { margin: 0 0 10px; font-size: 1rem; }
+.restock-panel h3 { margin: 22px 0 10px; font-size: .9rem; }
+.restock-panel p, .restock-panel > a { font-size: .8125rem; line-height: 1.6; overflow-wrap: anywhere; }
+.restock-panel .btn { min-height: 44px; height: auto; white-space: normal; margin-block: 8px; }
+.restock-panel > a { display: block; margin-block: 10px; text-underline-offset: 3px; }
+.restock-list { padding: 0; margin: 0; list-style: none; }
+.restock-list li { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--color-border); }
+.restock-list li > div { min-width: 0; flex: 1 1 170px; }
+.restock-list a { overflow-wrap: anywhere; font-size: .85rem; font-weight: 700; }
+.restock-list p { margin: 7px 0; }
+#shareCardFeedback { flex-basis: 100%; font-size: .8rem; overflow-wrap: anywhere; }

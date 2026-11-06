@@ -1,22 +1,7 @@
-/**
- * Recomendador local (sin backend): aprende de lo que la persona hace en
- * ESTE navegador y ordena el catálogo según eso.
- *
- * 1. Registro de actividad: búsquedas, categorías y tiendas filtradas,
- *    productos vistos, guardados y con alerta, e intereses elegidos en la
- *    bienvenida. Se guarda en localStorage (máx. 300 eventos).
- * 2. Afinidad: cada evento suma un peso a su categoría, tienda y palabras
- *    clave, multiplicado por un decaimiento exponencial (vida media 7 días),
- *    así lo reciente pesa más que lo de hace un mes.
- * 3. Puntaje por producto = afinidad de categoría + afinidad de tienda +
- *    coincidencia de palabras + un empujón por % de descuento, con
- *    penalización si ya lo vio/guardó y un tope por categoría para que la
- *    lista no sea monotemática. Cada recomendación lleva su "porqué".
- */
-
+/** Recomendaciones por cuenta: señales privadas en el servidor y afinidad local. */
 import { CATEGORIES } from "../data/categories.js";
+import { accountReady, accountState, refreshAccount, API_BASE, ACCOUNT_CHANGED_EVENT } from "./account.js";
 
-const STORAGE_KEY = "precionauta:activity";
 const MAX_EVENTS = 300;
 const HALF_LIFE_DAYS = 7;
 export const ACTIVITY_CHANGED_EVENT = "activity-changed";
@@ -51,67 +36,121 @@ export function tokenize(text) {
     .filter((w) => w.length >= 3 && !STOPWORDS.has(w) && !/^\d+$/.test(w));
 }
 
+let owner = null;
+let generation = 0;
+let events = [];
+let queue = Promise.resolve();
+
+function changed(detail = {}) {
+  document.dispatchEvent(new CustomEvent(ACTIVITY_CHANGED_EVENT, { detail }));
+}
+
+function currentOwner() {
+  const state = accountState();
+  return state.available ? state.user?.id ?? null : null;
+}
+
+async function activityRequest(expectedOwner, method = "GET", body) {
+  const response = await fetch(`${API_BASE}/community/activity`, {
+    method, credentials: "include",
+    headers: { "X-Account-Id": expectedOwner, ...(body ? { "Content-Type": "application/json" } : {}) },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+    signal: AbortSignal.timeout(6000),
+  });
+  const result = await response.json();
+  if (response.status === 401 || response.status === 409) void refreshAccount();
+  if (!response.ok || !result?.success) throw new Error(result?.error || "No se pudo sincronizar tu actividad.");
+  return result.data;
+}
+
+function owns(expectedOwner, expectedGeneration) {
+  return expectedOwner && owner === expectedOwner && currentOwner() === expectedOwner && generation === expectedGeneration;
+}
+
+function syncOwner() {
+  const next = currentOwner();
+  if (next === owner) return queue;
+  owner = next;
+  const expectedGeneration = ++generation;
+  events = [];
+  changed({ reset: true });
+  if (!next) {
+    queue = Promise.resolve();
+    return queue;
+  }
+  queue = activityRequest(next).then(data => {
+    if (!owns(next, expectedGeneration)) return;
+    events = Array.isArray(data) ? data.slice(-MAX_EVENTS) : [];
+    changed({ loaded: true });
+  }).catch(() => {
+    if (owns(next, expectedGeneration)) changed({ syncError: true });
+  });
+  return queue;
+}
+
+// El historial global anterior no tiene propietario y nunca se importa.
+document.addEventListener(ACCOUNT_CHANGED_EVENT, syncOwner);
+export const activityReady = accountReady.then(syncOwner);
+
 function loadEvents() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const events = raw ? JSON.parse(raw) : [];
-    return Array.isArray(events) ? events : [];
-  } catch {
-    return [];
-  }
+  return owner && currentOwner() === owner ? events : [];
 }
 
-function saveEvents(events) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
-  } catch {
-    /* sin localStorage las recomendaciones se quedan en modo "populares" */
-  }
-}
-
-/**
- * @param {"search"|"category"|"store"|"view"|"save"|"alert"|"onboarding"} type
- * @param {object} data  search: {query} · category: {slug} · store: {store}
- *                       view/save/alert: {product} · onboarding: {slug}
- */
+/** Las señales de producto envían sólo el ID; el catálogo valida sus metadatos. */
 export function track(type, data = {}) {
-  if (!WEIGHTS[type]) return;
-  const event = { type, t: Date.now() };
+  syncOwner();
+  if (!owner || !WEIGHTS[type]) return Promise.resolve(null);
+  const signal = { type };
   if (type === "search") {
-    const query = String(data.query ?? "").trim();
-    if (query.length < 3) return;
-    event.query = query.slice(0, 60);
+    const query = typeof data.query === "string" ? data.query.trim().slice(0, 60) : "";
+    if (query.length < 3) return Promise.resolve(null);
+    signal.query = query;
   } else if (type === "category" || type === "onboarding") {
-    if (!data.slug || data.slug === "todas") return;
-    event.slug = data.slug;
+    if (!CATEGORY_LABEL[data.slug]) return Promise.resolve(null);
+    signal.slug = data.slug;
   } else if (type === "store") {
-    if (!data.store || data.store === "todas") return;
-    event.store = data.store;
+    if (!data.store || data.store === "todas") return Promise.resolve(null);
+    signal.store = data.store;
   } else {
-    const p = data.product;
-    if (!p) return;
-    Object.assign(event, { id: p.id, slug: p.categorySlug, store: p.store, name: p.name });
+    const id = data.product?.id ?? data.id;
+    if (typeof id !== "string" || !id) return Promise.resolve(null);
+    signal.id = id;
   }
-
-  const events = loadEvents();
-  // Evita inflar el perfil con repeticiones inmediatas (p. ej. teclear la misma búsqueda).
-  const last = events[events.length - 1];
-  const sameAsLast =
-    last && last.type === type && last.query === event.query && last.slug === event.slug && last.id === event.id && last.store === event.store;
-  if (sameAsLast && event.t - last.t < 60_000) return;
-
-  events.push(event);
-  saveEvents(events);
-  document.dispatchEvent(new CustomEvent(ACTIVITY_CHANGED_EVENT, { detail: event }));
+  const expectedOwner = owner;
+  const expectedGeneration = generation;
+  queue = queue.then(async () => {
+    if (!owns(expectedOwner, expectedGeneration)) return null;
+    const result = await activityRequest(expectedOwner, "POST", signal);
+    if (!owns(expectedOwner, expectedGeneration)) return null;
+    if (result.event && !events.some(event => event.t === result.event.t && event.type === result.event.type && event.id === result.event.id && event.query === result.event.query && event.slug === result.event.slug && event.store === result.event.store)) {
+      events = [...events, result.event].slice(-MAX_EVENTS);
+      changed(result.event);
+    }
+    return result.event;
+  }).catch(() => {
+    if (owns(expectedOwner, expectedGeneration)) changed({ syncError: true });
+    return null;
+  });
+  return queue;
 }
 
 export function clearActivity() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* nada que borrar */
-  }
-  document.dispatchEvent(new CustomEvent(ACTIVITY_CHANGED_EVENT, { detail: { cleared: true } }));
+  syncOwner();
+  if (!owner) return Promise.resolve(false);
+  const expectedOwner = owner;
+  const expectedGeneration = generation;
+  queue = queue.then(async () => {
+    if (!owns(expectedOwner, expectedGeneration)) return false;
+    await activityRequest(expectedOwner, "DELETE");
+    if (!owns(expectedOwner, expectedGeneration)) return false;
+    events = [];
+    changed({ cleared: true });
+    return true;
+  }).catch(() => {
+    if (owns(expectedOwner, expectedGeneration)) changed({ syncError: true });
+    return false;
+  });
+  return queue;
 }
 
 function decay(t, now) {

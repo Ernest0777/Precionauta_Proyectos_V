@@ -19,21 +19,25 @@ Frontend: `http://localhost:4173`. Backend: `http://localhost:3001`. Configura `
 npm run server      # Solo backend
 npm run serve       # Solo frontend, puerto 4173
 npm test            # node --test tests/*.test.js
+npm start           # Backend, sin servidor de desarrollo ni navegador
+npm run backup      # Respaldo verificado de SQLite
 ```
 
 Servir solo el frontend permite explorar la interfaz, pero no proporciona una sesión ni habilita funciones de cuenta. El catálogo real depende de la configuración y disponibilidad de Mercado Libre.
 
 ## Cuenta, acceso y Plus
 
-Visitante puede explorar sin registrarse. La entrega incorpora registro e inicio de sesión con correo y contraseña de 12 a 128 caracteres, sesión mediante cookie y datos en SQLite. El perfil presenta nombre, correo, dirección opcional y plan. El backend confirma los permisos; localStorage no concede Plus.
+Visitante puede explorar una muestra de seis ofertas. El registro gratuito abre el catálogo completo, guardados, recomendaciones personales y temporadas. La entrega incorpora registro e inicio de sesión con correo y contraseña de 12 a 128 caracteres, sesión mediante cookie y datos en SQLite. El perfil presenta nombre, correo, dirección opcional y plan. El backend confirma los permisos; localStorage no concede Plus.
 
 | Capacidad | Visitante | Cuenta gratuita | Plus |
 |---|---|---|---|
-| Guardados | Locales | En cuenta | En cuenta |
-| Alertas de precio | Ninguna | Hasta 3 activas | Ilimitadas |
+| Catálogo | Muestra de 6 ofertas | Completo | Completo |
+| Guardados | Registro gratuito necesario | En cuenta | En cuenta |
+| Avisos de precio y reposición | Ninguno | Hasta 3 activos en total | Ilimitados |
 | Historial | Sin acceso | Hasta 30 días | Hasta 365 días |
-| Ofertas posteriores a la primera carga | Espera de 2 horas | Espera de 2 horas | Al instante |
-| Temporadas | 3 ofertas en total por evento | 3 ofertas en total por evento | Todas las disponibles |
+| Ofertas posteriores a la primera carga | Registro para ver más | Espera de 2 horas | Al instante |
+| Temporadas | Registro gratuito necesario | 3 ofertas en total por evento | Todas las disponibles |
+| Recomendaciones personales y votos | Registro gratuito necesario | Sí | Sí |
 
 Hay dos planes comerciales: Cuenta gratuita y Plus; Cazador se fusionó con Plus. Plus cuesta **$79 MXN/mes o $790 MXN/año, IVA incluido**. El anual ahorra $158 frente a 12 mensualidades. Al volver a Cuenta gratuita se conservan guardados y alertas; las excedentes quedan pausadas. La ventana de historial no garantiza observaciones de todos los días.
 
@@ -79,7 +83,7 @@ El frontend no requiere compilación. La identidad visual vigente es neobrutalis
 - [Plan de implementación y criterios de aceptación](docs/PLAN_IMPLEMENTACION.md).
 - [Guía del frontend](frontend/README.md).
 
-La integración actual requiere cierre de pruebas y revisión en navegador. Los resultados de escritorio, móvil, teclado y temas se registrarán al verificarlos; no se asumen aprobados.
+La verificación local está registrada en los planes: 94 pruebas automatizadas y recorrido de navegador aprobados con cuentas, datos y servicios simulados. Esto no acredita credenciales ni entrega de servicios externos en producción. Los permisos, votos y recomendaciones se documentan en [Registro y comunidad](docs/PLAN_REGISTRO_COMUNIDAD.md); el seguimiento y los avisos, en [Seguimiento y reposición](docs/PLAN_SEGUIMIENTO_REPOSICION.md); la carga, gráfica y descarga de tarjetas, en [Rendimiento](docs/RENDIMIENTO.md).
 
 ## Equipo
 
@@ -93,11 +97,17 @@ Configura en `backend/.env`: `RESEND_API_KEY`, `RECOVERY_FROM` (remitente autori
 
 ### Alertas con precio objetivo
 
+Las tres alertas activas de Cuenta gratuita se comparten entre precio y reposición. En Perfil, «Reposiciones y seguimiento» muestra las suscripciones, sus pausas y las notificaciones; el detalle permite activarlas o quitarlas. Sólo un cambio confirmado de agotado a disponible genera reposición. Los productos conocidos que sigues continúan consultándose fuera del catálogo de descuentos. En Detalle, «Descargar tarjeta» crea un PNG con precio observado, fotografía disponible y enlace.
+
 En «Mis alertas», abre «Definir precio objetivo» e indica un importe en MXN. Puedes editarlo o quitarlo para volver a avisos por cualquier baja. Se guarda en la cuenta; las alertas que exceden el cupo gratuito permanecen pausadas. Telegram requiere Plus y un bot configurado.
+
+### Backend continuo
+
+Para mantener la recolección sin visitas, consulta [Backend continuo](docs/BACKEND_CONTINUO.md): configuración Docker con reinicio y volúmenes, requisitos de HTTPS y respaldo. La configuración se validó, pero el contenedor no se construyó ni ejecutó porque Docker Engine no estaba iniciado; no se desplegó ningún servidor.
 
 ### Verificación de correo
 
-Perfil permite consultar el estado pendiente/verificado y reenviar el enlace cuando Resend está configurado.
+Perfil muestra «Correo pendiente de verificación» o «Correo verificado». Si Resend está configurado, se envía un enlace al registrar la cuenta; puede reenviarse desde Perfil. El enlace caduca en 24 horas y se utiliza una sola vez. Reutiliza las variables de recuperación anteriores. Sin configurar el remitente, las cuentas conservan acceso y la interfaz informa que el envío no está disponible.
 
 ### Moderador automático y reportes de ofertas
 
@@ -106,7 +116,3 @@ El panel `/admin` abre el resumen de actividad al entrar: evaluaciones, publicac
 Empieza en **observación**, sin cambiar la publicación. Desde el resumen puedes activar el modo automático: publica datos recientes con riesgo bajo, oculta casos que requieren revisión y retira sólo ante evidencia reciente de inventario agotado o descuento desaparecido. Las decisiones manuales prevalecen. «Deshacer» revierte una acción automática siempre que no exista una decisión posterior. «Analizar ahora» espera una consulta confirmada a Mercado Libre y avisa si falla.
 
 Desde Detalle, las cuentas pueden reportar una oferta vencida o un precio incorrecto, con nota opcional. El reporte no retira la oferta por sí solo. Se limita a cinco reportes nuevos por hora y cuenta; los duplicados pendientes no crean otra entrada. Una oferta vista con sesión puede reportarse durante 30 días aunque desaparezca antes de enviar. El análisis usa reglas e historial local y no requiere un servicio de IA externo; los casos sospechosos necesitan tu criterio.
-
-### Configuración de verificación
-
-Perfil muestra «Correo pendiente de verificación» o «Correo verificado». Si Resend está configurado, se envía un enlace al registrar la cuenta; puede reenviarse desde Perfil. El enlace caduca en 24 horas y se utiliza una sola vez. Reutiliza las variables de recuperación anteriores. Sin configurar el remitente, las cuentas conservan acceso y la interfaz informa que el envío no está disponible.

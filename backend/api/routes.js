@@ -7,34 +7,40 @@ const priceHistory = require('../db/price-history');
 const telegram = require('../db/telegram');
 const account = require('../account');
 const dealReports = require('../db/deal-reports');
-const { SEASONS, isLocked, publicDeal } = require('./access');
+const tracked = require('../db/tracked-products');
+const { SEASONS, isLocked, publicDeal, selectDealsForAccess } = require('./access');
 
 const asyncRoute = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const publicDeals = async () => moderation.applyPublic(await dealFetcher.fetchAllDeals());
+const requireRegistration = res => res.status(401).json({ success: false, registrationRequired: true, error: 'Regístrate gratis para ver el catálogo completo y las temporadas' });
 router.use((req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
 
 router.get('/deals', asyncRoute(async (req, res) => {
   const { filter = 0, category = null, season = null } = req.query;
   if (season && !SEASONS.has(season)) return account.fail(res, 400, 'Temporada desconocida');
+  if (season && req.access.level === 'visitor') return requireRegistration(res);
   const minDiscount = parseInt(filter, 10) || 0;
-  let deals = await publicDeals();
+  let deals = selectDealsForAccess(await publicDeals(), req.access);
   // La selección limitada es estable aun si se cambia filtro o categoría.
-  if (season && req.access.seasonLimit != null) deals = deals.slice(0, req.access.seasonLimit);
+  if (season && req.access.seasonLimit != null) deals = deals.filter(d => !isLocked(d, req.access)).slice(0, req.access.seasonLimit);
   if (category) deals = dealFetcher.filterByCategory(deals, category);
   // Filtrar un precio oculto permitiría deducir el descuento probando distintos umbrales.
   deals = deals.filter(d => isLocked(d, req.access) || d.discount >= minDiscount);
   const stats = dealFetcher.getStats(deals.filter(d => !isLocked(d, req.access)));
-  res.json({ success: true, data: deals.map(d => publicDeal(d, req.access)), access: req.access, stats,
+  res.json({ success: true, data: deals.map(d => publicDeal(d, req.access)), access: req.access, stats, registrationRequired: req.access.level === 'visitor',
     filters: { discountMin: minDiscount, category: category || 'all', season }, total: deals.length,
     lastUpdated: dealFetcher.cache.lastUpdated, source: dealFetcher.cache.source });
 }));
 
-// Detalle usa exclusivamente el catálogo público conocido: no permite saltar bloqueos por ID de ML.
-router.get('/product/:id', asyncRoute(async (req, res) => {
-  const deal = dealFetcher.findDealById(await publicDeals(), req.params.id);
+// El respaldo sólo incluye productos guardados o seguidos por esta misma cuenta.
+router.get('/product/:id', account.checkOptionalOwner, asyncRoute(async (req, res) => {
+  const deal = dealFetcher.findDealById(selectDealsForAccess(await publicDeals(), req.access), req.params.id)
+    || (req.account && tracked.owned(req.account.id).find(item => item.id === req.params.id));
+  if (!deal && req.access.level === 'visitor') return requireRegistration(res);
   if (!deal) return account.fail(res, 404, 'Producto no encontrado');
   if (isLocked(deal, req.access)) return account.fail(res, 403, 'Esta oferta estará disponible después de 2 horas');
   dealReports.recordKnownDeal(req.account?.id, deal);
+  if (req.account) tracked.grant(req.account.id, deal);
   res.json({ success: true, data: publicDeal(deal, req.access), access: req.access });
 }));
 
@@ -56,13 +62,14 @@ router.get('/categories', (req, res) => {
 });
 
 router.get('/stats', asyncRoute(async (req, res) => {
-  const deals = (await publicDeals()).filter(d => !isLocked(d, req.access));
+  const deals = selectDealsForAccess(await publicDeals(), req.access).filter(d => !isLocked(d, req.access));
   res.json({ success: true, data: { ...dealFetcher.getStats(deals), lastUpdated: dealFetcher.cache.lastUpdated,
     cacheAge: dealFetcher.cache.lastUpdated ? Math.floor((Date.now() - dealFetcher.cache.lastUpdated) / 1000) + 's' : 'no cache' } });
 }));
 
-router.get('/deals/:id/history', account.requireUser, asyncRoute(async (req, res) => {
-  const deal = dealFetcher.findDealById(await publicDeals(), req.params.id);
+router.get('/deals/:id/history', account.requireUser, account.checkOptionalOwner, asyncRoute(async (req, res) => {
+  const deal = dealFetcher.findDealById(await publicDeals(), req.params.id)
+    || tracked.owned(req.account.id).find(item => item.id === req.params.id);
   if (!deal) return account.fail(res, 404, 'Oferta no encontrada');
   if (isLocked(deal, req.access)) return account.fail(res, 403, 'Esta oferta estará disponible después de 2 horas');
   const days = Math.min(Math.max(parseInt(req.query.days, 10) || req.access.historyDays, 1), req.access.historyDays);

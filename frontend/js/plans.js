@@ -6,6 +6,7 @@ import {
   bindMobileMenu,
   bindThemeToggle,
   bindAuthModal,
+  requestRegistration,
   loadPlan,
   showToast,
   FREE_ALERT_LIMIT,
@@ -25,11 +26,12 @@ const PLANS = [
     tagline: "Guarda tus hallazgos y sigue sus precios.",
     price: { mensual: 0, anual: 0 },
     features: [
-      { text: "Explora el catálogo y guarda tus ofertas" },
+      { text: "Catálogo completo y ofertas guardadas en tu cuenta" },
       { text: "Ofertas nuevas disponibles 2 horas después" },
-      { text: `Hasta ${FREE_ALERT_LIMIT} alertas de precio activas` },
+      { text: `Hasta ${FREE_ALERT_LIMIT} avisos activos entre precio y reposición` },
       { text: `Historial de precio de ${HISTORY_DAYS.free} días` },
       { text: "Filtros por categoría, tienda y descuento" },
+      { text: "Hasta 3 ofertas por temporada" },
     ],
   },
   {
@@ -44,6 +46,7 @@ const PLANS = [
       { text: "Alertas de precio ilimitadas" },
       { text: `Historial de precio de ${HISTORY_DAYS.plus} días` },
       { text: "Tus guardados y alertas vinculados a tu cuenta" },
+      { text: "Catálogo completo en cada temporada" },
     ],
   },
 ];
@@ -151,7 +154,7 @@ function bindPlans() {
       }
     }
     if (event.target.closest("[data-create-account]")) {
-      document.querySelector("[data-auth-open]")?.click();
+      requestRegistration();
     }
     const downgrade = event.target.closest("[data-downgrade]");
     if (downgrade) {

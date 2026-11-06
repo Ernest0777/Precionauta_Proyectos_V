@@ -1,10 +1,11 @@
-import { PRODUCTS, LOCKED_PRODUCTS, API_BASE } from "./data/products.js";
+import { PRODUCTS, LOCKED_PRODUCTS, catalogReady, API_BASE, normalizeDeal } from "./data/products.js";
 import { formatAge, formatWait, HISTORY_DAYS } from "./utils/plan.js";
-import { accountReady, accountState } from "./utils/account.js";
+import { accountReady, accountState, refreshAccount, ACCOUNT_CHANGED_EVENT } from "./utils/account.js";
 import { productImages } from "./utils/images.js";
 import { CATEGORIES } from "./data/categories.js";
 import { renderProductCard } from "./components/productCard.js";
 import { renderPriceChart } from "./components/priceChart.js";
+import { bindPriceChart } from "./components/priceChartInteraction.js";
 import { seededRandom } from "./utils/priceHistory.js";
 import { icon, CATEGORY_ICON_BY_SLUG } from "./utils/icons.js";
 import {
@@ -31,8 +32,27 @@ import {
 import { bindHeaderMenus } from "./components/headerMenus.js";
 import { ALERTS_CHANGED_EVENT, SAVED_CHANGED_EVENT } from "./shared.js";
 import { track } from "./utils/recommender.js";
+import { bindCommunityVotes } from "./components/communityVotes.js";
+import { bindRestockPanel, availabilityLabel } from "./components/restockPanel.js";
+import { downloadShareCard } from "./utils/shareCard.js";
 
-await accountReady;
+let pageIdentity;
+let pageInvalidated = false;
+const currentPageIdentity = () => JSON.stringify([accountState().user?.id ?? null, accountState().plan.id]);
+accountReady.then(() => { pageIdentity ??= currentPageIdentity(); });
+document.addEventListener(ACCOUNT_CHANGED_EVENT, () => {
+  if (!pageIdentity || pageInvalidated || pageIdentity === currentPageIdentity()) return;
+  pageInvalidated = true;
+  document.querySelector("main")?.replaceChildren();
+  location.reload();
+});
+
+bindHeaderMenus();
+bindHeaderScrollShadow();
+bindMobileMenu();
+bindThemeToggle();
+bindAuthModal();
+await catalogReady;
 
 /** Plazos típicos de meses sin intereses en tiendas mexicanas. */
 const MSI_TERMS = [3, 6, 9, 12, 18];
@@ -53,11 +73,26 @@ const requestedId = new URLSearchParams(window.location.search).get("id");
 const lockedProduct = LOCKED_PRODUCTS.find((p) => p.id === requestedId) ?? null;
 
 function getRequestedProduct() {
-  return lockedProduct ?? PRODUCTS.find((p) => p.id === requestedId) ?? PRODUCTS[0];
+  return lockedProduct ?? PRODUCTS.find((p) => p.id === requestedId) ?? (requestedId ? null : PRODUCTS[0]);
 }
 
-const product = getRequestedProduct();
-const categoryLabel = CATEGORY_LABEL_BY_SLUG[product.categorySlug] ?? "Ofertas";
+let product = getRequestedProduct();
+if (!pageInvalidated && !product && requestedId && accountState().user) {
+  const owner = accountState().user.id;
+  const plan = accountState().plan.id;
+  try {
+    const response = await fetch(`${API_BASE}/product/${encodeURIComponent(requestedId)}`, {
+      credentials: "include", headers: { "X-Account-Id": owner }, signal: AbortSignal.timeout(8000),
+    });
+    if (response.status === 401 || response.status === 409) {
+      await refreshAccount();
+    } else {
+      const body = await response.json();
+      if (!pageInvalidated && owner === accountState().user?.id && plan === accountState().plan.id && response.ok && body.success && body.data && !body.data.locked) product = normalizeDeal(body.data, 0);
+    }
+  } catch { /* La vista de no disponible conserva el acceso al catálogo. */ }
+}
+const categoryLabel = CATEGORY_LABEL_BY_SLUG[product?.categorySlug] ?? "Ofertas";
 
 function renderBreadcrumb() {
   const categoryLink = document.getElementById("breadcrumbCategory");
@@ -151,7 +186,7 @@ function renderInfoColumn() {
       <h1>${escapeHtml(product.name)}</h1>
 
       <div class="price-panel">
-        <span class="price-panel__discount">-${discountPercent}%</span>
+        <span class="price-panel__discount">${discountPercent > 0 ? `-${discountPercent}%` : "Sin descuento actual"}</span>
         <div>
           <div class="price-old tabular-nums">${formatPriceMXN(product.previousPrice)}</div>
           <div class="price-panel__current tabular-nums">${formatPriceHTML(product.currentPrice)}</div>
@@ -162,7 +197,7 @@ function renderInfoColumn() {
       <div class="store-line">
         <span class="store-line__mark">${product.storeCode}</span>
         <div>
-          <div style="font-weight:700; font-size: var(--fs-sm);">Disponible en ${escapeHtml(product.store)}</div>
+          <div style="font-weight:700; font-size: var(--fs-sm);">${escapeHtml(product.store)} · ${availabilityLabel(product)}</div>
           ${
             product.offersCount > 1
               ? `<div style="font-size: var(--fs-xs); color: var(--color-ink-500);">Mejor precio entre ${product.offersCount} vendedores${
@@ -177,10 +212,10 @@ function renderInfoColumn() {
       </div>
 
       <div class="product-info__actions">
-        <a class="btn btn--primary" href="${product.storeUrl.replace("src=web", "src=detalle")}" target="_blank" rel="noopener sponsored">
-          Ver oferta en ${escapeHtml(product.store)}
+        ${product.availability === "unavailable" || product.stock === 0 || product.checkStatus === "failed" ? '<button type="button" class="btn btn--primary" disabled>Disponibilidad pendiente · sigue este producto</button>' : `<a class="btn btn--primary" href="${product.storeUrl.replace("src=web", "src=detalle")}" target="_blank" rel="noopener sponsored">
+          ${discountPercent > 0 ? "Ver oferta" : "Ver producto"} en ${escapeHtml(product.store)}
           <span class="btn__icon-circle">${icon("arrowRight", { size: 14 })}</span>
-        </a>
+        </a>`}
 
         <button type="button" class="btn btn--outline" id="saveToggle" aria-pressed="${isSaved}">
           ${icon("heart", { size: 16 })} ${isSaved ? "Guardado" : "Guardar oferta"}
@@ -193,6 +228,10 @@ function renderInfoColumn() {
 
       ${renderDealReport()}
 
+      ${product.live ? '<section class="restock-panel" id="restockControl" aria-label="Disponibilidad y reposición"></section>' : ""}
+
+      <section class="community-votes" id="communityVotes" aria-label="Valoraciones de la comunidad"></section>
+
       ${renderMsiCalculator()}
 
       <div class="share-row">
@@ -201,6 +240,8 @@ function renderInfoColumn() {
           ${icon("whatsapp", { size: 18 })} WhatsApp
         </a>
         <button type="button" class="share-btn" id="copyLink">${icon("copy", { size: 16 })} Copiar enlace</button>
+        <button type="button" class="share-btn" id="downloadShareCard">${icon("copy", { size: 16 })} Descargar tarjeta PNG</button>
+        <span id="shareCardFeedback" role="status" aria-live="polite"></span>
       </div>
 
       <span class="product-info__meta">Precionauta revisa el precio cada 5 minutos · Última revisión ${formatHoursAgoLabel(
@@ -265,11 +306,11 @@ let viewedDealOwner = null;
 let viewedDealRequest = Promise.resolve();
 function rememberViewedDeal() {
   const owner = accountState().user?.id;
-  if (!owner || lockedProduct) return Promise.resolve();
+  if (pageInvalidated || !owner || lockedProduct || !product) return Promise.resolve();
   if (viewedDealOwner === owner) return viewedDealRequest;
   viewedDealOwner = owner;
   viewedDealRequest = fetch(`${API_BASE}/product/${encodeURIComponent(product.id)}`, {
-    credentials: "include", signal: AbortSignal.timeout(6000),
+    credentials: "include", headers: { "X-Account-Id": owner }, signal: AbortSignal.timeout(6000),
   }).catch(() => null);
   return viewedDealRequest;
 }
@@ -383,6 +424,17 @@ function bindShare() {
       showToast("No pudimos copiar el enlace; cópialo desde la barra de direcciones.");
     }
   });
+  document.getElementById("downloadShareCard")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const feedback = document.getElementById("shareCardFeedback");
+    button.disabled = true;
+    feedback.textContent = "Preparando imagen…";
+    try {
+      await downloadShareCard(product);
+      feedback.textContent = "Tarjeta descargada. Incluye el enlace al producto.";
+    } catch (error) { feedback.textContent = error.message || "No pudimos generar la tarjeta. Inténtalo de nuevo."; }
+    finally { button.disabled = false; }
+  });
 }
 
 function renderProductDetail() {
@@ -408,6 +460,8 @@ function renderSpecs() {
 
 let historyRequest = 0;
 function renderPriceHistoryPanel() {
+  if (pageInvalidated) return;
+  if (!product || lockedProduct) return;
   const request = ++historyRequest;
   const rangeEl = document.getElementById("priceRange");
   const chartEl = document.getElementById("priceChart");
@@ -457,7 +511,7 @@ async function renderLiveHistory(rangeEl, chartEl, { days, level, request }) {
     unavailable = true;
   }
 
-  if (request !== historyRequest) return;
+  if (pageInvalidated || request !== historyRequest) return;
   if (unavailable) {
     rangeEl.innerHTML = "";
     chartEl.innerHTML = '<p class="price-chart__empty" role="status">No pudimos consultar el historial. Intenta de nuevo más tarde; no mostramos precios sin verificar.</p>';
@@ -512,14 +566,17 @@ async function renderLiveHistory(rangeEl, chartEl, { days, level, request }) {
   if (heading) heading.textContent = `Historial de precio real (${relativeStart(span).replace("hace ", "últimos ")})`;
   chartEl.innerHTML =
     renderPriceChart(points, { min, max, currentPrice, startLabel: relativeStart(span) }) +
-    `<p class="price-chart__note">El mínimo y máximo corresponden al período registrado disponible. Compara las subidas previas: un precio de referencia inflado puede exagerar el descuento. No garantizamos que sea el menor precio de todo el mercado.</p>` +
+    `<p class="price-chart__note" data-history-coverage>Registros disponibles desde el ${new Date(first).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}: ${rows.length} observaciones en un período de ${Math.max(1, Math.ceil(span / DAY_MS))} días. El mínimo y máximo corresponden a esos datos.</p>` +
+    `<p class="price-chart__note">Compara las subidas previas: un precio de referencia inflado puede exagerar el descuento. No garantizamos que sea el menor precio de todo el mercado.</p>` +
     (level === "free"
       ? `<p class="price-chart__note">Gratis muestra los últimos ${HISTORY_DAYS.free} días. <a href="planes.html">Con Plus puedes consultar hasta 12 meses registrados.</a></p>`
       : "");
+  bindPriceChart(chartEl, { observations: rows, startAt: first, endAt: first + span });
 }
 
 function renderRelated() {
   const grid = document.getElementById("relatedGrid");
+  if (!product) { if (grid) grid.innerHTML = ""; return; }
   if (!grid) return;
 
   const sameCategory = PRODUCTS.filter((p) => p.id !== product.id && p.categorySlug === product.categorySlug).sort(
@@ -664,20 +721,29 @@ function renderLockedDetail() {
   `;
 }
 
+function renderUnavailableDetail() {
+  const visitor = !accountState().user;
+  document.querySelector(".detail-panels")?.setAttribute("hidden", "");
+  document.title = visitor ? "Descubre más ofertas - Precionauta" : "Oferta no disponible - Precionauta";
+  document.getElementById("breadcrumbCategory").textContent = "Ofertas";
+  document.getElementById("breadcrumbProduct").textContent = visitor ? "Crea tu cuenta gratis" : "No disponible";
+  document.getElementById("productDetail").innerHTML = `<div class="product-info">
+    <h1>${visitor ? "Hay más ofertas para ti" : "Esta oferta ya no está disponible"}</h1>
+    <p>${visitor ? "Estás viendo una muestra de 6 ofertas. Crea tu cuenta gratis para explorar el catálogo completo, guardar tus favoritas y seguir hasta 3 productos. Plus es opcional." : "Puedes seguir explorando el catálogo para encontrar otras opciones."}</p>
+    <div class="product-info__actions">${visitor ? '<button type="button" class="btn btn--primary" data-register>Crear cuenta gratis</button>' : ""}
+      <a class="btn btn--outline" href="index.html#catalogo">Volver a las ofertas</a></div></div>`;
+}
+
 function init() {
   const yearEl = document.getElementById("footerYear");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-  if (lockedProduct) {
-    renderLockedDetail();
+  if (lockedProduct || !product) {
+    if (product) renderLockedDetail();
+    else renderUnavailableDetail();
     renderRelated();
     renderSavingsSummary(state.saved);
     bindRelatedActions();
-    bindHeaderMenus();
-    bindHeaderScrollShadow();
-    bindMobileMenu();
-    bindThemeToggle();
-    bindAuthModal();
     return;
   }
 
@@ -694,17 +760,14 @@ function init() {
   bindGallery();
   bindMsiCalculator();
   bindDealReport();
+  bindCommunityVotes(document.getElementById("communityVotes"), product.id);
+  bindRestockPanel(document.getElementById("restockControl"), { product });
   bindShare();
   bindSaveToggle();
   bindAlertToggle();
   bindRelatedActions();
-  bindHeaderMenus();
-  bindHeaderScrollShadow();
-  bindMobileMenu();
-  bindThemeToggle();
-  bindAuthModal();
 }
 
 document.addEventListener("account-changed", renderPriceHistoryPanel);
 document.addEventListener("account-changed", rememberViewedDeal);
-init();
+if (!pageInvalidated) init();

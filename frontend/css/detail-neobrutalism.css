@@ -1,4 +1,12 @@
 /* Product detail: the same bold, practical visual language as the catalog. */
+.community-votes { padding: 18px; border: var(--neo-line); background: var(--color-surface-soft); box-shadow: 3px 3px 0 var(--neo-ink); }
+.community-votes__title { margin: 0 0 8px; font-size: 1rem; }
+.community-votes p { margin: 6px 0; font-size: .8125rem; }
+.community-votes__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.community-votes__actions .btn { min-height: 44px; height: auto; white-space: normal; }
+.community-votes__actions .btn[aria-pressed="true"] { background: var(--neo-yellow, #f8e85b); color: #171717; }
+.community-votes__actions span { padding: 2px 7px; border: 1px solid currentColor; font-variant-numeric: tabular-nums; }
+.community-votes__feedback { min-height: 1.5em; }
 .deal-report__toggle { min-height: 44px; padding: 8px 0; color: var(--color-ink-900); font: inherit; font-size: .8125rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; background: transparent; border: 0; cursor: pointer; }
 .deal-report__form { display: grid; gap: 10px; margin-top: 8px; padding: 20px; border: var(--neo-line); background: var(--color-surface-soft); box-shadow: 3px 3px 0 var(--neo-ink); }
 .deal-report__form[hidden] { display: none; }

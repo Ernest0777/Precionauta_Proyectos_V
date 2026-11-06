@@ -3,6 +3,7 @@ const { promisify } = require('node:util');
 const express = require('express');
 const db = require('./db/database');
 const config = require('./config/config');
+const restock = require('./db/restock');
 
 const scrypt = promisify(crypto.scrypt);
 const COOKIE = 'precionauta_session';
@@ -32,9 +33,9 @@ function checkOrigin(req, res, next) {
 }
 
 function accessOf(user) {
-  if (!user) return { level: 'visitor', historyDays: 0, alertLimit: 0, seasonLimit: 3, delayMs: 7200000 };
-  if (user.plan_id === 'plus') return { level: 'plus', historyDays: 365, alertLimit: null, seasonLimit: null, delayMs: 0 };
-  return { level: 'free', historyDays: 30, alertLimit: 3, seasonLimit: 3, delayMs: 7200000 };
+  if (!user) return { level: 'visitor', historyDays: 0, alertLimit: 0, seasonLimit: 0, catalogLimit: 6, delayMs: 7200000 };
+  if (user.plan_id === 'plus') return { level: 'plus', historyDays: 365, alertLimit: null, seasonLimit: null, catalogLimit: null, delayMs: 0 };
+  return { level: 'free', historyDays: 30, alertLimit: 3, seasonLimit: 3, catalogLimit: null, delayMs: 7200000 };
 }
 
 function sessionData(user) {
@@ -48,6 +49,10 @@ function sessionData(user) {
     alertIds,
     alertTargets: user ? Object.fromEntries(db.prepare('SELECT deal_id, target_cents FROM account_alert_targets WHERE user_id = ?').all(user.id).map(row => [row.deal_id, row.target_cents / 100])) : {},
     pausedAlertIds: access.alertLimit == null ? [] : alertIds.slice(access.alertLimit),
+    restockIds: user ? restock.subscriptions(user.id).map(sub => sub.dealId) : [],
+    pausedRestockIds: user ? restock.subscriptions(user.id).filter(sub => sub.paused).map(sub => sub.dealId) : [],
+    restockUnreadCount: user ? restock.unreadCount(user.id) : 0,
+    unverifiedTrackingIds: user ? [...new Set([...JSON.parse(user.saved_ids), ...alertIds])].filter(id => !require('./db/tracked-products').hasAccess(user.id, id)) : [],
   };
 }
 
@@ -62,6 +67,15 @@ function attachSession(req, res, next) {
 function requireUser(req, res, next) {
   if (!req.account) return fail(res, 401, 'Inicia sesión para continuar');
   next();
+}
+
+function checkAccountOwner(req, res, next) {
+  if (req.get('X-Account-Id') !== (req.account?.id || 'visitor')) return fail(res, 409, 'La sesión cambió. Actualiza tu cuenta e inténtalo de nuevo.');
+  next();
+}
+
+function checkOptionalOwner(req, res, next) {
+  return req.get('X-Account-Id') === undefined ? next() : checkAccountOwner(req, res, next);
 }
 
 function requirePlus(req, res, next) {
@@ -140,7 +154,7 @@ router.post('/logout', (req, res) => {
   res.clearCookie(COOKIE, { httpOnly: true, sameSite: 'lax', secure: production(), path: '/' });
   res.json({ success: true, data: sessionData(null) });
 });
-router.use(requireUser);
+router.use(requireUser, checkOptionalOwner);
 const reply = (req, res) => res.json({ success: true, data: sessionData(db.prepare('SELECT * FROM account_users WHERE id = ?').get(req.account.id)) });
 
 router.patch('/profile', (req, res) => {
@@ -156,11 +170,36 @@ function idsOf(ids) {
   return [...new Set(ids)];
 }
 
-router.patch('/library', (req, res) => {
+async function validateLibraryAdds(req, saved, alerts) {
+  const current = db.prepare('SELECT * FROM account_users WHERE id = ?').get(req.account.id);
+  const oldSaved = new Set(JSON.parse(current.saved_ids));
+  const oldAlerts = new Set(JSON.parse(current.alert_ids));
+  const ids = [...new Set([...saved.filter(id => !oldSaved.has(id)), ...alerts.filter(id => !oldAlerts.has(id))])];
+  if (!ids.length) return { deals: [] };
+  const tracked = require('./db/tracked-products');
+  const { selectDealsForAccess, isLocked } = require('./api/access');
+  const moderation = require('./admin/moderation');
+  const catalog = selectDealsForAccess(moderation.applyPublic(await require('./api/deal-fetcher').fetchAllDeals()), accessOf(current));
+  const known = new Map(catalog.map(deal => [deal.id, deal]));
+  const deals = [];
+  for (const id of ids) {
+    const deal = known.get(id) || tracked.authorized(current.id, id);
+    if (!deal) return { error: [404, 'Producto no encontrado'] };
+    if (isLocked(deal, accessOf(current))) return { error: [403, 'Esta oferta estará disponible después de 2 horas'] };
+    deals.push(deal);
+  }
+  return { deals };
+}
+
+router.patch('/library', asyncRoute(async (req, res) => {
   const fields = ['savedAdd', 'savedRemove', 'alertAdd', 'alertRemove'];
   const lists = fields.map(field => idsOf(req.body?.[field] === undefined ? [] : req.body[field]));
   if (lists.some(list => !list)) return fail(res, 400, 'Listas de guardados y alertas inválidas');
   const [savedAdd, savedRemove, alertAdd, alertRemove] = lists;
+  const candidateAlerts = [...new Set([...JSON.parse(req.account.alert_ids).filter(id => !alertRemove.includes(id)), ...alertAdd.filter(id => !alertRemove.includes(id))])];
+  if (!restock.canAddPriceAlerts(req.account, candidateAlerts)) return fail(res, 403, 'Gratis permite 3 avisos en total entre precio y reposición. Conservamos los anteriores en pausa');
+  const validation = await validateLibraryAdds(req, savedAdd.filter(id => !savedRemove.includes(id)), alertAdd.filter(id => !alertRemove.includes(id)));
+  if (validation.error) return fail(res, ...validation.error);
   const error = db.transaction(() => {
     const current = db.prepare('SELECT * FROM account_users WHERE id = ?').get(req.account.id);
     const oldSaved = JSON.parse(current.saved_ids);
@@ -172,8 +211,9 @@ router.patch('/library', (req, res) => {
     const saved = update(oldSaved, savedAdd, savedRemove);
     const alerts = update(oldAlerts, alertAdd, alertRemove);
     if (saved.length > 2000 || alerts.length > 2000) return [400, 'La biblioteca es demasiado grande'];
-    if (accessOf(current).alertLimit != null && alerts.length > accessOf(current).alertLimit && alerts.some(id => !oldAlerts.includes(id))) return [403, 'Gratis permite 3 alertas. Conservamos tus anteriores en pausa'];
+    if (!restock.canAddPriceAlerts(current, alerts)) return [403, 'Gratis permite 3 avisos en total entre precio y reposición. Conservamos los anteriores en pausa'];
     db.prepare('UPDATE account_users SET saved_ids = ?, alert_ids = ? WHERE id = ?').run(JSON.stringify(saved), JSON.stringify(alerts), current.id);
+    for (const deal of validation.deals) require('./db/tracked-products').grant(current.id, deal);
     const keep = new Set(alerts);
     for (const row of db.prepare('SELECT deal_id FROM account_alert_targets WHERE user_id = ?').all(current.id)) {
       if (!keep.has(row.deal_id)) db.prepare('DELETE FROM account_alert_targets WHERE user_id = ? AND deal_id = ?').run(current.id, row.deal_id);
@@ -185,9 +225,9 @@ router.patch('/library', (req, res) => {
   });
   if (error) return fail(res, ...error);
   reply(req, res);
-});
+}));
 
-router.put('/library', (req, res) => {
+router.put('/library', asyncRoute(async (req, res) => {
   let saved = idsOf(req.body?.savedIds);
   let alerts = idsOf(req.body?.alertIds);
   if (!saved || !alerts || (req.body.merge !== undefined && typeof req.body.merge !== 'boolean')) return fail(res, 400, 'Listas de guardados y alertas inválidas');
@@ -197,20 +237,27 @@ router.put('/library', (req, res) => {
     alerts = [...new Set([...current, ...alerts])];
   }
   if (saved.length > 2000 || alerts.length > 2000) return fail(res, 400, 'La biblioteca es demasiado grande');
-  if (!req.body.merge && req.access.alertLimit != null && alerts.length > req.access.alertLimit && alerts.some(id => !current.includes(id))) return fail(res, 403, 'Gratis permite 3 alertas. Conservamos tus anteriores en pausa');
+  if (!restock.canAddPriceAlerts(req.account, alerts)) return fail(res, 403, 'Gratis permite 3 avisos en total entre precio y reposición. Conservamos los anteriores en pausa');
+  const validation = await validateLibraryAdds(req, saved, alerts);
+  if (validation.error) return fail(res, ...validation.error);
   // Una alerta eliminada de la biblioteca tampoco puede seguir enviando por Telegram.
   const keep = new Set(alerts);
-  db.transaction(() => {
+  const error = db.transaction(() => {
+    const fresh = db.prepare('SELECT * FROM account_users WHERE id = ?').get(req.account.id);
+    if (!restock.canAddPriceAlerts(fresh, alerts)) return [403, 'Gratis permite 3 avisos en total entre precio y reposición. Conservamos los anteriores en pausa'];
     db.prepare('UPDATE account_users SET saved_ids = ?, alert_ids = ? WHERE id = ?').run(JSON.stringify(saved), JSON.stringify(alerts), req.account.id);
+    for (const deal of validation.deals) require('./db/tracked-products').grant(req.account.id, deal);
     for (const row of db.prepare('SELECT deal_id FROM account_alert_targets WHERE user_id = ?').all(req.account.id)) {
       if (!keep.has(row.deal_id)) db.prepare('DELETE FROM account_alert_targets WHERE user_id = ? AND deal_id = ?').run(req.account.id, row.deal_id);
     }
     for (const row of db.prepare('SELECT s.code, s.deal_id FROM alert_subs s JOIN telegram_links l ON l.code = s.code WHERE l.user_id = ?').all(req.account.id)) {
       if (!keep.has(row.deal_id)) db.prepare('DELETE FROM alert_subs WHERE code = ? AND deal_id = ?').run(row.code, row.deal_id);
     }
+    return null;
   });
+  if (error) return fail(res, ...error);
   reply(req, res);
-});
+}));
 
 router.patch('/alerts/:id', (req, res) => {
   const target = req.body?.targetPrice;
@@ -234,4 +281,4 @@ router.post('/plan', (req, res) => {
   reply(req, res);
 });
 
-module.exports = { router, allowedOrigins, checkOrigin, attachSession, accessOf, requireUser, requirePlus, sessionData, fail, idsOf };
+module.exports = { router, allowedOrigins, checkOrigin, attachSession, accessOf, requireUser, requirePlus, sessionData, fail, idsOf, checkAccountOwner, checkOptionalOwner };

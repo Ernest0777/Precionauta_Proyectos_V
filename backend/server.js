@@ -4,19 +4,25 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const config = require('./config/config');
 const routes = require('./api/routes');
+const communityRoutes = require('./api/community-routes');
+const restockRoutes = require('./api/restock-routes');
+const shareRoutes = require('./api/share-routes');
 const adminRoutes = require('./api/admin-routes');
 const dealFetcher = require('./api/deal-fetcher');
 const moderation = require('./admin/moderation');
 const automation = require('./admin/automation');
 const adminAuth = require('./admin/auth');
 const priceHistory = require('./db/price-history');
+const trackedProducts = require('./db/tracked-products');
+const productTracker = require('./jobs/product-tracker');
+const restock = require('./db/restock');
 const clicks = require('./db/clicks');
 const telegram = require('./db/telegram');
 const account = require('./account');
 const { router: passwordRecoveryRouter } = require('./password-recovery');
 const { router: emailVerificationRouter } = require('./email-verification');
 const { publicRouter: dealReportRouter, adminRouter: adminReportRouter } = require('./api/report-routes');
-const { isLocked } = require('./api/access');
+const { isLocked, selectDealsForAccess } = require('./api/access');
 
 const app = express();
 const ROOT = path.join(__dirname, '..');
@@ -30,8 +36,8 @@ app.use(account.attachSession);
 // Rutas
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin', adminReportRouter);
-app.use('/api/account', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, passwordRecoveryRouter, emailVerificationRouter, account.router);
-app.use('/api', dealReportRouter, routes);
+app.use('/api/account', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, passwordRecoveryRouter, emailVerificationRouter, restockRoutes, account.router);
+app.use('/api', dealReportRouter, communityRoutes, shareRoutes, routes);
 
 // Panel de administración: lo sirve el backend, no la tienda, así que no
 // aparece en el sitio público. Comparte tokens de diseño y fuentes con la tienda.
@@ -48,7 +54,14 @@ app.get('/admin/shared/tokens.css', (req, res) => res.sendFile(path.join(ROOT, '
 app.get('/go/:id', async (req, res) => {
   res.set('Cache-Control', 'private, no-store');
   const deals = await dealFetcher.fetchAllDeals().catch(() => []);
-  const deal = dealFetcher.findDealById(moderation.applyPublic(deals), req.params.id);
+  let deal = dealFetcher.findDealById(selectDealsForAccess(moderation.applyPublic(deals), req.access), req.params.id);
+  if (!deal && req.account) {
+    const owned = trackedProducts.owned(req.account.id).find(item => item.id === req.params.id);
+    const decision = moderation.decisions[req.params.id];
+    const blocked = decision?.status === 'review' || (decision?.actor === 'manual' && decision.status === 'rejected');
+    if (owned && !blocked && owned.checkStatus === 'ok' && owned.availability === 'available' && Date.now() - owned.lastObservedAt <= dealFetcher.cache.ttl) deal = owned;
+  }
+  if (!deal && req.access.level === 'visitor') return res.status(401).json({ success: false, registrationRequired: true, error: 'Crea tu cuenta gratis para ver más ofertas' });
   if (!deal) return account.fail(res, 404, 'Oferta no encontrada');
   if (isLocked(deal, req.access)) return account.fail(res, 403, 'Esta oferta estará disponible en tu plan después de 2 horas');
   try {
@@ -70,17 +83,46 @@ dealFetcher.onUpdate((deals, at, source, observations = deals) => {
   } catch (error) {
     console.warn('⚠️ No se pudo guardar el historial de precios:', error.message);
   }
+  trackedProducts.remember(observations, { source, at: new Date(at).getTime() });
   try {
     automation.evaluate(observations, { source, at });
   } catch (error) {
     console.warn('⚠️ No se pudo completar la moderación automática:', error.message);
   }
+  trackedProducts.reconcileAccess(moderation.applyPublic(deals));
+  const restockEvents = restock.observe(observations, { source, at: new Date(at).getTime() });
+  telegram.onRestockEvents(restockEvents);
   telegram.onDealsUpdated(moderation.applyPublic(deals));
 });
 
+let collection = null;
+const collector = { running: false, lastFinishedAt: null, trackedLastBatch: 0, lastError: null };
+function collect() {
+  if (collection) return collection;
+  collector.running = true;
+  collection = (async () => {
+    await dealFetcher.refresh();
+    const observations = await productTracker.refresh();
+    collector.trackedLastBatch = observations.length;
+    if (observations.length) {
+      const at = Date.now();
+      automation.evaluate(observations, { source: 'mercadolibre', at });
+      telegram.onRestockEvents(restock.observe(observations, { source: 'mercadolibre', at }));
+      telegram.onDealsUpdated(moderation.applyPublic(observations));
+    }
+    telegram.onRestockEvents([]);
+    collector.lastFinishedAt = new Date().toISOString();
+    collector.lastError = null;
+  })().catch(error => {
+    collector.lastError = 'No se pudo completar la recolección';
+    console.warn('⚠️ Error de recolección:', error.message);
+  }).finally(() => { collector.running = false; collection = null; });
+  return collection;
+}
+
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date(), port: config.server.port });
+  res.json({ status: 'OK', timestamp: new Date(), port: config.server.port, collector });
 });
 
 // Error handling middleware
@@ -106,11 +148,11 @@ if (require.main === module) app.listen(PORT, () => {
   console.log(`🔐 Admin: http://localhost:${PORT}/admin${adminAuth.isConfigured() ? '' : ' (falta ADMIN_PASSWORD en backend/.env)'}`);
 
   // Precarga: la primera visita no espera la consulta completa a Mercado Libre.
-  dealFetcher.refresh();
+  collect();
 
   // La caché dura 5 min, pero solo se renueva cuando alguien entra. Para que el
   // historial de precios y las alertas no dependan de visitas, consultamos solos.
-  setInterval(() => dealFetcher.refresh(), dealFetcher.cache.ttl);
+  setInterval(collect, dealFetcher.cache.ttl);
 
   telegram.start();
 });

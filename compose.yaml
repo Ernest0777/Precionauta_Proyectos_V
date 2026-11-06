@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file:
+      - backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      PRECIONAUTA_DB: /app/backend/data/precionauta.db
+      PRECIONAUTA_MODERATION_FILE: /app/backend/cache/moderation.json
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - precionauta-data:/app/backend/data
+      - precionauta-cache:/app/backend/cache
+    stop_grace_period: 30s
+
+volumes:
+  precionauta-data:
+  precionauta-cache:

@@ -37,12 +37,14 @@ Los iconos y fuentes se sirven desde recursos locales. El detalle usa historial 
 
 `js/utils/plan.js` concentra los precios y ventanas de historial: Plus $79 MXN/mes o $790 MXN/año con IVA incluido; Cuenta gratuita hasta 30 días y Plus hasta 365 días. Evita duplicar constantes en tarjetas o checkout.
 
-- Visitante: catálogo liberado y guardados locales; sin historial ni alertas.
+- Visitante: muestra estable de seis ofertas; registro gratuito para ver más, guardar, recibir recomendaciones y entrar a Temporadas. Sin historial ni alertas.
 - Cuenta gratuita: guardados de cuenta, hasta 3 alertas activas y ofertas nuevas con espera de 2 horas después de la primera carga.
 - Plus: alertas ilimitadas, historial ampliado y ofertas nuevas al instante.
-- Temporadas: visitante y cuenta gratuita ven 3 ofertas en total por evento; Plus ve todas las disponibles.
+- Temporadas: requiere cuenta; la gratuita ve hasta tres ofertas liberadas en total por evento y Plus todas las disponibles.
 
 Visitante no aparece como plan comercial. Cazador se fusiona con Plus. Un downgrade conserva guardados y alertas; las excedentes del límite gratuito se pausan.
+
+`utils/recommender.js` sincroniza hasta 300 señales privadas por cuenta con `/api/community/activity`; vistas, búsquedas y acciones alimentan afinidades con motivos visibles. No importa el historial anónimo global anterior. Los votos de Detalle se guardan mediante `/api/community/deals/:id/votes`. Ambas funciones validan el propietario esperado con `X-Account-Id` para evitar atribuir acciones a otra cuenta si cambia la sesión entre pestañas. Las escrituras descartadas no se reintentan bajo la nueva identidad.
 
 El checkout sigue siendo una demostración sin cobros: tarjeta ficticia de solo lectura, ejemplos OXXO/SPEI sin referencia pagable y activación mediante backend. No captura, envía ni persiste PAN/CVC reales. No debe mostrar éxito antes de la confirmación del servidor.
 

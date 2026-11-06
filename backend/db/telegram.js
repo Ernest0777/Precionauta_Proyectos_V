@@ -1,6 +1,7 @@
 const db = require('./database');
 const config = require('../config/config');
 const { affiliateUrl } = require('./clicks');
+const restock = require('./restock');
 
 /**
  * Alertas por Telegram. El navegador genera un código y abre
@@ -56,10 +57,11 @@ async function call(method, body) {
 
 const send = (chatId, text) => {
   // Se comprueba de nuevo al enviar, incluso si el plan cambió durante el procesamiento.
-  if (!db.prepare(`SELECT 1 FROM telegram_links l JOIN account_users u ON u.id = l.user_id WHERE l.chat_id = ? AND u.plan_id = 'plus'`).get(String(chatId))) return Promise.resolve();
-  return call('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: false }).catch((error) =>
-    console.warn(`⚠️ Telegram a ${chatId}: ${error.message}`)
-  );
+  if (!db.prepare(`SELECT 1 FROM telegram_links l JOIN account_users u ON u.id = l.user_id WHERE l.chat_id = ? AND u.plan_id = 'plus'`).get(String(chatId))) return Promise.resolve(false);
+  return call('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: false }).then(() => true).catch((error) => {
+    console.warn(`⚠️ Telegram a ${chatId}: ${error.message}`);
+    return false;
+  });
 };
 
 const esc = (text) => String(text ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
@@ -208,4 +210,37 @@ function onDealsUpdated(deals) {
   });
 }
 
-module.exports = { shouldNotifyPriceDrop, start, status, claimLink, linkStatus, unlink, syncAlerts, onDealsUpdated, eligibleLinks: () => eligible.all() };
+let restockQueue = Promise.resolve();
+const restockInFlight = new Set();
+function onRestockEvents() {
+  if (!state.enabled) return restockQueue;
+  restockQueue = restockQueue.then(async () => {
+    const pending = db.prepare(`SELECT DISTINCT e.*, l.chat_id FROM restock_events e
+      JOIN account_users u ON u.id = e.user_id JOIN telegram_links l ON l.user_id = u.id
+      JOIN restock_subscriptions s ON s.user_id = e.user_id AND s.deal_id = e.deal_id
+      LEFT JOIN restock_telegram_attempts attempts ON attempts.event_id = e.id AND attempts.chat_id = l.chat_id
+      WHERE u.plan_id = 'plus' AND l.chat_id IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM restock_telegram_sent sent WHERE sent.event_id = e.id AND sent.chat_id = l.chat_id)
+      ORDER BY COALESCE(attempts.last_attempt_at, 0), e.at, e.id LIMIT 100`).all();
+    for (const stored of pending) {
+      const key = `${stored.id}:${stored.chat_id}`;
+      if (restockInFlight.has(key) || !db.prepare(`SELECT 1 FROM telegram_links l JOIN account_users u ON u.id = l.user_id
+        WHERE l.user_id = ? AND l.chat_id = ? AND u.plan_id = 'plus'`).get(stored.user_id, stored.chat_id)
+        || !restock.subscriptions(stored.user_id).some(sub => sub.dealId === stored.deal_id && !sub.paused)) continue;
+      restockInFlight.add(key);
+      try {
+        db.prepare(`INSERT INTO restock_telegram_attempts (event_id,chat_id,last_attempt_at) VALUES (?,?,?)
+          ON CONFLICT(event_id,chat_id) DO UPDATE SET last_attempt_at = excluded.last_attempt_at`).run(stored.id, stored.chat_id, Date.now());
+        const deal = { id: stored.deal_id };
+        const link = config.server.publicUrl ? `\n\n<a href="${esc(dealLink(deal))}">Ver producto</a>` : '';
+        const sent = await send(stored.chat_id, `📦 <b>¡Volvió a estar disponible!</b>\n${esc(stored.title)}${stored.price == null ? '' : `\n\nPrecio actual: <b>${money(stored.price)}</b>`}${link}`);
+        if (sent) db.prepare('INSERT OR IGNORE INTO restock_telegram_sent (event_id,chat_id) VALUES (?,?)').run(stored.id, stored.chat_id);
+      } finally {
+        restockInFlight.delete(key);
+      }
+    }
+  }).catch(error => console.warn(`⚠️ Telegram reposición: ${error.message}`));
+  return restockQueue;
+}
+
+module.exports = { shouldNotifyPriceDrop, start, status, claimLink, linkStatus, unlink, syncAlerts, onDealsUpdated, onRestockEvents, eligibleLinks: () => eligible.all() };

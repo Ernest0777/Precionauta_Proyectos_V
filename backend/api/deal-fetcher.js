@@ -128,12 +128,18 @@ class DealFetcher {
         meliClient.getCatalogProduct(productId),
         meliClient.getProductOffers(productId),
       ]);
-      const possiblyAvailable = offers.filter((offer) => offer.available_quantity !== 0);
-      const best = pickBestOffer(possiblyAvailable.length ? possiblyAvailable : offers);
-      if (!best || !product.name) return null;
+      if (!Array.isArray(offers) || !product?.name) return null;
+      const priced = offers.filter((offer) => Number.isFinite(offer.price) && offer.price > 0);
+      const available = priced.filter((offer) => Number.isInteger(offer.available_quantity) && offer.available_quantity > 0);
+      const possiblyAvailable = priced.filter((offer) => offer.available_quantity !== 0);
+      const best = pickBestOffer(available.length ? available : possiblyAvailable.length ? possiblyAvailable : priced);
+      if (!best) return null;
+      const allUnavailable = offers.every((offer) => offer.available_quantity === 0);
+      if (best.available_quantity === 0 && !allUnavailable) return null;
       const deal = this.formatDeal(product, best, offers.length, slug);
-      // La oferta elegida agotada no implica que todos los vendedores lo estén.
-      if (deal.stock === 0 && !offers.every((offer) => offer.available_quantity === 0)) delete deal.stock;
+      deal.availability = available.length ? 'available' : allUnavailable ? 'unavailable' : 'unknown';
+      // La falta de cantidades no confirma que todos los vendedores estén agotados.
+      if (deal.availability === 'unknown' || (deal.stock === 0 && deal.availability !== 'unavailable')) delete deal.stock;
       return deal;
     } catch (error) {
       console.warn(`⚠️ ${productId}: ${error.response?.status || error.message}`);
@@ -169,6 +175,8 @@ class DealFetcher {
         .map((a) => ({ label: a.name, value: a.value_name })),
       offersCount,
       ...(Number.isInteger(offer.available_quantity) && offer.available_quantity >= 0 ? { stock: offer.available_quantity } : {}),
+      availability: Number.isInteger(offer.available_quantity) && offer.available_quantity >= 0
+        ? (offer.available_quantity > 0 ? 'available' : 'unavailable') : 'unknown',
       freeShipping: Boolean(offer.shipping?.free_shipping),
       validatedAt: new Date(),
       expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 horas

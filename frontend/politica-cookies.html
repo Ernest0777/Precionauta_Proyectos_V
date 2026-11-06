@@ -12,7 +12,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Política de cookies - Precionauta</title>
-  <meta name="description" content="Qué usamos hoy (localStorage, no cookies de terceros) y qué cambiará cuando agreguemos analítica." />
+  <meta name="description" content="Cookie esencial de sesión, preferencias del navegador y datos de cuenta: cómo los utiliza Precionauta y qué puedes controlar." />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 
   <link rel="stylesheet" href="css/tokens.css" />
@@ -202,49 +202,82 @@
       <div class="container legal">
         <a class="content-back" href="index.html#catalogo">← Volver a las ofertas</a>
         <span class="content-eyebrow">Las reglas, bien claras</span>
-        <p class="legal__updated">Última actualización: 21 de septiembre de 2026</p>
+        <p class="legal__updated">Última actualización: 5 de noviembre de 2026</p>
         <h1>Política de cookies</h1>
 
         <div class="legal__callout">
-          <p>Precionauta no usa cookies de rastreo ni de terceros hoy. No verás un banner de consentimiento de cookies porque, honestamente, no hay ninguna cookie de la que consentir.</p>
+          <p>Precionauta utiliza una cookie esencial para mantener tu sesión y almacenamiento local para preferencias y copias de trabajo. Tus datos de cuenta también se guardan en el servidor; borrar los datos del navegador no los elimina.</p>
         </div>
 
         <nav class="legal-toc" aria-label="En esta página">
           <strong class="legal-toc__title">En esta página</strong>
           <ol>
-            <li><a href="#cookies-vs-almacenamiento-local">Cookies vs. almacenamiento local</a></li>
+            <li><a href="#cookies-vs-almacenamiento-local">Cookie de sesión y almacenamiento local</a></li>
             <li><a href="#que-guardamos-con-localstorage">Qué guardamos con localStorage</a></li>
-            <li><a href="#que-pasara-cuando-agreguemos-analitica">Qué pasará cuando agreguemos analítica</a></li>
-            <li><a href="#como-controlar-tu-almacenamiento-local">Cómo controlar tu almacenamiento local</a></li>
+            <li><a href="#que-pasara-cuando-agreguemos-analitica">Personalización y datos del servidor</a></li>
+            <li><a href="#como-controlar-tu-almacenamiento-local">Cómo controlar tus datos</a></li>
           </ol>
         </nav>
 
-        <h2 id="cookies-vs-almacenamiento-local">Cookies vs. almacenamiento local</h2>
+        <h2 id="cookies-vs-almacenamiento-local">Cookie de sesión y almacenamiento local</h2>
         <p>
-          Una cookie es un archivo que el navegador envía automáticamente al servidor en cada
-          solicitud. Precionauta no las usa. En su lugar, usamos <code>localStorage</code>, una
-          función del navegador que guarda información únicamente en tu equipo y que nosotros nunca
-          recibimos ni podemos leer desde un servidor.
+          La cookie <code>precionauta_session</code> identifica tu sesión ante el servidor y permite
+          acceder a tu biblioteca y a las funciones de tu cuenta. Se crea al entrar o registrarte,
+          tiene una vigencia de hasta 30 días y se retira al cerrar sesión. Usa
+          <code>HttpOnly</code>, por lo que el JavaScript de la página no puede leerla,
+          y <code>SameSite=Lax</code>. En producción se configura con <code>Secure</code> para
+          enviarse por HTTPS.
+        </p>
+        <p>
+          <code>localStorage</code> guarda información en este navegador. No se envía automáticamente
+          como una cookie, pero el sitio puede leerla y sincronizar ciertos datos con tu cuenta.
+          Bloquear la cookie de sesión puede impedir que funcionen el acceso, los guardados,
+          las alertas y las demás acciones que requieren una cuenta.
         </p>
 
         <h2 id="que-guardamos-con-localstorage">Qué guardamos con localStorage</h2>
         <ul>
-          <li>Las ofertas que marcas como favoritas (para calcular tu ahorro acumulado).</li>
-          <li>Las alertas de precio que activas en una ficha de producto.</li>
+          <li>La apariencia clara u oscura y el estado de la bienvenida para elegir intereses.</li>
+          <li>Preferencias de la interfaz, como avisos de temporada descartados o pasos de una lista marcados.</li>
+          <li>Copias de guardados y alertas de la cuenta, y datos antiguos pendientes de migración.</li>
+          <li>Datos de la vinculación opcional de Telegram cuando se utiliza esa función.</li>
         </ul>
-        <p>Nada de esto se comparte, se vende ni se analiza. Es solo para que el sitio recuerde tus preferencias entre visitas.</p>
-
-        <h2 id="que-pasara-cuando-agreguemos-analitica">Qué pasará cuando agreguemos analítica</h2>
         <p>
-          Si en una etapa futura integramos una herramienta de analítica (por ejemplo, para medir qué
-          ofertas generan más clics), actualizaremos esta política y agregaremos un banner de
-          consentimiento antes de activarla - no después.
+          Los guardados antiguos del navegador pueden enviarse al servidor al iniciar sesión para
+          incorporarlos a tu cuenta. Las copias pendientes permiten reintentar si esa migración falla.
+          Los nuevos guardados y alertas requieren una cuenta; su biblioteca se conserva en el servidor.
         </p>
 
-        <h2 id="como-controlar-tu-almacenamiento-local">Cómo controlar tu almacenamiento local</h2>
+        <h2 id="que-pasara-cuando-agreguemos-analitica">Personalización y datos del servidor</h2>
         <p>
-          Puedes borrarlo en cualquier momento desde la configuración de tu navegador ("Configuración
-          del sitio" → Precionauta → Borrar datos), o navegando en modo privado.
+          Tanto la Cuenta gratuita como Plus utilizan actividad privada para recomendar ofertas:
+          búsquedas, vistas, categorías, tiendas, intereses elegidos, guardados y alertas.
+          Se conservan hasta 300 eventos recientes por cuenta en SQLite. Esa actividad no es
+          una cookie publicitaria ni un historial público.
+        </p>
+        <p>
+          El servidor también guarda el perfil, el plan, la biblioteca, los precios objetivo,
+          los votos y los reportes. Los conteos de votos por oferta se muestran sin identificar
+          a las personas. Resend puede utilizarse para verificación y recuperación de contraseña,
+          y Telegram para avisos opcionales de Plus, cuando esos servicios estén configurados.
+          Consulta el <a href="aviso-privacidad.html">aviso de privacidad</a> para conocer esos datos
+          y el uso de referencias de ofertas vistas para reportes.
+        </p>
+
+        <h2 id="como-controlar-tu-almacenamiento-local">Cómo controlar tus datos</h2>
+        <p>
+          Puedes cerrar sesión desde tu perfil o eliminar las cookies y el almacenamiento local
+          desde la configuración del navegador (Configuración del sitio → Precionauta → Borrar datos).
+          Borrar esos datos puede quitar preferencias, copias pendientes y el acceso guardado en ese
+          navegador. <strong>No elimina tu cuenta ni sus datos en SQLite</strong>, que pueden volver
+          a cargarse al iniciar sesión. Navegar en privado tampoco borra datos existentes del servidor.
+        </p>
+        <p>
+          Para cambiar datos guardados en tu cuenta, elimina ofertas y alertas desde sus controles,
+          retira un voto pulsando otra vez la opción elegida o usa Inicio → Para ti → Borrar historial
+          para eliminar la actividad de recomendaciones. Ese borrado de actividad no elimina
+          guardados, alertas, votos ni reportes. La interfaz actual no incluye una función para
+          eliminar la cuenta completa.
         </p>
       </div>
     </section>

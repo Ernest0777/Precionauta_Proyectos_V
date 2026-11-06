@@ -12,7 +12,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Aviso de privacidad - Precionauta</title>
-  <meta name="description" content="Qué datos maneja Precionauta hoy, para qué se usan y cómo puedes borrarlos." />
+  <meta name="description" content="Datos de cuenta, recomendaciones, votos y almacenamiento de Precionauta: qué se guarda en el servidor y qué puedes controlar." />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 
   <link rel="stylesheet" href="css/tokens.css" />
@@ -202,18 +202,19 @@
       <div class="container legal">
         <a class="content-back" href="index.html#catalogo">← Volver a las ofertas</a>
         <span class="content-eyebrow">Las reglas, bien claras</span>
-        <p class="legal__updated">Última actualización: 21 de septiembre de 2026</p>
+        <p class="legal__updated">Última actualización: 5 de noviembre de 2026</p>
         <h1>Aviso de privacidad</h1>
         <p>
-          Precionauta es un proyecto académico (Proyectos V, Universidad Modelo) todavía en
-          desarrollo. Este aviso describe honestamente qué pasa con tus datos <strong>hoy</strong>,
-          no lo que planeamos hacer cuando el sitio esté completo.
+          Precionauta es un proyecto académico (Proyectos V, Universidad Modelo) en desarrollo.
+          Esta página describe los datos que utiliza su funcionamiento actual: cuentas,
+          biblioteca de ofertas, recomendaciones y participación en la comunidad.
         </p>
 
         <div class="legal__callout">
           <p>
-            Ahora mismo, Precionauta no tiene servidor propio ni base de datos. Ningún dato tuyo
-            sale de tu navegador.
+            Los datos de tu cuenta se guardan en una base de datos SQLite del servidor.
+            El navegador también conserva preferencias y algunas copias de trabajo.
+            Borrar los datos del navegador no elimina los datos de tu cuenta en el servidor.
           </p>
         </div>
 
@@ -222,53 +223,99 @@
           <ol>
             <li><a href="#que-guardamos-y-donde">Qué guardamos y dónde</a></li>
             <li><a href="#enlaces-a-tiendas-externas">Enlaces a tiendas externas</a></li>
-            <li><a href="#cuando-el-proyecto-avance">Cuando el proyecto avance</a></li>
+            <li><a href="#cuando-el-proyecto-avance">Correo y Telegram</a></li>
             <li><a href="#como-borrar-lo-que-ya-esta-guardado">Cómo borrar lo que ya está guardado</a></li>
-            <li><a href="#contacto">Contacto</a></li>
+            <li><a href="#contacto">Contacto y controles disponibles</a></li>
           </ol>
         </nav>
 
         <h2 id="que-guardamos-y-donde">Qué guardamos y dónde</h2>
         <ul>
           <li>
-            <strong>Favoritos y alertas de precio:</strong> se guardan con <code>localStorage</code>,
-            una función del navegador que vive únicamente en tu equipo. Nosotros no tenemos acceso a
-            esa información; nunca viaja a un servidor.
+            <strong>Cuenta y biblioteca:</strong> el servidor guarda tu nombre, correo electrónico,
+            una derivación de tu contraseña (no la contraseña en texto legible), dirección opcional,
+            plan, ofertas guardadas, alertas y precios objetivo. Estos datos permiten entrar,
+            recuperar tu biblioteca y aplicar los permisos de tu plan.
           </li>
           <li>
-            <strong>Analítica o rastreo:</strong> no usamos Google Analytics, Meta Pixel ni ninguna
-            herramienta de rastreo todavía.
+            <strong>Sesión:</strong> una cookie esencial de sesión identifica tu acceso al servidor.
+            Tiene el atributo <code>HttpOnly</code>, que impide leerla desde el JavaScript de la página.
+            Consulta la <a href="politica-cookies.html">política de cookies</a> para conocer su duración
+            y los datos que conserva el navegador.
+          </li>
+          <li>
+            <strong>Recomendaciones privadas:</strong> con una Cuenta gratuita o Plus se guardan
+            hasta 300 eventos recientes por cuenta: búsquedas, ofertas vistas, categorías y tiendas
+            de interés, elecciones iniciales, guardados y alertas. Se utilizan para ordenar las
+            recomendaciones y explicar por qué aparece una oferta. Este historial no se muestra
+            a otros usuarios.
+          </li>
+          <li>
+            <strong>Votos:</strong> el servidor vincula cada voto a tu cuenta para permitir cambiarlo
+            o retirarlo. En las ofertas se muestran los conteos agregados a favor y en contra,
+            sin publicar la identidad de quienes votan.
+          </li>
+          <li>
+            <strong>Reportes:</strong> se guardan la oferta, el motivo, la nota que escribas y el
+            estado de revisión para que el equipo pueda moderar ofertas vencidas o precios
+            incorrectos. También se conserva una referencia de las ofertas que consultaste para
+            poder reportar las vistas en los últimos 30 días, aunque ya no estén en el catálogo.
+            Ese plazo no supone que todos los datos del reporte se borren automáticamente.
+          </li>
+          <li>
+            <strong>En tu navegador:</strong> <code>localStorage</code> conserva la apariencia,
+            el estado de la bienvenida y otras preferencias de la interfaz. Puede contener copias
+            de guardados y alertas, incluidos datos antiguos pendientes de migrar a tu cuenta.
+            Al iniciar sesión, esas copias antiguas pueden enviarse al servidor para incorporarlas
+            a tu biblioteca. Los visitantes nuevos necesitan registrarse para guardar o activar alertas.
           </li>
         </ul>
 
         <h2 id="enlaces-a-tiendas-externas">Enlaces a tiendas externas</h2>
         <p>
-          Al dar clic en "Ver oferta" te llevamos al sitio de la tienda original (Amazon México,
-          Mercado Libre o Liverpool). Esas tiendas tienen sus propias políticas de privacidad,
-          independientes de esta. Te recomendamos revisarlas antes de comprar.
+          El conector de catálogo actual utiliza Mercado Libre. Al dar clic en "Ver oferta",
+          el enlace puede pasar por el servidor de Precionauta para contar el clic y agregar la
+          referencia de afiliación antes de abrir la tienda. Mercado Libre tiene sus propias
+          políticas de privacidad. Algunos productos de demostración pueden mostrar nombres
+          de otras tiendas; eso no significa que exista una integración activa con ellas.
         </p>
 
-        <h2 id="cuando-el-proyecto-avance">Cuando el proyecto avance</h2>
+        <h2 id="cuando-el-proyecto-avance">Correo y Telegram</h2>
         <p>
-          Las siguientes etapas de Precionauta (ver nuestro cronograma) incluyen cuentas de usuario y
-          alertas de precio por correo o Telegram, lo que implicará guardar tu correo electrónico en
-          un servidor. Actualizaremos este aviso, con el detalle exacto de qué se guarda y por cuánto
-          tiempo, antes de activar esas funciones.
+          La verificación de correo y la recuperación de contraseña utilizan Resend cuando el
+          servicio está configurado. En esos casos se envían al proveedor el correo de destino
+          y el mensaje con el enlace correspondiente. La disponibilidad y el envío dependen de
+          la configuración del servicio; esta página no confirma que se haya enviado un correo.
+        </p>
+        <p>
+          Telegram es una vinculación opcional para Plus, disponible cuando el bot está configurado.
+          Si decides conectarlo, se asocia tu cuenta con el chat de Telegram para entregar los
+          avisos. Puedes desconectarlo desde el panel de alertas. Usar una Cuenta gratuita o Plus
+          para recibir recomendaciones no requiere conectar Telegram.
         </p>
 
         <h2 id="como-borrar-lo-que-ya-esta-guardado">Cómo borrar lo que ya está guardado</h2>
         <p>
-          Todo lo que guarda este sitio hoy vive en el almacenamiento local de tu navegador. Puedes
-          borrarlo desde la configuración de tu navegador ("Borrar datos de navegación" /
-          "Configuración del sitio" → Precionauta → Borrar datos), o simplemente usando una ventana
-          de navegación privada.
+          Los controles de la interfaz permiten realizar estas acciones en tu cuenta:
+        </p>
+        <ul>
+          <li>Quitar una oferta desde el corazón o desde Mis guardados.</li>
+          <li>Eliminar una alerta desde la campana o desde Mis alertas, y quitar su precio objetivo desde esa alerta.</li>
+          <li>Borrar la actividad de recomendaciones desde Inicio → Para ti → Borrar historial. Esto no elimina tus guardados, alertas, votos ni reportes.</li>
+          <li>Retirar un voto pulsando otra vez la misma opción que habías elegido.</li>
+        </ul>
+        <p>
+          Para borrar preferencias y copias locales, usa la configuración del navegador
+          (Configuración del sitio → Precionauta → Borrar datos). Esto también puede cerrar tu
+          sesión, pero <strong>no borra tu cuenta ni sus datos en SQLite</strong>.
+          Una ventana privada tampoco elimina información que ya esté guardada en el servidor.
         </p>
 
-        <h2 id="contacto">Contacto</h2>
+        <h2 id="contacto">Contacto y controles disponibles</h2>
         <p>
-          Este proyecto todavía no tiene un correo de contacto oficial configurado. Mientras tanto,
-          cualquier duda puede canalizarse a través del equipo del proyecto (Pedro Narváez, Ernesto
-          Hernández, Dylan Mollinedo - Proyectos V).
+          Esta página no publica un correo oficial de contacto. La interfaz actual tampoco ofrece
+          una función para eliminar la cuenta completa o sus reportes. Los controles de eliminación
+          disponibles son los descritos arriba; cerrar sesión o limpiar el navegador no los sustituye.
         </p>
       </div>
     </section>

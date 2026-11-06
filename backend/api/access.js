@@ -8,6 +8,17 @@ function isLocked(deal, access) {
   return Boolean(access.delayMs && since != null && Date.now() - since < access.delayMs);
 }
 
+function selectDealsForAccess(deals, access) {
+  if (access.level !== 'visitor') return deals;
+  const seen = new Set();
+  // La muestra se fija antes de filtros o búsquedas y nunca incluye ofertas bloqueadas.
+  return deals.filter(deal => {
+    if (seen.has(deal.id) || isLocked(deal, access)) return false;
+    seen.add(deal.id);
+    return true;
+  }).slice(0, access.catalogLimit ?? 6);
+}
+
 function publicDeal(deal, access) {
   const seen = deal.source === 'demo' ? null : priceHistory.firstSeen(deal.id);
   const firstSeenAt = seen == null ? null : new Date(seen).toISOString();
@@ -24,4 +35,4 @@ function publicDeal(deal, access) {
   return { ...deal, locked: false, firstSeenAt, history };
 }
 
-module.exports = { SEASONS, isLocked, publicDeal };
+module.exports = { SEASONS, isLocked, publicDeal, selectDealsForAccess };

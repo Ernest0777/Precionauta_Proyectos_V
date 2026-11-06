@@ -5,9 +5,8 @@
  * en "Mis alertas" se manda al backend para que el bot avise si baja el precio.
  * Sin cuentas ni contraseñas: el código vive solo en este navegador.
  */
-import { API_BASE } from "../data/products.js";
 import { loadAlertIds, ALERTS_CHANGED_EVENT, showToast } from "../shared.js";
-import { accountState } from "./account.js";
+import { API_BASE, accountReady, accountState } from "./account.js";
 
 const CODE_KEY = "precionauta:tg-code";
 const LINKED_KEY = "precionauta:tg-linked";
@@ -75,6 +74,7 @@ export function initTelegram() {
   api("/telegram/status")
     .then(async (status) => {
       Object.assign(state, status);
+      await accountReady;
       if (status.enabled && accountState().user && accountState().plan.id === "plus") {
         await api(`/telegram/link/${getCode()}`, { method: "POST" });
         await checkLink();

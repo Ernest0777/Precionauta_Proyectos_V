@@ -6,7 +6,7 @@
  * en su propio init().
  */
 
-import { PRODUCTS } from "./data/products.js";
+import { PRODUCTS, CATALOG_CHANGED_EVENT } from "./data/products.js";
 import { calculateSavings, formatPriceMXN } from "./utils/format.js";
 import { track } from "./utils/recommender.js";
 import { PLAN_STORAGE_KEY } from "./utils/plan.js";
@@ -37,10 +37,12 @@ function persistIdSet(key, set) {
 }
 
 export function loadSavedIds() {
+  if (!accountState().user) return new Set();
   return loadIdSet(SAVED_STORAGE_KEY);
 }
 
 export function persistSavedIds(set) {
+  if (!accountState().user) { requestRegistration(); return; }
   const previous = loadIdSet(SAVED_STORAGE_KEY);
   persistIdSet(SAVED_STORAGE_KEY, set);
   syncLibrary({ savedAdd: [...set].filter(id => !previous.has(id)), savedRemove: [...previous].filter(id => !set.has(id)) });
@@ -52,6 +54,7 @@ export function loadAlertIds() {
 }
 
 export function persistAlertIds(set) {
+  if (!accountState().user) { requestRegistration(); return; }
   const previous = loadIdSet(ALERTS_STORAGE_KEY);
   persistIdSet(ALERTS_STORAGE_KEY, set);
   syncLibrary({ alertAdd: [...set].filter(id => !previous.has(id)), alertRemove: [...previous].filter(id => !set.has(id)) });
@@ -133,11 +136,11 @@ export function isPlus() {
 
 /**
  * Agrega o quita una alerta respetando el límite del plan gratis.
- * @returns {"added" | "removed" | "limit"}
+ * @returns {"added" | "removed" | "limit" | "auth"}
  */
 export function toggleAlert(id, { source = "page" } = {}) {
   if (!accountState().user) {
-    showToast("Crea tu cuenta gratuita para guardar hasta 3 alertas.", { actionLabel: "Crear cuenta", actionHref: "perfil.html#crear-cuenta" });
+    requestRegistration();
     return "auth";
   }
   const ids = loadAlertIds();
@@ -145,8 +148,8 @@ export function toggleAlert(id, { source = "page" } = {}) {
   if (ids.has(id)) {
     ids.delete(id);
     result = "removed";
-  } else if (!isPlus() && ids.size >= FREE_ALERT_LIMIT) {
-    showToast(`Llegaste a ${FREE_ALERT_LIMIT} alertas del plan gratis. Con Plus son ilimitadas.`, {
+  } else if (!isPlus() && ids.size + (accountState().restockIds?.length || 0) >= FREE_ALERT_LIMIT) {
+    showToast(`Gratis comparte ${FREE_ALERT_LIMIT} alertas entre precio y reposición. Quita una para cambiarla o consulta Plus.`, {
       actionLabel: "Ver Plus",
       actionHref: "planes.html",
     });
@@ -165,9 +168,10 @@ export function toggleAlert(id, { source = "page" } = {}) {
  * Guarda o quita una oferta. Única vía para cambiar los guardados: así el
  * panel "Mis guardados", los corazones y el resumen de ahorro se enteran por
  * el mismo evento, en cualquier página.
- * @returns {"added" | "removed"}
+ * @returns {"added" | "removed" | "auth"}
  */
 export function toggleSaved(id, { source = "page" } = {}) {
+  if (!accountState().user) { requestRegistration(); return "auth"; }
   const ids = loadSavedIds();
   const result = ids.has(id) ? "removed" : "added";
   result === "added" ? ids.add(id) : ids.delete(id);
@@ -217,8 +221,7 @@ export function showToast(message, { actionLabel, actionHref, duration = 4200 } 
 /**
  * Delegación para los botones de corazón y campana de cualquier grid de
  * tarjetas (catálogo, recomendados, temporada, relacionados en Detalle).
- * Lee y escribe siempre en localStorage (toggleSaved / toggleAlert) y
- * repinta los botones cuando el cambio viene de otro lado (paneles).
+ * Usa la biblioteca de la cuenta y repinta cuando cambia desde otro panel.
  */
 export function bindCardActions(container) {
   if (!container) return;
@@ -258,7 +261,10 @@ export function bindCardActions(container) {
   };
   document.addEventListener(ALERTS_CHANGED_EVENT, sync);
   document.addEventListener(SAVED_CHANGED_EVENT, sync);
+  document.addEventListener(ACCOUNT_CHANGED_EVENT, sync);
 }
+
+document.addEventListener(CATALOG_CHANGED_EVENT, () => renderSavingsSummary(loadSavedIds()));
 
 /**
  * "Resumen de ahorro acumulado" (PROJECT_CONTEXT.md), calculado en el
@@ -421,12 +427,17 @@ export function bindMobileMenu() {
 /**
  * Entrada por correo y contraseña con sesión verificada por el backend.
  */
+export function requestRegistration() {
+  document.dispatchEvent(new CustomEvent("auth-requested", { detail: { mode: "register" } }));
+}
+
 export function bindAuthModal() {
   const modal = document.getElementById("authModal");
   const closeBtn = document.getElementById("authModalClose");
   const feedback = document.getElementById("authFeedback");
   const openTriggers = document.querySelectorAll("[data-auth-open]");
-  if (!modal || openTriggers.length === 0) return;
+  if (!modal || modal.dataset.authBound) return;
+  modal.dataset.authBound = "true";
 
   const tabs = modal.querySelectorAll("[data-auth-tab]");
   const panels = modal.querySelectorAll("[data-auth-panel]");
@@ -458,12 +469,21 @@ export function bindAuthModal() {
     passwordLabel.appendChild(hint);
   }
 
-  const open = () => {
+  const open = (event) => {
     if (accountState().user) {
       window.location.href = "perfil.html";
       return;
     }
     lastFocused = document.activeElement;
+    const mode = event?.detail?.mode ?? event?.currentTarget?.dataset?.authMode;
+    if (mode === "register" || mode === "login") {
+      tabs.forEach((tab) => {
+        const active = tab.dataset.authTab === mode;
+        tab.classList.toggle("is-active", active);
+        tab.setAttribute("aria-selected", String(active));
+      });
+      panels.forEach((panel) => { panel.hidden = panel.dataset.authPanel !== mode; });
+    }
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
     document.body.classList.add("no-scroll");
@@ -479,6 +499,11 @@ export function bindAuthModal() {
 
   openTriggers.forEach((trigger) => trigger.addEventListener("click", open));
   document.addEventListener("auth-requested", open);
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest("[data-register]")) return;
+    event.preventDefault();
+    requestRegistration();
+  });
   closeBtn?.addEventListener("click", close);
   modal.addEventListener("click", (event) => {
     if (event.target === modal) close();

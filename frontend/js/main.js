@@ -1,4 +1,5 @@
-import { PRODUCTS, LOCKED_PRODUCTS, CATALOG_SOURCE } from "./data/products.js";
+import { PRODUCTS, LOCKED_PRODUCTS, CATALOG_SOURCE, catalogReady } from "./data/products.js";
+import { accountReady, accountState, ACCOUNT_CHANGED_EVENT } from "./utils/account.js";
 import { formatWait } from "./utils/plan.js";
 import { CATEGORIES, ALL_CATEGORIES_SLUG } from "./data/categories.js";
 import { renderProductCard, renderLockedCard } from "./components/productCard.js";
@@ -56,7 +57,7 @@ const THRESHOLD_OPTIONS = [
 
 const ALL_STORES = "todas";
 /** Derivado de los productos, no hardcodeado: si mañana agregan una tienda nueva a products.js, el filtro la recoge solo. */
-const STORE_OPTIONS = [ALL_STORES, ...new Set(PRODUCTS.map((p) => p.store))];
+let STORE_OPTIONS = [ALL_STORES];
 
 const SORT_OPTIONS = {
   "discount-desc": {
@@ -414,6 +415,17 @@ function renderDealTicker() {
  */
 function renderRecommendations() {
   if (!els.recoRail) return;
+  if (!accountState().user) {
+    if (els.recoTitle) els.recoTitle.innerHTML = "Ofertas <em>para ti</em>";
+    if (els.recoInterests) els.recoInterests.innerHTML = "";
+    els.recoRail.innerHTML = `<div class="registration-gate registration-gate--reco">
+      <p class="registration-gate__eyebrow">Tu cuenta gratuita</p>
+      <h3>Encuentra ofertas según tus intereses</h3>
+      <p>Crea tu cuenta y elige lo que te gusta. Tus recomendaciones tendrán una razón, y tú decides qué guardar.</p>
+      <button type="button" class="btn btn--primary" data-register>Crear cuenta gratis</button>
+    </div>`;
+    return;
+  }
   const picks = recommend(PRODUCTS, { limit: 10 });
   const interests = getInterests();
   const alertIds = loadAlertIds();
@@ -592,6 +604,16 @@ function renderCatalog({ animate = false } = {}) {
 
 function renderLoadMore(shown, total) {
   if (!els.catalogMore) return;
+  if (!accountState().user) {
+    els.catalogMore.innerHTML = `<div class="registration-gate">
+      <p class="registration-gate__eyebrow">${PRODUCTS.length} ofertas de muestra · Tu siguiente paso es gratis</p>
+      <h3>Crea tu cuenta gratis para ver más ofertas</h3>
+      <p>Accede al catálogo completo, guarda tus favoritos y activa hasta 3 alertas de precio con 30 días de historial.</p>
+      <button type="button" class="btn btn--primary" data-register>Crear cuenta gratis</button>
+      <p class="registration-gate__note">Sin tarjeta. Plus es opcional: ofertas nuevas al instante e historial de 365 días.</p>
+    </div>`;
+    return;
+  }
   const remaining = total - shown;
   els.catalogMore.innerHTML =
     total === 0
@@ -771,7 +793,14 @@ function readUrlFilters() {
 function init() {
   if (els.year) els.year.textContent = String(new Date().getFullYear());
 
+  STORE_OPTIONS = [ALL_STORES, ...new Set(PRODUCTS.map((p) => p.store))];
+  const currentSearch = pendingSearch ?? (window.searchBar?.getValue() || null);
   readUrlFilters();
+  if (currentSearch !== null) {
+    state.query = currentSearch;
+    window.searchBar?.setValue(currentSearch);
+  }
+  state.saved = loadSavedIds();
   renderStats();
   renderHero();
   renderHeroStores();
@@ -785,10 +814,24 @@ function init() {
   renderRecommendations();
   renderSavingsSummary(state.saved);
 
+  bindThresholdFilterDelegation();
+  bindStoreFilterDelegation();
+  bindCatalogDelegation();
+  bindSortControl();
+  bindScrollToCatalogLinks();
+  bindRecommendations();
+  bindExtremeZone();
+  if (accountState().user) maybeShowOnboarding();
+}
+
+let pendingSearch = null;
+let catalogInitialized = false;
+function initShell() {
   let searchTrackTimer = null;
   document.addEventListener("search-query", (event) => {
     const { query = "", submit = false } = event.detail ?? {};
-    setQuery(query);
+    pendingSearch = query.trim();
+    if (catalogInitialized) setQuery(query);
     clearTimeout(searchTrackTimer);
     if (submit) {
       track("search", { query });
@@ -801,33 +844,41 @@ function init() {
 
   bindHeaderMenus({
     onCategory: (slug) => {
-      setActiveCategory(slug);
+      if (catalogInitialized) setActiveCategory(slug);
+      else state.activeCategory = slug;
       scrollToCatalog();
     },
     onStore: (store) => {
-      setStore(store);
+      if (catalogInitialized) setStore(store);
+      else state.store = store;
       scrollToCatalog();
     },
     onSearch: (query) => {
       window.searchBar?.setValue(query);
-      setQuery(query);
+      pendingSearch = query.trim();
+      if (catalogInitialized) setQuery(query);
       track("search", { query });
       scrollToCatalog();
     },
   });
 
-  bindThresholdFilterDelegation();
-  bindStoreFilterDelegation();
-  bindCatalogDelegation();
-  bindSortControl();
   bindHeaderScrollShadow();
   bindMobileMenu();
   bindThemeToggle();
   bindAuthModal();
-  bindScrollToCatalogLinks();
-  bindRecommendations();
-  bindExtremeZone();
-  maybeShowOnboarding();
 }
+let pageIdentity;
+let pageInvalidated = false;
+const currentPageIdentity = () => JSON.stringify([accountState().user?.id ?? null, accountState().plan.id]);
+accountReady.then(() => { pageIdentity ??= currentPageIdentity(); });
+document.addEventListener(ACCOUNT_CHANGED_EVENT, () => {
+  if (!pageIdentity || pageInvalidated || pageIdentity === currentPageIdentity()) return;
+  pageInvalidated = true;
+  document.querySelector("main")?.replaceChildren();
+  location.reload();
+});
 
-init();
+initShell();
+await catalogReady;
+catalogInitialized = true;
+if (!pageInvalidated) init();

@@ -1,6 +1,7 @@
 import { icon, CATEGORY_ICON_BY_SLUG } from "../utils/icons.js";
 import { formatAge, formatWait } from "../utils/plan.js";
 import { productImages } from "../utils/images.js";
+import { accountState } from "../utils/account.js";
 import {
   formatPriceMXN,
   formatPriceHTML,
@@ -164,6 +165,13 @@ export function renderProductCard(product, categoryLabel, opts = {}) {
  * el nombre ni el precio: con eso cualquiera la buscaría directo en la tienda.
  */
 export function renderLockedCard(product, categoryLabel) {
+  if (!accountState().user) {
+    return `<article class="product-card product-card--locked" data-product-id="${escapeAttr(product.id)}">
+      <div class="product-card__body"><p class="product-card__category">${escapeHtml(categoryLabel ?? "Ofertas")}</p>
+      <h3 class="product-card__name">Descubre más ofertas</h3>
+      <p class="locked-card__text">Crea tu cuenta gratis para ver el catálogo completo, guardar tus favoritos y activar hasta 3 alertas.</p>
+      <button type="button" class="btn btn--primary" data-register>Crear cuenta gratis</button></div></article>`;
+  }
   const discountPercent = calculateDiscountPercent(product.previousPrice, product.currentPrice);
   const categoryIconName = CATEGORY_ICON_BY_SLUG[product.categorySlug] ?? "tag";
   const age = formatAge(Date.now() - product.firstSeenAt);

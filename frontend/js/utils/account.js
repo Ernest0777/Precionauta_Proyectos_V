@@ -3,19 +3,36 @@ export const API_BASE = (window.PRECIONAUTA_API ?? "http://localhost:3001/api").
 export const ACCOUNT_CHANGED_EVENT = "account-changed";
 export const LIBRARY_OWNER_KEY = "precionauta:library-owner";
 const PENDING_LIBRARY_KEY = "precionauta:pending-library";
+const SESSION_CHANGED_KEY = "precionauta:session-changed";
 
 const visitor = () => ({
   user: null,
   plan: { id: "free" },
-  access: { level: "visitor", historyDays: 0, alertLimit: 0, seasonLimit: 3, delayMs: 7_200_000 },
+  access: { level: "visitor", historyDays: 0, alertLimit: 0, catalogLimit: 6, seasonLimit: 0, delayMs: 7_200_000 },
   savedIds: [],
   alertIds: [],
   pausedAlertIds: [],
+  restockIds: [],
+  pausedRestockIds: [],
+  restockUnreadCount: 0,
   alertTargets: {},
 });
 let state = { ...visitor(), available: false };
 let sessionGeneration = 0;
 let responseSequence = 0;
+
+function announceSessionChange() {
+  try { localStorage.setItem(SESSION_CHANGED_KEY, `${Date.now()}:${Math.random()}`); } catch {}
+}
+
+window.addEventListener?.("storage", (event) => {
+  if (event.key !== SESSION_CHANGED_KEY) return;
+  ++sessionGeneration;
+  ++responseSequence;
+  state = { ...visitor(), available: false };
+  document.dispatchEvent(new CustomEvent(ACCOUNT_CHANGED_EVENT, { detail: state }));
+  refreshAccount();
+});
 
 export function accountState() {
   return state;
@@ -28,13 +45,13 @@ function accept(data) {
   return state;
 }
 
-async function request(path, { method = "GET", body, timeoutMs = 6000 } = {}) {
+async function request(path, { method = "GET", body, timeoutMs = 6000, expectedOwner } = {}) {
   let res;
   try {
     res = await fetch(`${API_BASE}/account${path}`, {
       method,
       credentials: "include",
-      headers: body === undefined ? {} : { "Content-Type": "application/json" },
+      headers: { ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...(expectedOwner ? { "X-Account-Id": expectedOwner } : {}) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       signal: AbortSignal.timeout(timeoutMs),
     });
@@ -112,6 +129,7 @@ async function authenticate(path, details) {
     try { localStorage.setItem(`${PENDING_LIBRARY_KEY}:${data.user.id}`, JSON.stringify({ ...library, owner: data.user.id })); } catch { /* The in-memory copy still gets merged. */ }
   }
   accept(data);
+  announceSessionChange();
   if (library && (library.savedIds.length || library.alertIds.length)) {
     try {
       await migrateLibrary(library);
@@ -129,7 +147,7 @@ async function mutate(path, method, body) {
   const owner = state.user?.id;
   const generation = sessionGeneration;
   const sequence = ++responseSequence;
-  const data = await request(path, { method, body });
+  const data = await request(path, { method, body, expectedOwner: owner });
   return state.user?.id === owner && generation === sessionGeneration && sequence === responseSequence ? accept(data) : state;
 }
 export const updateProfile = (details) => mutate("/profile", "PATCH", details);
@@ -150,7 +168,9 @@ export async function logoutAccount() {
     localStorage.removeItem(LIBRARY_OWNER_KEY);
     localStorage.removeItem("precionauta:plan");
   } catch { /* La sesión se cierra también cuando el almacenamiento no está disponible. */ }
-  return accept(data);
+  const session = accept(data);
+  announceSessionChange();
+  return session;
 }
 
 export const accountReady = refreshAccount();

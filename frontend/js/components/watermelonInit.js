@@ -7,7 +7,7 @@
  */
 
 import { MorphingDiscoveryBar } from "./morphingDiscoveryBar.js";
-import { PRODUCTS } from "../data/products.js";
+import { PRODUCTS, CATALOG_LOADED, CATALOG_CHANGED_EVENT } from "../data/products.js";
 import { CATEGORIES } from "../data/categories.js";
 import { icon, CATEGORY_ICON_BY_SLUG } from "../utils/icons.js";
 import { formatPriceMXN } from "../utils/format.js";
@@ -58,6 +58,24 @@ function initializeSearchBar() {
       document.dispatchEvent(new CustomEvent("search-query", { detail: { query, submit } }));
     },
   });
+
+  const refresh = () => {
+    searchBar.setSuggestions(buildSuggestions());
+    searchBar.results = [];
+    if (!CATALOG_LOADED) {
+      searchBar.suggestionsContainer.innerHTML = '<p role="status">Cargando ofertas…</p>';
+      if (document.activeElement !== searchBar.input) searchBar.hideSuggestions();
+      return;
+    }
+    if (document.activeElement !== searchBar.input) return;
+    const query = searchBar.getValue();
+    if (query.length >= searchBar.searchMinLength) {
+      searchBar.updateSuggestions(query);
+      searchBar.showSuggestions();
+    } else if (!query) searchBar.showEmptyState();
+  };
+  refresh();
+  document.addEventListener(CATALOG_CHANGED_EVENT, refresh);
 
   window.searchBar = searchBar;
   document.dispatchEvent(new CustomEvent("search-bar-ready"));

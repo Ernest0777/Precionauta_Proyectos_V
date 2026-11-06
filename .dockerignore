@@ -1,0 +1,11 @@
+.git
+.agents
+.codex
+.superpowers
+.playwright-cli
+node_modules
+backend/.env*
+backend/data
+backend/cache
+tests
+*.log

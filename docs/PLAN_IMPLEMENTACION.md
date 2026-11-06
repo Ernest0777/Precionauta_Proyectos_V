@@ -4,20 +4,21 @@ Actualizado: 2026-11-04. Rama: `Neo_Brutalism`.
 
 ## Objetivo aprobado
 
-Consolidar Cuenta gratuita y Plus, incorporar cuentas persistentes y aplicar los permisos desde el backend, manteniendo el diseño neobrutalista vigente. El visitante puede explorar sin registrarse. Cazador se fusiona con Plus. Afiliados y tiendas nuevas quedan para después; Mercado Libre sigue siendo el conector actual.
+Consolidar Cuenta gratuita y Plus, incorporar cuentas persistentes y aplicar los permisos desde el backend, manteniendo el diseño neobrutalista vigente. El visitante puede explorar una muestra de seis ofertas; el registro gratuito abre el resto de funciones. Cazador se fusiona con Plus. Afiliados y tiendas nuevas quedan para después; Mercado Libre sigue siendo el conector actual.
 
-La implementación está en integración. Este documento describe el contrato y su aceptación; no declara aprobada la revisión final en navegador.
+Este documento recoge el contrato vigente y el historial de verificaciones. La ampliación de registro, votos y recomendaciones se detalla en [PLAN_REGISTRO_COMUNIDAD.md](PLAN_REGISTRO_COMUNIDAD.md).
 
 ## Contrato de producto
 
 | Capacidad | Visitante | Cuenta gratuita | Plus |
 |---|---|---|---|
-| Explorar catálogo liberado | Sí | Sí | Sí |
-| Guardados | Locales | En cuenta | En cuenta |
+| Explorar catálogo liberado | Muestra de 6 ofertas | Completo | Completo |
+| Guardados | Requiere registro | En cuenta | En cuenta |
 | Alertas activas | Ninguna | Hasta 3 | Ilimitadas |
 | Ventana de historial | Sin acceso | Hasta 30 días | Hasta 365 días |
-| Ofertas posteriores a primera carga | Espera de 2 horas | Espera de 2 horas | Inmediatas |
-| Temporadas | 3 en total por evento | 3 en total por evento | Todas las disponibles |
+| Ofertas posteriores a primera carga | Registro para ver más | Espera de 2 horas | Inmediatas |
+| Temporadas | Requiere registro | 3 en total por evento | Todas las disponibles |
+| Recomendaciones personales y votos | Requiere registro | Sí | Sí |
 
 Plus: $79 MXN/mes o $790 MXN/año con IVA incluido. El total anunciado no lleva un cargo adicional de IVA. El anual ahorra $158 frente a 12 mensualidades. Se ofrecen dos tarjetas comerciales: Cuenta gratuita y Plus; visitante es un estado de acceso.
 
@@ -107,4 +108,18 @@ Se añadió estado pendiente/verificado en Perfil, envío automático al registr
 
 Se retiró «Mantente conectado» de Inicio y Detalle, junto con su formulario simulado, manejador y estilos exclusivos. El buscador volvió a su disposición compacta: no ocupa una nueva fila en escritorio ni ensancha las sugerencias. Se comprobaron 1280, 1366 y 1440 px antes/después de enfocar, además de los recorridos móviles previos.
 
-Suite actual: 26 pruebas aprobadas. El navegador comprobó reenvío de verificación con Resend simulado, confirmación, persistencia del estado verificado, ausencia de suscripción y estabilidad del encabezado. La revisión independiente del flujo de verificación no encontró fallos materiales adicionales.
+Suite al cerrar esa etapa: 26 pruebas aprobadas. El navegador comprobó reenvío de verificación con Resend simulado, confirmación, persistencia del estado verificado, ausencia de suscripción y estabilidad del encabezado. La revisión independiente del flujo de verificación no encontró fallos materiales adicionales.
+
+## Moderación automática, reportes y resumen de entrada
+
+Implementado en la rama Neo_Brutalism. Las cuentas pueden reportar oferta vencida o precio incorrecto desde Detalle, con nota opcional de hasta 300 caracteres. Los reportes persisten en SQLite; se evita duplicar pendientes del mismo usuario, producto y motivo, con cinco creaciones nuevas por hora. El panel permite atender o descartar cada reporte. Una consulta de detalle autorizada se conserva durante 30 días por cuenta para admitir el reporte si la oferta desaparece entre abrirla y enviarlo.
+
+El motor comienza en observación: registra propuestas sin aplicar decisiones nuevas. El modo automático opcional publica validaciones recientes de riesgo bajo, deriva casos sospechosos a revisión y retira sólo ante evidencia explícita de inventario agotado o descuento terminado. Un precio anterior ausente o incoherente produce incertidumbre, no confirma vencimiento. La selección evita precios de un vendedor agotado si existe otro disponible o con inventario desconocido. No se interpreta como agotamiento que falte una oferta en una consulta, que caduque su validación o que alguien la reporte.
+
+Las decisiones manuales prevalecen sobre el motor. Las decisiones y la auditoría de acciones automáticas o reversiones comparten una transacción SQLite. Las decisiones antiguas de JSON se migran una sola vez. «Deshacer» comprueba que la decisión no cambió después y deja una decisión manual protectora. El historial JSON de consultas es secundario.
+
+Al entrar al panel se abre Resumen: última consulta, modo, evaluaciones, acciones aplicadas, propuestas, casos pendientes con motivos y reportes de la comunidad. La primera entrada cubre 24 horas; las siguientes, desde la última entrada en ese navegador. El marcador se guarda sólo después de mostrar correctamente el resumen completo. «Analizar ahora» espera una actualización de Mercado Libre y comunica el fallo cuando no se pudo confirmar una consulta nueva.
+
+Verificación final del 5 de noviembre de 2026: **47 pruebas aprobadas**, sintaxis válida en **78 archivos JavaScript** y `git diff --check` sin errores. El recorrido de Chrome comprobó reporte público, atención administrativa, observación, activación automática, reversión, resumen al entrar y volver a entrar, fallo de carga sin adelantar la última visita, y ancho móvil de 390 px. Conservó las comprobaciones previas de cuenta, verificación, recuperación, precios, permisos, imágenes y planes.
+
+Las pruebas usan SQLite, usuarios y servidores temporales, con Mercado Libre y Resend simulados; no envían correos ni Telegram reales. La revisión independiente detectó y se corrigieron la pérdida de referencias a ofertas desaparecidas, la persistencia separada de decisión/auditoría, el análisis prematuro de caché, el avance prematuro de última visita y la falsa inferencia de descuento terminado desde un precio ausente. Antes de usar habitualmente el modo automático, corresponde evaluar sus propuestas en observación con datos reales.

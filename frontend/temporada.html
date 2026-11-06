@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/season.css" />
   <link rel="stylesheet" href="css/neobrutalism.css" />
   <link rel="stylesheet" href="css/content-neobrutalism.css" />
+  <link rel="stylesheet" href="css/registration.css" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#ffe638" />
   <link rel="apple-touch-icon" href="assets/icons/app/apple-touch-icon.png" />
@@ -203,14 +204,14 @@
         <div class="season-hero__copy">
           <span class="content-eyebrow">Tu próxima gran compra empieza aquí</span>
           <h1 class="season-hero__title" id="seasonTitle">Temporadas</h1>
-          <div class="season-selector"><label for="seasonSelect">Explorar temporada</label><select id="seasonSelect" name="temporada"><option value="buen-fin-2026">Buen Fin 2026</option></select></div>
+          <div class="season-selector" data-season-member hidden><label for="seasonSelect">Explorar temporada</label><select id="seasonSelect" name="temporada"><option value="buen-fin-2026">Buen Fin 2026</option></select></div>
           <p class="season-hero__lead" id="seasonLead">Explora los eventos del año y compara sus ofertas con los precios registrados antes de comprar.</p>
-          <div class="season-hero__actions">
+          <div class="season-hero__actions" data-season-member hidden>
             <a class="btn btn--primary" href="#minimos">Ver ofertas en mínimo histórico</a>
             <a class="hero__link" href="#guia">Cómo detectar descuentos falsos</a>
           </div>
         </div>
-        <div class="countdown" id="countdown" aria-live="polite">
+        <div class="countdown" id="countdown" aria-live="polite" data-season-member hidden>
           <p class="countdown__label" id="countdownLabel">Faltan</p>
           <div class="countdown__grid">
             <div class="countdown__cell"><span class="countdown__num tabular-nums" data-unit="days">--</span><span class="countdown__unit">días</span></div>
@@ -222,7 +223,19 @@
       </div>
     </section>
 
-    <section id="minimos" class="season-section" aria-labelledby="minimosTitle">
+    <section id="seasonRegistration" class="season-section" aria-labelledby="seasonRegistrationTitle">
+      <div class="container">
+        <div class="registration-gate">
+          <p class="registration-gate__eyebrow">Temporadas · Con tu cuenta gratuita</p>
+          <h2 id="seasonRegistrationTitle">Prepárate para las ofertas de temporada</h2>
+          <p>Crea tu cuenta gratis para explorar hasta 3 ofertas por evento, guardar tus favoritos y activar hasta 3 alertas de precio.</p>
+          <button type="button" class="btn btn--primary" data-register>Crear cuenta gratis</button>
+          <p class="registration-gate__note">Sin tarjeta. Plus es opcional y amplía el catálogo de cada temporada.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="minimos" class="season-section" aria-labelledby="minimosTitle" data-season-member hidden>
       <div class="container">
         <div class="season-access"><p id="seasonAccess" role="status">Cargando ofertas de la temporada…</p><a href="planes.html" id="seasonUpgrade">Ver acceso Plus</a></div>
         <div class="section-head">
@@ -233,7 +246,7 @@
       </div>
     </section>
 
-    <section class="season-section season-section--alt" aria-labelledby="fuertesTitle">
+    <section class="season-section season-section--alt" aria-labelledby="fuertesTitle" data-season-member hidden>
       <div class="container">
         <div class="section-head">
           <h2 id="fuertesTitle">Más precios <em>para comparar</em></h2>
@@ -243,7 +256,7 @@
       </div>
     </section>
 
-    <section id="guia" class="season-section" aria-labelledby="guiaTitle">
+    <section id="guia" class="season-section" aria-labelledby="guiaTitle" data-season-member hidden>
       <div class="container season-guide">
         <div>
           <h2 id="guiaTitle">Cómo no caer en <em>descuentos falsos</em></h2>
@@ -253,7 +266,7 @@
       </div>
     </section>
 
-    <section class="season-section season-section--alt" aria-labelledby="calTitle">
+    <section class="season-section season-section--alt" aria-labelledby="calTitle" data-season-member hidden>
       <div class="container">
         <div class="section-head">
           <h2 id="calTitle">Calendario de <em>temporadas</em></h2>

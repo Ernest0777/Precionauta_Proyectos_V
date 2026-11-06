@@ -10,6 +10,10 @@ test('alert targets belong to the account and filter only new price drops', asyn
   process.env.NODE_ENV = 'test';
   const configFile = require.resolve('../backend/config/config');
   require.cache[configFile] = { id: configFile, filename: configFile, loaded: true, exports: { server: {}, telegram: {}, affiliate: {} } };
+  const fetcherFile = require.resolve('../backend/api/deal-fetcher');
+  require.cache[fetcherFile] = { id: fetcherFile, filename: fetcherFile, loaded: true, exports: {
+    fetchAllDeals: async () => ['one', 'two', 'three', 'four'].map(id => ({ id, title: id, currentPrice: 100, source: 'demo' })),
+  } };
   const express = require('express');
   const db = require('../backend/db/database');
   const account = require('../backend/account');

@@ -1,5 +1,6 @@
 import { accountReady, accountState, updateProfile, logoutAccount, retryLibraryMigration, requestEmailVerification, ACCOUNT_CHANGED_EVENT } from "./utils/account.js";
 import { PLUS_PRICES } from "./utils/plan.js";
+import { bindRestockPanel } from "./components/restockPanel.js";
 import { bindHeaderMenus } from "./components/headerMenus.js";
 import { bindAuthModal, bindHeaderScrollShadow, bindMobileMenu, bindThemeToggle } from "./shared.js";
 
@@ -9,6 +10,7 @@ bindAuthModal();
 bindHeaderScrollShadow();
 bindMobileMenu();
 bindThemeToggle();
+bindRestockPanel(document.getElementById("reposiciones"));
 document.getElementById("footerYear").textContent = String(new Date().getFullYear());
 
 const form = document.getElementById("profileForm");
@@ -38,13 +40,14 @@ function paint() {
     : "$0 MXN · sin suscripción de pago";
   document.getElementById("profilePlanBenefits").replaceChildren(...(plus
     ? ["Ofertas nuevas al instante", "Hasta 12 meses de historial registrado", "Alertas ilimitadas y Telegram", "Todas las ofertas de cada temporada"]
-    : ["3 alertas de precio activas", "30 días de historial registrado", "Ofertas nuevas después de 2 horas", "3 ofertas por temporada"]
+    : ["3 alertas activas entre precio y reposición", "30 días de historial registrado", "Ofertas nuevas después de 2 horas", "3 ofertas por temporada"]
   ).map((text) => { const li = document.createElement("li"); li.textContent = text; return li; }));
   document.getElementById("profileSavedCount").textContent = String(session.savedIds.length);
-  document.getElementById("profileAlertCount").textContent = String(session.alertIds.length - (session.pausedAlertIds?.length || 0));
+  document.getElementById("profileAlertCount").textContent = String(session.alertIds.length - (session.pausedAlertIds?.length || 0) + (session.restockIds?.length || 0) - (session.pausedRestockIds?.length || 0));
   const paused = document.getElementById("profilePaused");
-  paused.hidden = !session.pausedAlertIds?.length;
-  paused.textContent = `${session.pausedAlertIds?.length || 0} alertas conservadas en pausa. Con Plus puedes volver a activarlas todas.`;
+  const pausedCount = (session.pausedAlertIds?.length || 0) + (session.pausedRestockIds?.length || 0);
+  paused.hidden = !pausedCount;
+  paused.textContent = `${pausedCount} alertas conservadas en pausa. Con Plus puedes volver a activarlas todas.`;
 }
 
 form.addEventListener("submit", async (event) => {

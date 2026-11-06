@@ -1,5 +1,5 @@
 /** Temporadas: calendario editorial, acceso por cuenta y ofertas por evento. */
-import { PRODUCTS, API_BASE, normalizeDeal } from "./data/products.js";
+import { PRODUCTS, catalogReady, API_BASE, normalizeDeal } from "./data/products.js";
 import { accountReady, accountState } from "./utils/account.js";
 import { CATEGORIES } from "./data/categories.js";
 import { SEASONS, getSeason, getSeasonStatus, splitDuration, selectSeasonProducts, partitionSeasonProducts } from "./data/season.js";
@@ -127,6 +127,15 @@ async function loadSeasonOffers() {
   await accountReady;
   const plus = accountState().access.level === "plus";
   const status = document.getElementById("seasonAccess");
+  const visitor = !accountState().user;
+  const gate = document.getElementById("seasonRegistration");
+  if (gate) gate.hidden = !visitor;
+  document.querySelectorAll("[data-season-member]").forEach((section) => { section.hidden = visitor; });
+  if (visitor) {
+    document.getElementById("minGrid").innerHTML = "";
+    document.getElementById("strongGrid").innerHTML = "";
+    return;
+  }
   status.textContent = "Cargando ofertas de la temporada…";
   document.getElementById("minGrid").innerHTML = "";
   document.getElementById("strongGrid").innerHTML = "";
@@ -137,10 +146,11 @@ async function loadSeasonOffers() {
     if (!res.ok) throw new Error("season-unavailable");
     const payload = await res.json();
     if (!Array.isArray(payload.data)) throw new Error("season-invalid");
-    products = payload.data.filter((row) => !row.locked).map((row, index) => normalizeDeal(row, index));
+    products = payload.data.filter((row) => !row.locked).map((row, index) => normalizeDeal({ ...row, source: row.source ?? payload.source ?? "backend" }, index));
   } catch {
     // La muestra local nunca concede acceso Plus ni representa ofertas del evento.
     demo = true;
+    await catalogReady;
     products = PRODUCTS.filter((product) => !product.live);
   }
   if (request !== seasonRequest) return;

@@ -7,7 +7,7 @@ Actualizado: 2026-11-05. Trabajo actual en `Neo_Brutalism`.
 - [x] Mantener el diseño neobrutalista actual y sus temas claro/oscuro.
 - [x] Fusionar Cazador con Plus; mostrar Cuenta gratuita y Plus como los dos planes comerciales.
 - [x] Fijar Plus en $79 MXN/mes o $790 MXN/año con IVA incluido; ahorro anual de $158.
-- [x] Definir visitante como acceso sin cuenta, con guardados locales, sin historial ni alertas.
+- [x] Definir visitante como muestra de seis ofertas, sin guardados, historial, alertas ni Temporadas; registro gratuito para ampliar acceso.
 - [x] Definir Cuenta gratuita: 3 alertas activas, hasta 30 días de historial y 2 horas de espera para ofertas posteriores a la primera carga.
 - [x] Definir Plus: alertas ilimitadas, hasta 365 días de historial y acceso inmediato a ofertas nuevas.
 - [x] Definir temporadas gratuitas como 3 ofertas en total por evento; Plus accede a todas las disponibles.
@@ -51,6 +51,12 @@ Estas tareas no bloquean la entrega actual. No hay cuentas autorizadas o aprobac
 
 - [x] Reportar oferta vencida o precio incorrecto desde Detalle, con cola administrativa y límites por cuenta.
 - [x] Moderador por reglas e historial, modo observación inicial, modo automático opcional, decisiones reversibles y resumen al entrar al panel.
+- [x] Valoraciones de comunidad por cuenta y recomendaciones personales persistentes, con aislamiento entre pestañas.
+- [ ] Configurar respaldo periódico de SQLite para proteger cuentas, historial, votos y actividad acumulada.
+- [x] Preparar recolección de productos seguidos fuera de ofertas, reposición confirmada y tarjetas PNG.
+- [x] Preparar respaldo SQLite verificable y configuración Docker con almacenamiento persistente.
+- [ ] Elegir servidor sin suspensión, desplegar con HTTPS y validar el contenedor; Docker Engine no estaba iniciado en desarrollo.
+- [ ] Investigar fuentes autorizadas de precios históricos antes de plantear importaciones; conservar procedencia y fechas reales.
 - [ ] Evaluar las propuestas de observación con datos reales antes de usar el modo automático de forma habitual; ajustar falsos positivos con evidencia.
 
 - [ ] Validar las hipótesis de la [protopersona](docs/PROTOPERSONA.md) con entrevistas y observación de tareas.

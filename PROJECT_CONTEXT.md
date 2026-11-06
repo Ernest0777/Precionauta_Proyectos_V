@@ -10,13 +10,13 @@ Consolidar Cuenta gratuita y Plus, conectar la cuenta real al backend y conserva
 
 | Estado | Guardados | Alertas | Historial | Ofertas nuevas | Temporadas |
 |---|---|---|---|---|---|
-| Visitante | Locales | Ninguna | Ninguno | 2 horas de espera después de la primera carga | 3 en total por evento |
+| Visitante | Requiere registro | Ninguna | Ninguno | Muestra de 6 ofertas liberadas; registro para ver más | Requiere registro |
 | Cuenta gratuita | En cuenta | 3 activas | Hasta 30 días | 2 horas de espera después de la primera carga | 3 en total por evento |
 | Plus | En cuenta | Ilimitadas | Hasta 365 días | Inmediatas | Todas las disponibles |
 
 Plus cuesta $79 MXN/mes o $790 MXN/año, IVA incluido. El anual ahorra $158, equivalentes a 2 mensualidades. El número de días determina la ventana accesible, no garantiza que exista toda esa historia para cada producto.
 
-Visitante no es un plan comercial. Puede explorar sin registrarse. Al bajar de Plus se conservan guardados y alertas; las excedentes del límite gratuito quedan pausadas.
+Visitante no es un plan comercial. Puede explorar seis ofertas sin registrarse; no puede guardar ni acceder a Temporadas. La cuenta gratuita también incorpora valoraciones y recomendaciones personales por su actividad. Al bajar de Plus se conservan guardados y alertas; las excedentes del límite gratuito quedan pausadas.
 
 ## Integración actual
 
@@ -28,7 +28,7 @@ Visitante no es un plan comercial. Puede explorar sin registrarse. Al bajar de P
 - Catálogo: Mercado Libre cuando hay datos; ejemplos identificables como respaldo cuando el backend no está disponible.
 - Temporadas: fechas oficiales cuando estén anunciadas; estado pendiente cuando no lo estén. El límite gratuito es por evento completo.
 
-La integración de cuentas y permisos se está cerrando en esta entrega. La revisión final en navegador debe quedar registrada antes de declararla verificada.
+La integración de cuentas, permisos, comunidad, recomendaciones, moderación, seguimiento y reposición está verificada localmente: 94 pruebas automatizadas y recorrido de navegador con datos temporales y servicios simulados. Las tres alertas gratuitas se comparten entre precio y reposición. El seguimiento conserva precios fuera de ofertas y las tarjetas se descargan como PNG. Las páginas ya no bloquean sus controles esperando el catálogo; el historial admite consulta de precio y fecha mediante mouse, tacto y teclado. Hay configuración de backend continuo y respaldo, sin despliegue ni prueba de ejecución Docker. Los detalles constan en los planes, docs/RENDIMIENTO.md y docs/BACKEND_CONTINUO.md.
 
 ## Límites explícitos
 

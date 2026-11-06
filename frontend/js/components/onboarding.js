@@ -7,9 +7,10 @@
 import { CATEGORIES } from "../data/categories.js";
 import { icon, CATEGORY_ICON_BY_SLUG } from "../utils/icons.js";
 import { track } from "../utils/recommender.js";
+import { accountState } from "../utils/account.js";
 
 const ONBOARDED_KEY = "precionauta:onboarded";
-const STORES = ["Amazon México", "Mercado Libre", "Liverpool"];
+const STORES = ["Mercado Libre"];
 
 function wasOnboarded() {
   try {
@@ -66,7 +67,7 @@ function build() {
         </div>
       </fieldset>
 
-      <p class="onboarding__privacy">${icon("shieldCheck", { size: 14 })} Se guarda solo en este navegador.</p>
+      <p class="onboarding__privacy">${icon("shieldCheck", { size: 14 })} Tus intereses se guardan en tu cuenta para personalizar las recomendaciones.</p>
 
       <div class="onboarding__actions">
         <button type="submit" value="skip" class="onboarding__skip">Ahora no</button>
@@ -98,6 +99,10 @@ function build() {
 }
 
 export function openOnboarding() {
+  if (!accountState().user) {
+    document.dispatchEvent(new CustomEvent("auth-requested", { detail: { mode: "register" } }));
+    return;
+  }
   if (!dialog) build();
   dialog.querySelectorAll("input").forEach((i) => (i.checked = false));
   dialog.querySelector("[data-onboarding-save]").disabled = true;
@@ -107,8 +112,8 @@ export function openOnboarding() {
 
 /** Solo la primera vez, con una pausa para que primero se vea la página. */
 export function maybeShowOnboarding(delay = 1400) {
-  if (wasOnboarded()) return;
+  if (!accountState().user || wasOnboarded()) return;
   setTimeout(() => {
-    if (!wasOnboarded() && !document.querySelector("dialog[open]")) openOnboarding();
+    if (accountState().user && !wasOnboarded() && !document.querySelector("dialog[open]")) openOnboarding();
   }, delay);
 }

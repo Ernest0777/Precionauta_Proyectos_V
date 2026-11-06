@@ -15,7 +15,7 @@
 
 import { GENERATED_PRODUCTS } from "./generatedProducts.js";
 import { currentPlanId, FREE_DELAY_MS } from "../utils/plan.js";
-import { accountReady, API_BASE as ACCOUNT_API_BASE } from "../utils/account.js";
+import { accountReady, accountState, ACCOUNT_CHANGED_EVENT, API_BASE as ACCOUNT_API_BASE } from "../utils/account.js";
 
 const BASE_PRODUCTS = [
   {
@@ -262,22 +262,35 @@ const API_TIMEOUT_MS = 6000;
 /** true si el catálogo viene de Mercado Libre; false si son los de ejemplo. */
 export let IS_LIVE = false;
 export let CATALOG_SOURCE = "local";
+export const VISITOR_PREVIEW_LIMIT = 6;
+export let REGISTRATION_REQUIRED = false;
+export let CATALOG_LOADED = false;
+export const CATALOG_CHANGED_EVENT = "catalog-changed";
+export const PRODUCTS = [];
+export const LOCKED_PRODUCTS = [];
 
-async function loadLiveProducts() {
-  await accountReady;
+async function loadLiveProducts({ owner, plan }, generation) {
   try {
-    const response = await fetch(`${API_BASE}/deals`, { credentials: "include", signal: AbortSignal.timeout(API_TIMEOUT_MS) });
+    const response = await fetch(`${API_BASE}/deals`, {
+      credentials: "include",
+      ...(owner ? { headers: { "X-Account-Id": owner } } : {}),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const body = await response.json();
-    if (!body.success || !Array.isArray(body.data)) throw new Error("respuesta de catálogo inválida");
-    CATALOG_SOURCE = body.source ?? "backend";
-    IS_LIVE = CATALOG_SOURCE !== "demo";
-    // Las que el equipo destacó en el panel llegan primero y con `featured`.
+    if (generation !== catalogGeneration) return null;
+    if (!body?.success || !Array.isArray(body.data)) throw new Error("respuesta de catálogo inválida");
+    const source = body.source ?? "backend";
     const anyPinned = body.data.some((deal) => deal.featured);
-    return body.data.map((deal, index) => normalizeDeal(deal, index, anyPinned));
+    const deals = owner ? body.data : body.data.slice(0, VISITOR_PREVIEW_LIMIT);
+    return {
+      products: deals.map((deal, index) => normalizeDeal({ ...deal, source: deal.source ?? source }, index, anyPinned)),
+      source, registrationRequired: !owner || Boolean(body.registrationRequired), owner, plan,
+    };
   } catch (error) {
+    if (generation !== catalogGeneration) return null;
     console.info(`[Precionauta] Backend no disponible (${error.message}); usando productos de ejemplo.`);
-    return SAMPLE_PRODUCTS;
+    return { products: owner ? SAMPLE_PRODUCTS : SAMPLE_PRODUCTS.slice(0, VISITOR_PREVIEW_LIMIT), source: "local", registrationRequired: !owner, owner, plan };
   }
 }
 
@@ -320,6 +333,11 @@ export function normalizeDeal(deal, index = 0, anyPinned = false) {
     image: deal.thumbnail,
     images: deal.pictures ?? [],
     offersCount: deal.offersCount,
+    availability: deal.availability,
+    stock: deal.stock,
+    lastObservedAt: deal.lastObservedAt ?? deal.validatedAt,
+    lastCheckedAt: deal.lastCheckedAt,
+    checkStatus: deal.checkStatus,
     freeShipping: deal.freeShipping,
     live,
     // Cuándo apareció (null = ya estaba cuando empezamos a guardar historial).
@@ -327,22 +345,51 @@ export function normalizeDeal(deal, index = 0, anyPinned = false) {
   };
 }
 
-const ALL_PRODUCTS = await loadLiveProducts();
-const PLAN_ID = currentPlanId();
-const NOW = Date.now();
+let catalogGeneration = 0;
+let sessionReady = false;
+let catalogIdentity = "";
+const accessIdentity = () => JSON.stringify([accountState().user?.id ?? null, currentPlanId()]);
 
-/** La primera carga es visible; las ofertas posteriores esperan en Gratis. */
-const isFresh = (p) => p.locked || (p.live && p.firstSeenAt != null && NOW - p.firstSeenAt < FREE_DELAY_MS);
-
-for (const p of ALL_PRODUCTS) {
-  if (isFresh(p)) {
-    p.isNew = true;
-    p.unlocksAt = p.firstSeenAt + FREE_DELAY_MS;
-  }
+/** Invalida precios y fotos de la sesión anterior antes de solicitar su reemplazo. */
+export function refreshCatalog() {
+  const generation = ++catalogGeneration;
+  const snapshot = { owner: accountState().user?.id, plan: currentPlanId() };
+  catalogIdentity = accessIdentity();
+  PRODUCTS.length = 0;
+  LOCKED_PRODUCTS.length = 0;
+  CATALOG_LOADED = false;
+  IS_LIVE = false;
+  CATALOG_SOURCE = "local";
+  REGISTRATION_REQUIRED = !snapshot.owner;
+  catalogReady = loadLiveProducts(snapshot, generation).then((result) => {
+    if (generation !== catalogGeneration) return catalogReady;
+    if (!result || catalogIdentity !== accessIdentity()) return refreshCatalog();
+    const now = Date.now();
+    for (const product of result.products) {
+      if (product.locked || (product.live && product.firstSeenAt != null && now - product.firstSeenAt < FREE_DELAY_MS)) {
+        product.isNew = true;
+        product.unlocksAt = product.firstSeenAt + FREE_DELAY_MS;
+      }
+    }
+    PRODUCTS.push(...result.products.filter((product) => snapshot.plan === "plus" || !product.isNew));
+    LOCKED_PRODUCTS.push(...(!snapshot.owner || snapshot.plan === "plus" ? [] : result.products.filter((product) => product.isNew)));
+    CATALOG_SOURCE = result.source;
+    IS_LIVE = result.source !== "demo" && result.source !== "local";
+    REGISTRATION_REQUIRED = result.registrationRequired;
+    CATALOG_LOADED = true;
+    document.dispatchEvent(new CustomEvent(CATALOG_CHANGED_EVENT));
+    return { PRODUCTS, LOCKED_PRODUCTS };
+  });
+  document.dispatchEvent(new CustomEvent(CATALOG_CHANGED_EVENT));
+  return catalogReady;
 }
 
-/**
- * Gratis ve la carga inicial y las ofertas liberadas; Plus ve también las nuevas.
- */
-export const PRODUCTS = PLAN_ID === "plus" ? ALL_PRODUCTS : ALL_PRODUCTS.filter((p) => !p.isNew);
-export const LOCKED_PRODUCTS = PLAN_ID === "plus" ? [] : ALL_PRODUCTS.filter((p) => p.isNew);
+/** Importar los controles compartidos nunca espera a la red del catálogo. */
+export let catalogReady = accountReady.then(() => {
+  sessionReady = true;
+  return refreshCatalog();
+});
+
+document.addEventListener(ACCOUNT_CHANGED_EVENT, () => {
+  if (sessionReady && catalogIdentity !== accessIdentity()) refreshCatalog();
+});

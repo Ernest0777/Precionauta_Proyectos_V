@@ -9,8 +9,9 @@
     "frontend:dev": "http-server frontend -p 4173 -c-1 -o",
     "server:dev": "nodemon backend/server.js",
     "server": "node backend/server.js",
-    "start": "npm run dev",
-    "serve": "http-server frontend -p 4173",
+    "start": "node backend/server.js",
+    "backup": "node backend/scripts/backup.js",
+    "serve": "http-server frontend -p 4173 -c-1",
     "build": "echo Production ready - deploy backend/ and frontend/ folders"
   },
   "keywords": [

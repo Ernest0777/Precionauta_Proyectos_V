@@ -28,8 +28,12 @@ export function renderPriceChart(points, { min, max, currentPrice, startLabel = 
   const minPoint = points.reduce((a, b) => (b.price < a.price ? b : a));
 
   return `
+    <div class="price-chart__plot">
     <svg
       class="price-chart__svg"
+      data-price-min="${min}" data-price-max="${max}"
+      data-plot-left="${PAD_X}" data-plot-right="${WIDTH - PAD_X}"
+      data-plot-top="${PAD_TOP}" data-plot-bottom="${PAD_TOP + plotHeight}"
       viewBox="0 0 ${WIDTH} ${HEIGHT}"
       role="img"
       aria-label="Historial de precio desde ${startLabel}: máximo ${formatPriceMXN(
@@ -49,6 +53,18 @@ export function renderPriceChart(points, { min, max, currentPrice, startLabel = 
 
       <text x="${PAD_X}" y="${HEIGHT - 8}" class="price-chart__label">${startLabel}</text>
       <text x="${WIDTH - PAD_X}" y="${HEIGHT - 8}" text-anchor="end" class="price-chart__label">hoy</text>
+      <g data-chart-cursor visibility="hidden" aria-hidden="true" class="price-chart__cursor">
+        <line y1="${PAD_TOP}" y2="${PAD_TOP + plotHeight}" class="price-chart__guide" />
+        <circle r="5" class="price-chart__marker" />
+      </g>
     </svg>
+    <div class="price-chart__tooltip" data-chart-tooltip role="tooltip" hidden>
+      <span class="price-chart__tooltip-label">Precio registrado</span>
+      <strong data-chart-price></strong>
+      <span data-chart-observed></span>
+    </div>
+    <p class="price-chart__hint" data-chart-hint>Desliza o mueve el cursor para consultar un precio. Con teclado, usa las flechas, Inicio y Fin.</p>
+    <span class="sr-only" data-chart-announcement role="status" aria-live="polite" aria-atomic="true"></span>
+    </div>
   `;
 }
